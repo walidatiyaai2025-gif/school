@@ -90,12 +90,14 @@ class SetupBuilderTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root=self.fixture(d)
             public=base64.b64encode(bytes(range(32))).decode('ascii')
+            (root/'backend/.env.example').write_text('SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY=\n')
             r=self.run_builder(root,'--trusted-update-public-key',public)
             self.assertEqual(r.returncode,0,r.stderr)
             archive=root/'setup/output/SchoolPDF-Setup-v1.1.2.zip'
             with zipfile.ZipFile(archive) as z:
                 environment=z.read('.env.example').decode()
                 self.assertIn('SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="'+public+'"',environment)
+                self.assertEqual(environment.count('SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY='),1)
                 self.assertEqual(json.loads(z.read('SETUP_MANIFEST.json'))['signed_updates'],True)
                 self.assertNotIn('setup-access.key',z.namelist())
 
