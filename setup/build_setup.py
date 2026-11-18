@@ -130,8 +130,7 @@ def main() -> int:
     except (OSError, ValueError) as exc:
         print(f'RELEASE BLOCKED: {exc}', file=sys.stderr)
         return 2
-    # Keep setup credentials private to the uploader. Never log the access code.
-    payload['setup-access.key'] = (secrets.token_urlsafe(48) + '\n').encode()
+    # Setup secrets are generated only on the destination host, never in a release ZIP.
     for d in EMPTY_DIRS:
         payload[f'{d}/.gitkeep'] = b''
     file_manifest = [
@@ -156,7 +155,7 @@ def main() -> int:
         'School PDF cPanel fresh installation. Keep this ZIP and setup-access.key PRIVATE.\n'
         'Upload and extract outside public web root, point DocumentRoot to public/,\n'
         'then visit https://sclpdf.50sols.com/install.\n'
-        'Create your MySQL database/user in cPanel first.\n'
+        'Create MySQL database/user first, then read setup-access.key from File Manager after /install.\n'
         'After installation, remove unused installation artifacts from your hosting account.\n'
     ).encode()
     out_dir = root / 'setup/output'

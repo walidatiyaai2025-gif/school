@@ -11,7 +11,7 @@ abstract class TestCase extends BaseTestCase {
  protected function setUp(): void {
   parent::setUp();
   if(!is_dir(storage_path('app/private')))mkdir(storage_path('app/private'),0750,true);
-  file_put_contents(storage_path('app/private/install.lock'),'testing');
+  file_put_contents(storage_path('app/private/install.lock'),'{"installed":true,"version":"1.1.2"}');
  }
  protected function tearDown(): void {
   @unlink(storage_path('app/private/install.lock'));

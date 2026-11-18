@@ -2,7 +2,7 @@ name: School PDF Setup Preview (NOT PRODUCTION)
 
 on:
   push:
-    branches: [main, fix/setup-preview-artifact]
+    branches: [main, fix/setup-preview-artifact, feat/cpanel-signed-updates-recovery]
     paths:
       - 'backend/**'
       - 'setup/**'

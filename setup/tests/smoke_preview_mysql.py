@@ -126,6 +126,27 @@ def main() -> None:
                                capture_output=True, timeout=30)
         check(query.returncode == 0 and 'mysql-install-ok' in query.stdout,
               'database migrations / super admin verification failed')
+        # Verify the real installed Laravel code can snapshot live file state and
+        # MariaDB content without SSH, including an integrity-checked private ZIP.
+        backup_php = (
+            'require $argv[1]."/vendor/autoload.php";'
+            '$app=require $argv[1]."/bootstrap/app.php";'
+            r'$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();'
+            r'$b=$app->make(App\Services\SystemBackupManager::class);'
+            '$result=$b->create();'
+            '$manifest=$b->verify($result["id"]);'
+            'if (!isset($manifest["database_tables"]["users"]) || '
+            '!in_array(".env",array_column($manifest["files"],"path"),true)) exit(9);'
+            'echo "BACKUP_OK";'
+        )
+        backup_result = subprocess.run([php, '-r', backup_php, str(app)], env=env,
+            text=True, capture_output=True, timeout=120)
+        check(backup_result.returncode == 0 and 'BACKUP_OK' in backup_result.stdout,
+            f'isolated private backup verification failed: {backup_result.stderr[-450:]}')
+        print('PASS: real installed archive backup, MariaDB row export, .env retention,')
+        print('private backup manifest and SHA-256 verification')
+        from signed_upgrade_smoke import run_signed_upgrade_smoke
+        run_signed_upgrade_smoke(app, env, php)
         print('PASS: exact preview ZIP extraction, integrity, isolated MySQL install,')
         print('hashed super admin, completed lock, and repeated-install denial')
         print('Production upgrade, recovery and signing gates remain NOT VERIFIED.')

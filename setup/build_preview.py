@@ -56,12 +56,11 @@ def main() -> int:
     for path in EMPTY_DIRS:
         contents[f'{path}/.gitkeep'] = b''
 
-    # This preview code is public and MUST NOT be trusted for production setup.
-    contents['setup-access.key'] = (secrets.token_urlsafe(48) + '\n').encode()
+    # The web installer generates its own site-local setup code on first HTTPS visit.
     contents['PREVIEW-NOT-FOR-PRODUCTION.txt'] = (
         'WARNING: NOT FOR PRODUCTION. This is a public CI preview, not a release.\n'
         'Fresh install, upgrade, recovery and signing acceptance are not all verified.\n'
-        'A setup code bundled in a public GitHub artifact is NOT private.\n'
+        'A setup code is created only on the destination host.\n'
         'Never upload this archive to a live cPanel domain.\n'
         'Use only a throwaway, isolated environment to test the installer.\n'
     ).encode()
