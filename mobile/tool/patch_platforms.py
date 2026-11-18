@@ -81,8 +81,8 @@ if build.exists():
     if 'coreLibraryDesugaring(' not in s:
         s+='\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
     s=re.sub(r'(minSdk\s*=\s*)flutter.minSdkVersion',r'\g<1>24',s)
-    s=re.sub(r'(applicationId\s*=\s*)\"[^\"]+\"',r'\g<1>\"com.fiftysols.schoolpdf\"',s)
-    s=re.sub(r'(namespace\s*=\s*)\"[^\"]+\"',r'\g<1>\"com.fiftysols.schoolpdf\"',s)
+    s=re.sub(r'(applicationId\s*=\s*)\"[^\"]+\"',r'\g<1>"com.fiftysols.schoolpdf"',s)
+    s=re.sub(r'(namespace\s*=\s*)\"[^\"]+\"',r'\g<1>"com.fiftysols.schoolpdf"',s)
     build.write_text(s)
 
 pbx=root/'ios/Runner.xcodeproj/project.pbxproj'
