@@ -59,7 +59,7 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation(zone.identifier));
     } catch (_) { /* Use UTC until the OS timezone maps to an IANA location. */ }
     await local.initialize(
-      const InitializationSettings(
+      settings: const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(requestAlertPermission: false,
           requestBadgePermission: false, requestSoundPermission: false)),
@@ -93,8 +93,10 @@ class NotificationService {
         if (!permissionGranted || message.notification == null) return;
         final notice = message.notification!;
         await local.show(
-          DateTime.now().millisecondsSinceEpoch.remainder(100000),
-          notice.title ?? 'School PDF', notice.body ?? '', _updates,
+          id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
+          title: notice.title ?? 'School PDF',
+          body: notice.body ?? '',
+          notificationDetails: _updates,
           payload: message.data['document_id']?.toString());
       });
       FirebaseMessaging.onMessageOpenedApp.listen(
@@ -165,21 +167,25 @@ class NotificationService {
 
   Future<void> pdfReady(String recordId) async {
     if (!permissionGranted) return;
-    await local.show(DateTime.now().millisecondsSinceEpoch.remainder(100000),
-      'School PDF', 'ملف PDF جاهز للمشاركة', _tasks, payload: recordId);
+    await local.show(
+      id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      title: 'School PDF', body: 'ملف PDF جاهز للمشاركة',
+      notificationDetails: _tasks, payload: recordId);
   }
 
   /// Inexact daily notifications: avoids SCHEDULE_EXACT_ALARM privileged access.
   Future<void> configureReminder({required bool enabled, required String time}) async {
-    await local.cancel(9211);
+    await local.cancel(id: 9211);
     if (!enabled || !permissionGranted) return;
     final parts = time.split(':');
     final hour = int.parse(parts[0]), minute = int.parse(parts[1]);
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (!scheduled.isAfter(now)) scheduled = scheduled.add(const Duration(days: 1));
-    await local.zonedSchedule(9211, 'School PDF', 'وقت مراجعة واجباتك 📚',
-      scheduled, _tasks, androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    await local.zonedSchedule(
+      id: 9211, title: 'School PDF', body: 'وقت مراجعة واجباتك 📚',
+      scheduledDate: scheduled, notificationDetails: _tasks,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time);
   }
 }

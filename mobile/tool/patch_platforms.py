@@ -71,11 +71,18 @@ if build.exists():
     if 'isCoreLibraryDesugaringEnabled' not in s:
         s=re.sub(r'(compileOptions\s*\{)',
                  r'\1\n        isCoreLibraryDesugaringEnabled = true',s,count=1)
+    # Notification plugin 22.x targets compileSdk 36 and Java 17.
+    s=re.sub(r'(compileSdk\s*=\s*)flutter.compileSdkVersion',
+             r'\g<1>36',s)
+    for old in ('JavaVersion.VERSION_1_8','JavaVersion.VERSION_11'):
+        s=s.replace(old,'JavaVersion.VERSION_17')
+    s=s.replace('jvmTarget = "1.8"','jvmTarget = "17"')
+    s=s.replace('jvmTarget = "11"','jvmTarget = "17"')
     if 'coreLibraryDesugaring(' not in s:
         s+='\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
     s=re.sub(r'(minSdk\s*=\s*)flutter.minSdkVersion',r'\g<1>24',s)
-    s=re.sub(r'(applicationId\s*=\s*)\"[^\"]+\"',r'\g<1>\"com.fiftysols.schoolpdf\"',s)
-    s=re.sub(r'(namespace\s*=\s*)\"[^\"]+\"',r'\g<1>\"com.fiftysols.schoolpdf\"',s)
+    s=re.sub(r'(applicationId\s*=\s*)\"[^\"]+\"',r'\g<1>"com.fiftysols.schoolpdf"',s)
+    s=re.sub(r'(namespace\s*=\s*)\"[^\"]+\"',r'\g<1>"com.fiftysols.schoolpdf"',s)
     build.write_text(s)
 
 pbx=root/'ios/Runner.xcodeproj/project.pbxproj'

@@ -57,8 +57,11 @@ jobs:
         run: |
           flutter create --project-name school_pdf --platforms android --org com.fiftysols .
           python3 tool/patch_platforms.py
+          # Flutter creates a sample MyApp test on a fresh platform scaffold;
+          # it is not part of this app and must not replace real tests.
+          if [ -f test/widget_test.dart ] && grep -q 'MyApp' test/widget_test.dart; then rm test/widget_test.dart; fi
           flutter pub get
-          dart run flutter_launcher_icons
+          dart run flutter_launcher_icons -f tool/flutter_launcher_icons_android.yaml
           flutter analyze --no-fatal-infos
           flutter test
       - name: Build debug APK with no production ads
