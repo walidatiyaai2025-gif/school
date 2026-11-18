@@ -135,7 +135,7 @@ class PdfService {
       final painter=TextPainter(
         text:TextSpan(text:value,style:TextStyle(fontSize:fontSize,
           color:const Color(0xFF102448),fontWeight:bold?FontWeight.w700:FontWeight.w400)),
-        textDirection:TextDirection.rtl,maxLines:1,ellipsis:'…');
+        textDirection:ui.TextDirection.rtl,maxLines:1,ellipsis:'…');
       painter.layout(maxWidth:width-60);
       painter.paint(canvas,Offset(width-painter.width-25,y));
       painter.dispose();
