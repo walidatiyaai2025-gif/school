@@ -7,7 +7,7 @@
 3. أنشئ قاعدة MySQL/MariaDB ومستخدمًا لها من Database Wizard؛ لا تضع كلمة المرور داخل ZIP.
 4. ارفع ZIP إلى مسار خاص مثل `/home/CPANEL_USER/schoolpdf-app/` وافكّه **مرة واحدة**. تجنب استخراج Laravel داخل public_html بكامله.
 5. من Domains اضبط Document Root للدومين **`sclpdf.50sols.com`** على المسار `/home/CPANEL_USER/schoolpdf-app/public`. إن لم تسمح الاستضافة بتعديل الجذر، راجع دعم الاستضافة ولا تنشر جذر Laravel علنًا.
-6. افتح `https://sclpdf.50sols.com/install`، راجع فحص الاستضافة، أدخل الرمز من `setup-access.key` خارج public، ثم DB وSuper Admin، وأكمل Finish.
+6. افتح `https://sclpdf.50sols.com/install`، راجع فحص الاستضافة، افتح `/install` أولًا لإنشاء رمز فردي على الاستضافة، ثم اقرأ `setup-access.key` من File Manager خارج `public` وأدخله في المعالج، ثم DB وSuper Admin، وأكمل Finish.
 7. افحص `https://sclpdf.50sols.com/admin/login` وصفحات `/privacy`, `/terms`, `/support`, `/app-ads.txt` والـAPI.
 8. ضع Firebase Admin Service Account خارج `public` بصلاحيات مقيدة واضبط مساره في `.env` بأمان. لا تضع مفتاح الخادم في تطبيق Flutter أو مجلد الويب.
 9. في cPanel Cron Jobs، إن كان مسموحًا، اضبط Laravel Scheduler باستخدام مسار PHP الصحيح وتعليمات مسؤول الاستضافة. عند عدم توفر Cron، استخدم آلية المعالجة اليدوية المتاحة باللوحة مع فهم أن وصول الإشعارات لن يكون تلقائيًا مضمونًا.
