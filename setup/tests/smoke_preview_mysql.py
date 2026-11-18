@@ -131,8 +131,8 @@ def main() -> None:
         backup_php = (
             'require $argv[1]."/vendor/autoload.php";'
             '$app=require $argv[1]."/bootstrap/app.php";'
-            '$app->make(Illuminate\\\\Contracts\\\\Console\\\\Kernel::class)->bootstrap();'
-            '$b=$app->make(App\\\\Services\\\\SystemBackupManager::class);'
+            r'$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();'
+            r'$b=$app->make(App\Services\SystemBackupManager::class);'
             '$result=$b->create();'
             '$manifest=$b->verify($result["id"]);'
             'if (!isset($manifest["database_tables"]["users"]) || '
