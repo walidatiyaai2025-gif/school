@@ -105,6 +105,8 @@ def main() -> int:
     parser.add_argument('--root', type=Path, default=ROOT)
     parser.add_argument('--git-sha', default=os.environ.get('GITHUB_SHA', ''))
     parser.add_argument('--evidence', type=Path, default=None)
+    parser.add_argument('--trusted-update-public-key', default='',
+        help='Base64-encoded Ed25519 verification key derived from CI signer')
     parser.add_argument('--check-only', action='store_true')
     args = parser.parse_args()
     root = args.root.resolve()
@@ -131,6 +133,19 @@ def main() -> int:
         print(f'RELEASE BLOCKED: {exc}', file=sys.stderr)
         return 2
     # Setup secrets are generated only on the destination host, never in a release ZIP.
+    # Inject only the public release-verification key into .env.example.
+    # The installer copies this into the installed .env without exposing the secret signer.
+    if args.trusted_update_public_key:
+        import base64
+        try:
+            raw_key = base64.b64decode(args.trusted_update_public_key, validate=True)
+            if len(raw_key) != 32:
+                raise ValueError('Ed25519 public key must be 32 bytes')
+        except (ValueError, base64.binascii.Error) as exc:
+            raise SystemExit('RELEASE BLOCKED: invalid trusted update verification key') from exc
+        payload['.env.example'] += (
+            '\nSCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="' + args.trusted_update_public_key + '"\n'
+        ).encode()
     for d in EMPTY_DIRS:
         payload[f'{d}/.gitkeep'] = b''
     file_manifest = [
@@ -143,6 +158,7 @@ def main() -> int:
         'required_extensions': ['pdo_mysql', 'mbstring', 'fileinfo', 'openssl', 'sodium', 'zip'],
         'features': ['web-installer', 'super-admin', 'country-push-dashboard', 'app-ads-txt'],
         'acceptance_checks': json.loads(evidence.read_text(encoding='utf-8'))['checks'],
+        'signed_updates': bool(args.trusted_update_public_key),
         'files': file_manifest,
     }
     payload['SETUP_MANIFEST.json'] = (json.dumps(metadata, indent=2, ensure_ascii=False) + '\n').encode()
@@ -180,7 +196,7 @@ def main() -> int:
         (out_dir / f'SchoolPDF-Setup-v{version}.sha256').write_text(f'{digest}  {final.name}\n')
         (out_dir / f'SchoolPDF-Setup-v{version}-BUILD_INFO.json').write_bytes(payload['BUILD_INFO.json'])
         print(f'RELEASE CANDIDATE GENERATED: {final}\nSHA256: {digest}')
-        print('Setup access code is private and stored only inside the ZIP.')
+        print('Setup access code will be generated on the hosting server, outside public/.')
         return 0
     finally:
         temp.unlink(missing_ok=True)
