@@ -79,8 +79,10 @@ final class SystemBackupManager
                 $full = $file->getPathname();
                 $relative = str_replace('\\','/',substr($full,strlen($base)+1));
                 $segments = explode('/',$relative);
+                // Never back up staged update packages, operation locks, or prior
+                // backups into the next backup. Preserve all other user storage.
                 if (in_array('.git',$segments,true) || in_array('node_modules',$segments,true) ||
-                    in_array('backups',$segments,true) && str_starts_with($relative,'storage/app/private/system-updates/') ||
+                    str_starts_with($relative,'storage/app/private/system-updates/') ||
                     str_starts_with($relative,'storage/logs/') ||
                     str_starts_with($relative,'storage/framework/cache/') ||
                     str_starts_with($relative,'storage/framework/views/') ||
