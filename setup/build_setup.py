@@ -145,7 +145,11 @@ def main() -> int:
             raise SystemExit('RELEASE BLOCKED: invalid trusted update verification key') from exc
         template = payload['.env.example'].decode('utf-8')
         line = 'SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="' + args.trusted_update_public_key + '"'
-        if re.search(r'(?m)^SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY=.*
+        if re.search(r'(?m)^SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY=.*$', template):
+            template = re.sub(r'(?m)^SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY=.*$', lambda match: line, template)
+        else:
+            template = template.rstrip('\n') + '\n' + line + '\n'
+        payload['.env.example'] = template.encode('utf-8')
     for d in EMPTY_DIRS:
         payload[f'{d}/.gitkeep'] = b''
     file_manifest = [
