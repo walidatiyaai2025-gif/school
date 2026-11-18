@@ -42,7 +42,17 @@ PHP
 
 الـPublic Key من `ed25519-public-base64.txt` ليس سرًا؛ نظام البناء يشتقه من Secret ويزرعه داخل `.env.example` في حزمة Setup، ويستعمله Laravel للتحقق من التحديثات.
 
-## 3. بوابات الإصدار
+## 3. معالجة خطأ التوقيع في CI
+
+إذا فشل `Validate protected release signer` برسالة `invalid protected Ed25519 signer`، تحقق من **قيمة GitHub Actions Secret** باسم `SCHOOLPDF_RELEASE_ED25519_KEY_B64` في إعدادات المستودع. لا ترسل السر في المحادثات أو Logs.
+
+- يقبل البناء الآن صيغة **Ed25519 seed** بطول **32 بايت بعد فك Base64**، أو مفتاح libsodium الخاص بطول **64 بايت بعد فك Base64**. يجب أن تكون صيغة الـ64 بايت متسقة داخليًا (الجزء العام مطابق للمشتق من الـSeed).
+- لا تقبل القيمة نصًا عاديًا أو Hex أو المفتاح العام أو Base64 غير صالح. لا يجوز نسخ الـPublic Key إلى خانة الـSecret.
+- إن كان السر الموجود تالفًا، استرجع **نفس المفتاح الخاص الأصلي** من التخزين المشفر، واستبدل قيمة Repository Secret يدويًا. لا تغيّر هوية التوقيع إن سبق نشر أي Setup لعملاء؛ تدوير المفتاح يحتاج مسار ثقة/انتقال مُراجع.
+- تُنفّذ Pull Requests الاختبارات باستخدام مفتاح مؤقت خاص بالـCI فقط، **ولا تحصل على سر الإنتاج ولا تنشر Verified Artifact**. وحده نجاح Workflow على `main` مع سر محمي صالح يسمح بإصدار ZIP معتمد.
+- بعد إصلاح السر، أعد تشغيل `School PDF cPanel Setup v1.1.2 - Verified First Install` على `main`، وتأكد من نجاح `build-candidate` ثم `independently-install-exact-setup` ثم `publish-verified-cpanel-setup`. لا ترفع `CANDIDATE-UNVERIFIED` أو `PREVIEW-UNVERIFIED` إلى الإنتاج.
+
+## 4. بوابات الإصدار
 
 - تثبيت كامل من **Setup ZIP الناتج نفسه** على قاعدة نظيفة.
 - تحديث فعلي من **حزمة Setup سابقة مدعومة** باستخدام **Update ZIP الناتج نفسه**، لا مجرد fixture اصطناعية.
