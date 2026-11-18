@@ -21,35 +21,60 @@ import zipfile
 from build_setup import ROOT, files_to_package, sha256_bytes
 
 
+def _load_key_php() -> str:
+    """Validate a canonical Ed25519 secret or derive it from a 32-byte seed.
+
+    Both representations are private. Do not emit or package either one.
+    For a 64-byte secret, validate the embedded public half against its seed:
+    libsodium would otherwise accept a mismatched secret that can sign data
+    which the corresponding public key cannot verify.
+    """
+    return (
+        '$raw=base64_decode(trim((string)getenv("SCHOOLPDF_RELEASE_ED25519_KEY_B64")),true);'
+        'if($raw===false)exit(4);'
+        'if(strlen($raw)===SODIUM_CRYPTO_SIGN_SEEDBYTES){'
+        '$k=sodium_crypto_sign_secretkey(sodium_crypto_sign_seed_keypair($raw));'
+        '}elseif(strlen($raw)===SODIUM_CRYPTO_SIGN_SECRETKEYBYTES){'
+        '$k=$raw;'
+        '$seed=substr($k,0,SODIUM_CRYPTO_SIGN_SEEDBYTES);'
+        '$canonical=sodium_crypto_sign_secretkey(sodium_crypto_sign_seed_keypair($seed));'
+        'if(!hash_equals($canonical,$k))exit(5);'
+        '}else{exit(4);}'
+    )
+
+
 def signing_key():
-    value = os.environ.get('SCHOOLPDF_RELEASE_ED25519_KEY_B64', '')
-    if not value:
+    if not os.environ.get('SCHOOLPDF_RELEASE_ED25519_KEY_B64', '').strip():
         raise RuntimeError('BLOCKED: protected GitHub release signing key is not configured')
-    php = (
-        '$k=base64_decode(getenv("SCHOOLPDF_RELEASE_ED25519_KEY_B64"),true);'
-        'if($k===false || strlen($k)!==SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) exit(4);'
+    php = _load_key_php() + (
         'echo base64_encode(sodium_crypto_sign_publickey_from_secretkey($k));'
     )
-    p = subprocess.run(['php','-r',php],capture_output=True,text=True,timeout=15)
-    if p.returncode or len(base64.b64decode(p.stdout,validate=True))!=32:
-        raise RuntimeError('BLOCKED: invalid protected Ed25519 signing secret')
+    p = subprocess.run(['php', '-r', php], capture_output=True, text=True, timeout=15)
+    try:
+        valid = p.returncode == 0 and len(base64.b64decode(p.stdout, validate=True)) == 32
+    except (ValueError, base64.binascii.Error):
+        valid = False
+    if not valid:
+        raise RuntimeError(
+            'BLOCKED: invalid protected Ed25519 signer; supply a base64 32-byte '
+            'seed or a canonical base64 64-byte secret in GitHub Actions secrets'
+        )
     return p.stdout
 
 
 def sign(raw: bytes) -> str:
-    php = (
-        '$k=base64_decode(getenv("SCHOOLPDF_RELEASE_ED25519_KEY_B64"),true);'
-        'if($k===false || strlen($k)!==SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) exit(4);'
+    # Always validate before signing; never use a corrupt 64-byte secret.
+    signing_key()
+    php = _load_key_php() + (
         'echo base64_encode(sodium_crypto_sign_detached(stream_get_contents(STDIN),$k));'
     )
-    p = subprocess.run(['php','-r',php],input=raw,capture_output=True,timeout=15)
+    p = subprocess.run(['php', '-r', php], input=raw, capture_output=True, timeout=15)
     if p.returncode:
         raise RuntimeError('BLOCKED: release manifest signing failed')
     signature = p.stdout.decode('ascii')
-    if len(base64.b64decode(signature,validate=True))!=64:
+    if len(base64.b64decode(signature, validate=True)) != 64:
         raise RuntimeError('BLOCKED: malformed release signature')
     return signature
-
 
 def main() -> int:
     parser=argparse.ArgumentParser()
