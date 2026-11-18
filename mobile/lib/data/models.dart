@@ -45,6 +45,7 @@ class PdfRecord {
 }
 
 class StudentSettings {
+  StudentSettings();
   String name = '';
   String schoolClass = '';
   String level = 'primary';
