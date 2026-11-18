@@ -8,6 +8,7 @@ on:
       - 'setup/**'
       - 'VERSION'
       - '.github/workflows/setup-preview.yml'
+      - '.github/workflows/fullstack-checks.yml'
   workflow_dispatch:
 
 permissions:
