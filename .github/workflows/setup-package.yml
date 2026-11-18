@@ -7,6 +7,13 @@ on:
       - 'setup/**'
       - 'VERSION'
       - '.github/workflows/setup-package.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'setup/**'
+      - 'VERSION'
+      - '.github/workflows/setup-package.yml'
   workflow_dispatch:
 
 permissions:
