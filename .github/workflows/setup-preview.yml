@@ -65,7 +65,7 @@ jobs:
       - name: Assemble non-production preview ZIP and verify extracted installation
         run: |
           python3 setup/build_preview.py --git-sha "$GITHUB_SHA"
-          python3 setup/tests/smoke_preview_mysql.py
+          SCHOOLPDF_CI_INSTALL_SMOKE=1 python3 setup/tests/smoke_preview_mysql.py
       - name: Upload clearly marked NON-PRODUCTION ZIP
         uses: actions/upload-artifact@v4
         with:
