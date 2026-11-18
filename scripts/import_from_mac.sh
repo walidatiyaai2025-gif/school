@@ -25,7 +25,8 @@ else
     echo "Target has uncommitted changes; resolve them before running import." >&2
     exit 1
   fi
-  git -C "$DEST" pull --ff-only origin main
+  git -C "$DEST" fetch origin main
+  git -C "$DEST" rebase origin/main || { echo "Git rebase conflict. No push attempted; inspect $DEST." >&2; exit 1; }
 fi
 
 rsync -av \
