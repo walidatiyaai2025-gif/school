@@ -90,8 +90,15 @@ def main() -> None:
         env['SCHOOLPDF_FORM'] = base64.b64encode(json.dumps(form).encode()).decode()
         result = invoke()
         check(result.returncode == 0, f'POST crashed: {result.stderr[-500:]}')
-        check('تم التثبيت وقفل المعالج بنجاح' in result.stdout,
-              'installer did not finish successfully; review CI isolated logs')
+        if 'تم التثبيت وقفل المعالج بنجاح' not in result.stdout:
+            errors = re.findall(r'<p class="alert">([^<]+)</p>', result.stdout)
+            print('Installer safe diagnostics:', {
+                'errors': errors[:4],
+                'env_created': (app / '.env').exists(),
+                'install_lock_created': (app / 'storage/app/private/install.lock').exists(),
+                'stderr_tail': result.stderr[-400:],
+            }, file=sys.stderr)
+            raise RuntimeError('installer did not finish successfully; review CI isolated logs')
         check((app / 'storage/app/private/install.lock').exists(), 'setup lock missing')
         check((app / '.env').exists(), 'env missing')
         check(not (app / 'setup-access.key').exists(), 'setup key not removed')
