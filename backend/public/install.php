@@ -129,6 +129,11 @@ if (($_SERVER['REQUEST_METHOD']??'GET')==='POST') {
                     } catch (Throwable $exception) {
                         // Preserve DB and .env on failure for safe investigation; never auto-rollback data.
                         error_log('SchoolPDF installer incomplete: '.get_class($exception));
+                        // Only the isolated CI installer smoke receives extra SQL diagnostics.
+                        // Never expose database errors or credentials to a web visitor.
+                        if (getenv('SCHOOLPDF_CI_INSTALL_SMOKE') === '1') {
+                            error_log('SchoolPDF CI smoke SQL detail: '.substr($exception->getMessage(),0,600));
+                        }
                         http_response_code(500);
                         $errors[]='تعذّر إكمال التثبيت. قد تكون قاعدة البيانات أو .env تغيرتا؛ لا تحذف البيانات. راجع سجلات الاستضافة وخطة الاستعادة قبل إعادة المحاولة.';
                     } finally {
