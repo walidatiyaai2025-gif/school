@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 command -v flutter >/dev/null 2>&1 || { echo 'Flutter SDK is not installed/in PATH.' >&2; exit 1; }
 flutter create --project-name school_pdf --platforms android --org com.fiftysols .
 python3 tool/patch_platforms.py
+if [ -f test/widget_test.dart ] && grep -q 'MyApp' test/widget_test.dart; then rm test/widget_test.dart; fi
 flutter pub get
 dart run flutter_launcher_icons -f tool/flutter_launcher_icons_android.yaml
 flutter analyze --no-fatal-infos
