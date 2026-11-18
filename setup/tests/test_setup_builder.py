@@ -76,7 +76,7 @@ class SetupBuilderTest(unittest.TestCase):
             with zipfile.ZipFile(archive) as z:
                 names=z.namelist()
                 self.assertIn('vendor/autoload.php',names)
-                self.assertIn('setup-access.key',names)
+                self.assertNotIn('setup-access.key',names)
                 self.assertIn('SETUP_MANIFEST.json',names)
                 self.assertNotIn('storage/app/private/prod-data.txt',names)
                 self.assertNotIn('.env',names)
