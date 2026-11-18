@@ -85,6 +85,20 @@ class SetupBuilderTest(unittest.TestCase):
                 self.assertTrue(all(not n.startswith('/') and '..' not in Path(n).parts for n in names))
                 self.assertEqual(json.loads(z.read('BUILD_INFO.json'))['source_git_sha'],HEAD)
 
+    def test_setup_embeds_only_the_trusted_public_update_key(self):
+        import base64
+        with tempfile.TemporaryDirectory() as d:
+            root=self.fixture(d)
+            public=base64.b64encode(bytes(range(32))).decode('ascii')
+            r=self.run_builder(root,'--trusted-update-public-key',public)
+            self.assertEqual(r.returncode,0,r.stderr)
+            archive=root/'setup/output/SchoolPDF-Setup-v1.1.2.zip'
+            with zipfile.ZipFile(archive) as z:
+                environment=z.read('.env.example').decode()
+                self.assertIn('SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="'+public+'"',environment)
+                self.assertEqual(json.loads(z.read('SETUP_MANIFEST.json'))['signed_updates'],True)
+                self.assertNotIn('setup-access.key',z.namelist())
+
     def test_symlinks_are_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             root=self.fixture(d)
