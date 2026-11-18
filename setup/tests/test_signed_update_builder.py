@@ -57,6 +57,50 @@ class SignedUpdateBuilderTest(unittest.TestCase):
             self.assertNotEqual(result.returncode,0)
             self.assertIn('production dependencies changed',result.stderr)
 
+    def test_accepts_ed25519_seed_and_derives_same_public_key(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.fixture(directory)
+            private, public = self.signer()
+            seed = base64.b64encode(base64.b64decode(private)[:32]).decode('ascii')
+            result = self.build(root, seed)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            emitted = (root / 'setup/output/SchoolPDF-Release-Public-Key.txt').read_text().strip()
+            self.assertEqual(emitted, public)
+            with zipfile.ZipFile(root / 'setup/output/SchoolPDF-Update-v1.1.2.zip') as archive:
+                manifest = archive.read('manifest.json')
+                signature = base64.b64decode(archive.read('signature.ed25519'), validate=True)
+            verification = subprocess.run(
+                ['php', '-r',
+                 '$signature=base64_decode(getenv("SIG"),true);'
+                 '$public=base64_decode(getenv("PUB"),true);'
+                 'exit(sodium_crypto_sign_verify_detached($signature,'
+                 'stream_get_contents(STDIN),$public)?0:1);'],
+                input=manifest, capture_output=True,
+                env={**os.environ, 'SIG': base64.b64encode(signature).decode(), 'PUB': public},
+            )
+            self.assertEqual(verification.returncode, 0)
+
+    def test_rejects_mismatched_64_byte_secret(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.fixture(directory)
+            private, _ = self.signer()
+            corrupt = bytearray(base64.b64decode(private))
+            corrupt[-1] ^= 1
+            broken = base64.b64encode(corrupt).decode('ascii')
+            result = self.build(root, broken)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('invalid protected Ed25519 signer', result.stderr)
+            self.assertNotIn(broken, result.stderr)
+            self.assertFalse(list((root / 'setup/output').glob('*.zip')))
+
+    def test_rejects_malformed_base64_signer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.fixture(directory)
+            result = self.build(root, 'not-valid@base64')
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('invalid protected Ed25519 signer', result.stderr)
+            self.assertFalse(list((root / 'setup/output').glob('*.zip')))
+
     def test_signs_exact_manifest_and_excludes_live_data(self):
         with tempfile.TemporaryDirectory() as directory:
             root=self.fixture(directory)
