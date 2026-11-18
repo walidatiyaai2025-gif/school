@@ -23,8 +23,10 @@ fi
 
 git clone "$REPO" "$DEST"
 
-rsync -av \
-  --exclude='.git/' --exclude='.env' --exclude='.env.*' --exclude='vendor/' \
+rsync -av --no-links \
+  --exclude='.git/' --exclude='.gitignore' \
+  --include='.env.example' --exclude='.env' --exclude='.env.*' \
+  --exclude='vendor/' \
   --exclude='node_modules/' --exclude='.dart_tool/' \
   --exclude='build/' --exclude='Pods/' --exclude='.gradle/' \
   --exclude='dist/' --exclude='__pycache__/' \
