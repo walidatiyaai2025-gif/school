@@ -118,7 +118,12 @@ catch (RuntimeException $e) { echo "REPLAY_BLOCKED"; }''',safe)
 $b=$app->make(App\Services\SystemBackupManager::class);
 $all=$b->availableBackups();
 if (count($all)<2) exit(6);
-foreach ($all as $item) $b->verify($item["id"]);
+foreach ($all as $item) {
+    $manifest=$b->verify($item["id"]);
+    foreach ($manifest["files"] as $entry) {
+        if (str_starts_with($entry["path"],"storage/app/private/system-updates/")) exit(17);
+    }
+}
 echo "BACKUP_RESTORABLE";''',safe)
     assert verify.returncode == 0 and 'BACKUP_RESTORABLE' in verify.stdout, (
         f'backup integrity failed: {verify.stderr[-400:]}')
