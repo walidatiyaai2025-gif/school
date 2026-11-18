@@ -20,6 +20,7 @@ final class SystemUpdateController
             'history'=>$updates->historyEntries(),
             'staged'=>$request->session()->get('schoolpdf_staged_update'),
             'verifiedBackup'=>$request->session()->get('schoolpdf_verified_backup'),
+            'backups'=>$backups->availableBackups(),
         ]);
     }
 
@@ -39,7 +40,7 @@ final class SystemUpdateController
     {
         try {
             $backup = $updates->backupNow();
-            return back()->with('status','Verified backup created: '.$backup['id']);
+            return back()->with('status','A complete backup was created and verified.');
         } catch (Throwable $e) {
             return back()->withErrors(['backup'=>'Backup failed: '.$e->getMessage()]);
         }
