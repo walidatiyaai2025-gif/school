@@ -67,6 +67,13 @@ def main() -> None:
             return subprocess.run([php, '-r', php_code, str(script)], env=env,
                                   text=True, capture_output=True, timeout=90)
 
+        # Installer enables PHP strict sessions. Pre-create the fixture session so
+        # PHP accepts the supplied ID instead of rotating it on the first GET.
+        init = subprocess.run([php, '-r',
+            'ini_set("session.save_path",getenv("SCHOOLPDF_SESSION_DIR"));'
+            'session_id(getenv("SCHOOLPDF_SESSION_ID"));session_start();session_write_close();'],
+            env=env, text=True, capture_output=True, timeout=20)
+        check(init.returncode == 0, 'could not establish isolated PHP session')
         page = invoke()
         check(page.returncode == 0, f'GET installer crashed: {page.stderr[:400]}')
         csrf = re.search(r'name="csrf" value="([a-f0-9]{64})"', page.stdout)
