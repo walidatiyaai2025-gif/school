@@ -2,7 +2,7 @@ name: School PDF Setup Preview (NOT PRODUCTION)
 
 on:
   push:
-    branches: [main, fix/setup-preview-artifact, feat/cpanel-signed-updates-recovery]
+    branches: [main, fix/setup-preview-artifact, feat/cpanel-signed-updates-recovery, test/cpanel-db-recovery-release-gates]
     paths:
       - 'backend/**'
       - 'setup/**'
@@ -33,7 +33,23 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
+      mariadb_restore:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: isolated-ci-root-only
+          MARIADB_DATABASE: schoolpdf_restore_ci
+          MARIADB_USER: schoolpdf_ci
+          MARIADB_PASSWORD: isolated-ci-user-password
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
     env:
+      SCHOOLPDF_TEST_RESTORE_DATABASE: schoolpdf_restore_ci
+      SCHOOLPDF_TEST_RESTORE_PORT: '3307'
       SCHOOLPDF_TEST_DB_USERNAME: schoolpdf_ci
       SCHOOLPDF_TEST_DB_PASSWORD: isolated-ci-user-password
       SCHOOLPDF_TEST_DB_DATABASE: schoolpdf_ci
