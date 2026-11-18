@@ -8,6 +8,23 @@ test -f "$SRC/backend/composer.json" || { echo "Missing: $SRC/backend/composer.j
 test -f "$SRC/backend/composer.lock" || { echo "Missing: $SRC/backend/composer.lock (keep locally tested dependencies)" >&2; exit 1; }
 test -f "$SRC/mobile/pubspec.yaml" || { echo "Missing: $SRC/mobile/pubspec.yaml" >&2; exit 1; }
 
+# Never overwrite or reset a previous checkout with unfinished work.
+# Retry in a new clone when that checkout has staged, unstaged, or untracked files.
+if [ -d "$DEST/.git" ] && {
+  ! git -C "$DEST" diff --quiet ||
+  ! git -C "$DEST" diff --cached --quiet ||
+  [ -n "$(git -C "$DEST" ls-files --others --exclude-standard)" ];
+}; then
+  previous="$DEST"
+  index=1
+  while [ -e "${previous}-fresh-${index}" ]; do
+    index=$((index + 1))
+  done
+  DEST="${previous}-fresh-${index}"
+  echo "Preserving existing checkout with local changes: $previous"
+  echo "Importing into a fresh checkout instead: $DEST"
+fi
+
 if [ -e "$DEST" ] && [ ! -d "$DEST/.git" ]; then
   echo "Target exists and is not a Git clone: $DEST. Choose another SCHOOLPDF_GIT_DIR." >&2
   exit 1
