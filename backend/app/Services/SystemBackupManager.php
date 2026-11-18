@@ -130,6 +130,19 @@ final class SystemBackupManager
         return $version;
     }
 
+    public function availableBackups(): array
+    {
+        $directory = $this->backupDirectory();
+        if (!is_dir($directory)) return [];
+        $archives = glob($directory.'/*.zip') ?: [];
+        rsort($archives);
+        return array_slice(array_map(static fn($path) => [
+            'id'=>basename($path,'.zip'),
+            'created_at'=>gmdate('Y-m-d H:i:s',filemtime($path)),
+            'size_bytes'=>filesize($path),
+        ],$archives),0,20);
+    }
+
     public function verify(string $id): array
     {
         if (!preg_match('/^\d{8}-\d{6}-[a-f0-9]{16}$/D',$id)) {
