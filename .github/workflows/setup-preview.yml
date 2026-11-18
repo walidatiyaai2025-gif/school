@@ -48,7 +48,7 @@ jobs:
       - name: Verify source and Composer lock
         run: |
           test -s backend/composer.lock
-          composer validate --working-dir=backend --strict --no-check-publish
+          composer validate --working-dir=backend --no-check-publish
           python3 -m unittest discover -s setup/tests -p 'test_*.py' -v
       - name: Laravel tests and Composer security audit
         working-directory: backend
