@@ -130,8 +130,7 @@ def main() -> int:
     except (OSError, ValueError) as exc:
         print(f'RELEASE BLOCKED: {exc}', file=sys.stderr)
         return 2
-    # Keep setup credentials private to the uploader. Never log the access code.
-    payload['setup-access.key'] = (secrets.token_urlsafe(48) + '\n').encode()
+    # Setup secrets are generated only on the destination host, never in a release ZIP.
     for d in EMPTY_DIRS:
         payload[f'{d}/.gitkeep'] = b''
     file_manifest = [
