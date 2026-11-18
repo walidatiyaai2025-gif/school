@@ -19,6 +19,22 @@ if (is_file($root.'/PREVIEW-NOT-FOR-PRODUCTION.txt') && getenv('SCHOOLPDF_CI_INS
 }
 $isHttps=isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off' && $_SERVER['HTTPS']!=='';
 $canonicalHost=strtolower((string)($_SERVER['HTTP_HOST']??''))==='sclpdf.50sols.com';
+// Generate the installer secret ONLY on the destination server after a valid
+// HTTPS request. Release artifacts must not contain a reusable access code.
+if ($isHttps && $canonicalHost && is_dir($private) && is_writable($private) &&
+    !is_file($root.'/setup-access.key')) {
+    $keyfile=$root.'/setup-access.key';
+    $keyhandle=@fopen($keyfile,'x');
+    if ($keyhandle !== false) {
+        chmod($keyfile,0600);
+        $token=bin2hex(random_bytes(32))."\n";
+        $written=fwrite($keyhandle,$token);
+        fflush($keyhandle);
+        fclose($keyhandle);
+        if ($written !== strlen($token)) @unlink($keyfile);
+    }
+}
+
 ini_set('session.use_strict_mode','1');
 ini_set('session.cookie_httponly','1');
 ini_set('session.cookie_secure','1');
