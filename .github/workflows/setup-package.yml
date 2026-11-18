@@ -1,0 +1,58 @@
+name: School PDF cPanel Setup ZIP — Release Candidate Gate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          extensions: mbstring, pdo_mysql, pdo_sqlite, zip, fileinfo, openssl, sodium
+          coverage: none
+      - name: Verify locked dependencies belong to final source commit
+        run: |
+          test -s backend/composer.lock || { echo 'BLOCKED: Commit Composer lock before releasing.' >&2; exit 1; }
+          composer validate --working-dir=backend --strict --no-check-publish
+      - name: Source and installer safety tests
+        run: |
+          python3 -m unittest discover -s setup/tests -v
+          find backend -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Install test dependencies and run Laravel tests
+        working-directory: backend
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          vendor/bin/phpunit
+      - name: Verify real Fresh Install / Upgrade / Recovery results for exact SHA
+        run: |
+          test -s setup/ci-evidence.json || { echo 'BLOCKED: exact-head acceptance evidence not available.' >&2; exit 1; }
+          python3 setup/build_setup.py --git-sha "$GITHUB_SHA" --check-only
+          # Release gate intentionally fails unless tests have actually been run.
+      - name: Resolve pinned Composer production dependencies
+        working-directory: backend
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-progress
+      - name: Generate and verify Setup ZIP for cPanel
+        run: |
+          python3 setup/build_setup.py --git-sha "$GITHUB_SHA"
+          python3 - <<'PY'
+          import pathlib,zipfile
+          f=next(pathlib.Path('setup/output').glob('SchoolPDF-Setup-*.zip'))
+          with zipfile.ZipFile(f) as z:
+              assert z.testzip() is None
+              assert 'vendor/autoload.php' in z.namelist()
+              assert '.env' not in z.namelist()
+          print('Setup package archive integrity passed')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-Setup-v1.1.2-VERIFIED
+          path: |
+            setup/output/SchoolPDF-Setup-v1.1.2.zip
+            setup/output/SchoolPDF-Setup-v1.1.2.sha256
+            setup/output/SchoolPDF-Setup-v1.1.2-BUILD_INFO.json
+          if-no-files-found: error

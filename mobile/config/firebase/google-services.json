@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "718574327363",
+    "project_id": "schoolpdf-50sols",
+    "storage_bucket": "schoolpdf-50sols.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:718574327363:android:a12c3a0e123b5ed42966f6",
+        "android_client_info": {
+          "package_name": "com.fiftysols.schoolpdf"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzomqIyHbET_h0oGlbwRq4sR7NVW-byro"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

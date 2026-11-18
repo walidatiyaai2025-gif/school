@@ -1,0 +1,69 @@
+name: Build School PDF Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-debug-apk:
+    name: Android debug APK (installable)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Java 17 for Android Gradle
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Verify Firebase Android/iOS client configuration
+        run: python3 tool/verify_firebase_config.py
+
+      - name: Prepare Android platform, dependencies and icon
+        run: |
+          flutter --version
+          flutter create --project-name school_pdf --platforms android --org com.fiftysols .
+          python3 tool/patch_platforms.py
+          flutter pub get
+          dart run flutter_launcher_icons
+
+      - name: Analyze Dart source
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run Flutter unit tests
+        run: flutter test
+
+      - name: Build installable Android APK (debug; test ads off)
+        run: flutter build apk --debug --no-pub
+
+      - name: Verify APK and generate checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-debug.apk dist/SchoolPDF-v1.1.1-debug.apk
+          cd dist
+          sha256sum SchoolPDF-v1.1.1-debug.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload downloadable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-v1.1.1-Android-debug-APK
+          path: |
+            dist/SchoolPDF-v1.1.1-debug.apk
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14

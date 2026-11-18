@@ -1,0 +1,15 @@
+{
+  "project": "School PDF",
+  "version": "1.1.2",
+  "status": "BLOCKED_NOT_PRODUCTION_READY",
+  "generated_setup_zip": false,
+  "reason": "Neither locked Composer production dependencies nor exact-head Fresh Install/Upgrade/Recovery acceptance evidence is present in this environment.",
+  "missing": [
+    "backend/composer.lock",
+    "backend/vendor/autoload.php",
+    "backend/vendor/composer/installed.php",
+    "exact-head CI acceptance evidence",
+    "Fresh Install/Upgrade/Recovery validation"
+  ],
+  "no_production_upload": true
+}

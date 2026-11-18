@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^install/?$ install.php [L,QSA]
+    RewriteRule ^install\.php$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+<FilesMatch "^(\.env|composer\.(json|lock)|artisan|setup-access\.key)$">
+ Require all denied
+</FilesMatch>

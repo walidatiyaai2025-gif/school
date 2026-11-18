@@ -1,0 +1,87 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'models.dart';
+
+class AppStore extends ChangeNotifier {
+  AppStore._(this._prefs);
+  final SharedPreferences _prefs;
+  StudentSettings settings = StudentSettings();
+  final List<PdfRecord> records = [];
+
+  static Future<AppStore> load() async {
+    final p = await SharedPreferences.getInstance();
+    final store = AppStore._(p);
+    try {
+      final raw = p.getString('settings_v1');
+      if (raw != null) store.settings = StudentSettings.fromJson(jsonDecode(raw) as Map<String,dynamic>);
+    } catch (_) { /* Corrupt settings should not crash startup. */ }
+    try {
+      final raw = p.getString('files_v1');
+      if (raw != null) {
+        for (final j in (jsonDecode(raw) as List)) {
+          try {
+            final doc = PdfRecord.fromJson(Map<String,dynamic>.from(j as Map));
+            if (await File(doc.path).exists()) store.records.add(doc);
+          } catch (_) { /* skip corrupt entry */ }
+        }
+      }
+    } catch (_) { /* preserve documents on disk even if metadata is broken */ }
+    store.records.sort((a,b)=>b.createdAt.compareTo(a.createdAt));
+    return store;
+  }
+  Future<void> saveSettings() async {
+    await _prefs.setString('settings_v1',jsonEncode(settings.toJson()));
+    notifyListeners();
+  }
+  Future<void> addRecord(PdfRecord doc) async {
+    records.insert(0, doc);
+    await _persistRecords();
+  }
+  Future<void> noteShareOpened(String id) async {
+    final i = records.indexWhere((x)=>x.id==id);
+    if (i<0) return;
+    records[i] = records[i].copyWith(
+      shareAttempts: records[i].shareAttempts+1,
+      lastShareAttempt: DateTime.now());
+    await _persistRecords();
+  }
+  Future<void> rename(String id,String newName) async {
+    final i = records.indexWhere((x)=>x.id==id);
+    if (i<0) return;
+    final old = records[i];
+    final safe = safeFilename(newName).replaceAll(RegExp(r'\.pdf$',caseSensitive:false),'');
+    if (safe.trim().isEmpty) throw const FormatException('Invalid name');
+    final src = File(old.path);
+    final dest = File('${src.parent.path}/$safe.pdf');
+    if (await dest.exists() && dest.path!=src.path) {
+      throw const FileSystemException('A file with that name already exists');
+    }
+    if (dest.path!=src.path) await src.rename(dest.path);
+    records[i] = PdfRecord(id:old.id,filename:'$safe.pdf',path:dest.path,
+      student:old.student,schoolClass:old.schoolClass,
+      subject:old.subject,level:old.level,createdAt:old.createdAt,
+      pageCount:old.pageCount,bytes:old.bytes,
+      shareAttempts:old.shareAttempts,lastShareAttempt:old.lastShareAttempt);
+    await _persistRecords();
+  }
+  Future<void> delete(String id) async {
+    final i=records.indexWhere((x)=>x.id==id);
+    if(i<0) return;
+    final file=File(records[i].path);
+    if(await file.exists()) await file.delete();
+    records.removeAt(i);
+    await _persistRecords();
+  }
+  Future<void> _persistRecords() async {
+    await _prefs.setString('files_v1',encodeRecords(records));
+    notifyListeners();
+  }
+}
+
+String safeFilename(String input) {
+  final stripped = input.replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1F]'),'_')
+      .replaceAll(RegExp(r'\s+'),'_').replaceAll(RegExp(r'_{2,}'),'_').trim();
+  return stripped.length>90?stripped.substring(0,90):stripped;
+}

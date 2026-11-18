@@ -1,0 +1,14 @@
+<?php
+use Illuminate\Database\Migrations\Migration; use Illuminate\Database\Schema\Blueprint; use Illuminate\Support\Facades\Schema;
+return new class extends Migration {
+ public function up(): void {
+  Schema::create('users',function(Blueprint $t){$t->id();$t->string('name');$t->string('email')->unique();$t->string('password');$t->string('role')->default('super_admin');$t->boolean('is_active')->default(true);$t->rememberToken();$t->timestamps();});
+  Schema::create('device_registrations',function(Blueprint $t){$t->id();$t->uuid('installation_id')->unique();$t->char('token_hash',64);$t->string('platform',12);$t->string('app_version',32);$t->char('country_code',2)->nullable()->index();$t->string('locale',12)->default('ar');$t->boolean('notifications_enabled')->default(false);$t->boolean('push_opt_in')->default(false);$t->boolean('analytics_consent')->default(false);$t->longText('fcm_token')->nullable();$t->timestamp('last_seen_at')->index();$t->timestamps();});
+  Schema::create('push_campaigns',function(Blueprint $t){$t->id();$t->string('title',140);$t->text('body');$t->char('country_code',2)->nullable()->index();$t->string('status',24)->default('draft');$t->foreignId('created_by')->constrained('users');$t->unsignedInteger('total_targets')->default(0);$t->unsignedInteger('sent_count')->default(0);$t->unsignedInteger('failed_count')->default(0);$t->timestamp('sent_at')->nullable();$t->timestamps();});
+  Schema::create('push_deliveries',function(Blueprint $t){$t->id();$t->foreignId('push_campaign_id')->constrained()->cascadeOnDelete();$t->foreignId('device_registration_id')->constrained()->cascadeOnDelete();$t->string('status',24);$t->string('provider_message_id')->nullable();$t->string('error_message',300)->nullable();$t->timestamps();$t->unique(['push_campaign_id','device_registration_id']);});
+  Schema::create('ad_settings',function(Blueprint $t){$t->id();$t->string('provider',40);$t->string('platform',10);$t->string('app_id')->nullable();$t->string('banner_unit_id')->nullable();$t->boolean('enabled')->default(false);$t->text('notes')->nullable();$t->timestamps();$t->unique(['provider','platform']);});
+  Schema::create('jobs',function(Blueprint $t){$t->id();$t->string('queue')->index();$t->longText('payload');$t->unsignedTinyInteger('attempts');$t->unsignedInteger('reserved_at')->nullable();$t->unsignedInteger('available_at');$t->unsignedInteger('created_at');});
+  Schema::create('failed_jobs',function(Blueprint $t){$t->id();$t->string('uuid')->unique();$t->text('connection');$t->text('queue');$t->longText('payload');$t->longText('exception');$t->timestamp('failed_at')->useCurrent();});
+ }
+ public function down(): void {foreach(['failed_jobs','jobs','ad_settings','push_deliveries','push_campaigns','device_registrations','users'] as $t) Schema::dropIfExists($t);}
+};

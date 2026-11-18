@@ -1,0 +1,659 @@
+{
+  "app": "School PDF",
+  "version": "1.1.2",
+  "delivery": "source+setup-tooling only; production setup blocked until locked vendor and acceptance",
+  "firebase_project_id": "schoolpdf-50sols",
+  "android_application_id": "com.fiftysols.schoolpdf",
+  "ios_bundle_id": "com.fiftysols.schoolpdf",
+  "setup_folder_present": true,
+  "production_setup_zip_included": false,
+  "setup_builder_unit_tests_passed": 7,
+  "actual_fresh_install_tested": false,
+  "actual_upgrade_tested": false,
+  "actual_recovery_tested": false,
+  "php_lint_passed": true,
+  "flutter_build_tested": false,
+  "server_service_account_included": false,
+  "files": [
+    {
+      "path": ".github/workflows/fullstack-checks.yml",
+      "size": 2813,
+      "sha256": "b975c96b926b5aad3d1d9696cce3f0be4d82be48b69d92d2e540ad094c6a0041"
+    },
+    {
+      "path": ".github/workflows/setup-package.yml",
+      "size": 2576,
+      "sha256": "dbd1235d72e89b4207c0366843a9398c3e5692d1b6dfc024be326fc415df13f9"
+    },
+    {
+      "path": "README_AR.md",
+      "size": 10714,
+      "sha256": "796daa0088b2fbc97066e6c86262f7b7be49ead04f00479750b8c6dc696a54ef"
+    },
+    {
+      "path": "VERSION",
+      "size": 6,
+      "sha256": "77123b8e4bdbd54505bf6e8021527ac60281602a06fe307564532c4dba39dbca"
+    },
+    {
+      "path": "backend/.env.example",
+      "size": 704,
+      "sha256": "ca659bbd117312f154d1b1a5c62e41d9cfae9b33ff90c83e3941da4b9311c938"
+    },
+    {
+      "path": "backend/.gitignore",
+      "size": 215,
+      "sha256": "de057df0358a12e5de45286e5d6883e33fdb6d5a903b6ba726ba878052c9bd68"
+    },
+    {
+      "path": "backend/app/Http/Controllers/Admin/AdsController.php",
+      "size": 1784,
+      "sha256": "5d4453556564154af993a1666c417eeaba1dc85e3e6b678873319be792182393"
+    },
+    {
+      "path": "backend/app/Http/Controllers/Admin/AuthController.php",
+      "size": 857,
+      "sha256": "2b62d38315a5ec3f85c688d110dead625344871b8ef567ab04bbd39d42ba253e"
+    },
+    {
+      "path": "backend/app/Http/Controllers/Admin/CampaignController.php",
+      "size": 1558,
+      "sha256": "d36032dfc65c0ecb17150d915e8fa3bea543b55b3555adb17e72712e549384f5"
+    },
+    {
+      "path": "backend/app/Http/Controllers/Admin/DashboardController.php",
+      "size": 973,
+      "sha256": "5077dcd7b7c8727131899d9aeb98e76d652a099a1a7cd7029613110b63ff91fd"
+    },
+    {
+      "path": "backend/app/Http/Controllers/Admin/StoreReportController.php",
+      "size": 1709,
+      "sha256": "e18dae114402c828b19896d81ba28b57d23ece96dc7c886d30d9bb85fa41554d"
+    },
+    {
+      "path": "backend/app/Http/Controllers/Admin/SystemUpdateController.php",
+      "size": 657,
+      "sha256": "2d5cf4f738fb3491d5dfade37e2d9f0d2f09f6400d7a0194dcf4f5ed658f5cba"
+    },
+    {
+      "path": "backend/app/Http/Controllers/Api/ConfigController.php",
+      "size": 681,
+      "sha256": "b50b0d6fa9d55de0337746d8a77d7e11e9407f48537e3835da3a55540c4792d3"
+    },
+    {
+      "path": "backend/app/Http/Controllers/Api/DeviceController.php",
+      "size": 3342,
+      "sha256": "8710a0210d0f48a5ae070ef58c50baa885fcc320a87d2aa465e495a3925ffe79"
+    },
+    {
+      "path": "backend/app/Http/Middleware/AdminOnly.php",
+      "size": 396,
+      "sha256": "c939b55f81b18a4d00c26e9ca7541024991eff57eac7f9e345e9b88774a6c97a"
+    },
+    {
+      "path": "backend/app/Http/Middleware/RequireInstalled.php",
+      "size": 374,
+      "sha256": "4279726f4c89b53948d523304b87c2ff33fa22c2ef2b9ababcb1e8d62c92d83b"
+    },
+    {
+      "path": "backend/app/Jobs/SendCampaign.php",
+      "size": 1239,
+      "sha256": "a7874b9fe4fe3b589adb1eb23da678d3fb11e22675a3e2873e128a0168224bdd"
+    },
+    {
+      "path": "backend/app/Jobs/SendOnePush.php",
+      "size": 1317,
+      "sha256": "35767a2907e27dcc3a18c382fb829ca7e28c3385c86919aa353248bbad39fd3e"
+    },
+    {
+      "path": "backend/app/Models/AdSetting.php",
+      "size": 260,
+      "sha256": "63238b05ec0e9f1b91118fad216daf61c285e31b2eb4ed1debfbde6f99ce156b"
+    },
+    {
+      "path": "backend/app/Models/DeviceRegistration.php",
+      "size": 685,
+      "sha256": "acbcae06bce208c1f9e6957b500970605e2b02b925053e019c0a8fa90d091891"
+    },
+    {
+      "path": "backend/app/Models/PushCampaign.php",
+      "size": 304,
+      "sha256": "a5f885694f7a799d31da5045652dc7768f635bd6e49c805c19c249f72fef7353"
+    },
+    {
+      "path": "backend/app/Models/PushDelivery.php",
+      "size": 418,
+      "sha256": "325db763c81c01cecab5b619cd07095b4d9b287ca95839a2c373c8954d7b8645"
+    },
+    {
+      "path": "backend/app/Models/User.php",
+      "size": 333,
+      "sha256": "2aca2d740ec7cd916a3de7b2f09089b21d03f4f28cd355e6fc8bf3c6403db2b5"
+    },
+    {
+      "path": "backend/app/Providers/AppServiceProvider.php",
+      "size": 192,
+      "sha256": "08ba6080f0f54e26a47fcf357e7f8a32cf1e4283e384db6ab3b157c03614fa4c"
+    },
+    {
+      "path": "backend/app/Services/CountryResolver.php",
+      "size": 1283,
+      "sha256": "8db9dd2bda2b5b9cff6e5db164b4be5d8bf2dcf2338edf1c302229fea6db2a76"
+    },
+    {
+      "path": "backend/app/Services/FcmSender.php",
+      "size": 2142,
+      "sha256": "2a004defd8ba7a70aee2a61f0c2199302f26ca1718eb83fa2f0fe38fe8f86a74"
+    },
+    {
+      "path": "backend/artisan",
+      "size": 333,
+      "sha256": "41be751ec7d366ae28ba3c21cf2b0873ed877405d58e8bda3890aecb9671c6ce"
+    },
+    {
+      "path": "backend/bootstrap/app.php",
+      "size": 642,
+      "sha256": "03bc4285dfce79edf9492f909dc99ff29689066d339efcb12c0a9e1946eacabe"
+    },
+    {
+      "path": "backend/bootstrap/cache/.gitignore",
+      "size": 14,
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+    },
+    {
+      "path": "backend/bootstrap/providers.php",
+      "size": 56,
+      "sha256": "c90862112ce4cfa0c182349cb9ae647127023504ecab453a4de63c1560d7b923"
+    },
+    {
+      "path": "backend/composer.json",
+      "size": 682,
+      "sha256": "c7e938d9956c69703686ffffaf88a9c39ab91d76d551ce1c8d07e388b56d7b4b"
+    },
+    {
+      "path": "backend/config/app.php",
+      "size": 493,
+      "sha256": "4a4a0a1c2f5edb30992ca7f02efb52327cfc6bbc0d68b7a669c5d406839e94f4"
+    },
+    {
+      "path": "backend/config/auth.php",
+      "size": 351,
+      "sha256": "6dd14abce110955af2c2ecd698edf7077f0d1664dd77af4a6e394b7f6d68521c"
+    },
+    {
+      "path": "backend/config/cache.php",
+      "size": 414,
+      "sha256": "c8a806879e2355c0d4102bb1071867241d78de165ad7f7a1010c702e1628dbb5"
+    },
+    {
+      "path": "backend/config/database.php",
+      "size": 791,
+      "sha256": "a064d9d39de85b50d65d0cdbebce6fbb2d700e68cb8113c0eec83417c7fb3f68"
+    },
+    {
+      "path": "backend/config/filesystems.php",
+      "size": 346,
+      "sha256": "72d358130aa48ab42c3eb3c1cab601e3956f9326a7b44af8d1e7a3bf036784d2"
+    },
+    {
+      "path": "backend/config/logging.php",
+      "size": 327,
+      "sha256": "d54e8ac96645177ef794acc3024adace7ec00a313046c878712fb6d0807fc786"
+    },
+    {
+      "path": "backend/config/mail.php",
+      "size": 669,
+      "sha256": "68e022011ff59e5dfb0332f82983d6f8eb26756da03cb642b09055a2ec5d73ab"
+    },
+    {
+      "path": "backend/config/queue.php",
+      "size": 339,
+      "sha256": "d5007edd39b578a628a3cc83643edcc012e7ac54b536fee4234adf05a46ed2ba"
+    },
+    {
+      "path": "backend/config/schoolpdf.php",
+      "size": 530,
+      "sha256": "58bc719f06d824f5aa543912e3492387a5051cbd3d6dcc7e1bcc5aadb5794e84"
+    },
+    {
+      "path": "backend/config/session.php",
+      "size": 384,
+      "sha256": "540ca23b36604a1fd27fee1eebbb07330e4c8196a6707b3ada98073c9d5c7237"
+    },
+    {
+      "path": "backend/database/migrations/2026_11_18_000001_create_schoolpdf_tables.php",
+      "size": 2815,
+      "sha256": "40e50b90b5a2479a6c7056806753f84dc486cfd5309b8e73db74459df7acd98e"
+    },
+    {
+      "path": "backend/database/migrations/2026_11_18_000002_create_store_reports.php",
+      "size": 531,
+      "sha256": "6cb85352e554a59ad08510542b9d563cf22c578806c5bbf4610987ff868d4820"
+    },
+    {
+      "path": "backend/docs/store-installs-template.csv",
+      "size": 94,
+      "sha256": "6f03726e294866ccce96daaf3c60e90ca486bce058ff8998ef43910e1189e001"
+    },
+    {
+      "path": "backend/phpunit.xml",
+      "size": 704,
+      "sha256": "863f97aeb77d5c67d35e01cb11fd5980d0e3e8760a2528d823403f6856dc3f98"
+    },
+    {
+      "path": "backend/public/.htaccess",
+      "size": 362,
+      "sha256": "61e56b04defc60a7b21150e15728c1f842be003ae5722e62594c8decaa69b7b0"
+    },
+    {
+      "path": "backend/public/ads.txt",
+      "size": 67,
+      "sha256": "626dcb05626fa735e68ac99de2eea4dc13619beb620dce3430da3c3534ac71c2"
+    },
+    {
+      "path": "backend/public/app-ads.txt",
+      "size": 188,
+      "sha256": "8727e565d4efa4def3548dafa73dba64ed4868a498d309b20ae3cba6effa6fcd"
+    },
+    {
+      "path": "backend/public/brand-icon.png",
+      "size": 362765,
+      "sha256": "10f1a1e26c3d5a194d050e56e3973dded358295d784236469d32aa5d92fe67aa"
+    },
+    {
+      "path": "backend/public/index.php",
+      "size": 385,
+      "sha256": "9daa4e17986aa425efebc7723d62c0156ba4e9c1c36220c5bb82e4aa52f67811"
+    },
+    {
+      "path": "backend/public/install.php",
+      "size": 16605,
+      "sha256": "4cd0e791f3db3ed56e864b9562945c0b5847bf91acfb20cfe0b3b5b5bed9e609"
+    },
+    {
+      "path": "backend/public/robots.txt",
+      "size": 55,
+      "sha256": "9b465edd3f2c076eaf21ed5712a55e6d5957007d0774e276c19f187bf9e50332"
+    },
+    {
+      "path": "backend/resources/views/admin/ads.blade.php",
+      "size": 2976,
+      "sha256": "339d34ad5d0c2adc41d0f639fcbd363da5f61c2baec865c055f80bb179ef3134"
+    },
+    {
+      "path": "backend/resources/views/admin/dashboard.blade.php",
+      "size": 4715,
+      "sha256": "b99ae5d0b752fa20c450a668dc6cf4aff3ca97c7a3376a7545f870c3c7e1f2cc"
+    },
+    {
+      "path": "backend/resources/views/admin/login.blade.php",
+      "size": 614,
+      "sha256": "3093f70eaee90f76269142a62a24a9b97dcc1561dbce3cd56214be47823fb4d5"
+    },
+    {
+      "path": "backend/resources/views/admin/updates.blade.php",
+      "size": 1036,
+      "sha256": "726b52d9029773e4eab9ae450bb40b6f24b5a101fd3db0b6d4076a7065c8ee03"
+    },
+    {
+      "path": "backend/resources/views/components/shell.blade.php",
+      "size": 2954,
+      "sha256": "c582ed418c9c299763903bd4fffa3467512017cec6e5a2d814f20b55178b2d38"
+    },
+    {
+      "path": "backend/resources/views/legal/home.blade.php",
+      "size": 616,
+      "sha256": "eeb013f69b384c576a872ac50e3d2c787e69203108af1876caca464f96ee50ff"
+    },
+    {
+      "path": "backend/resources/views/legal/privacy.blade.php",
+      "size": 3366,
+      "sha256": "65f0953e363a33b1c046e904e59975ebe19c8b254da7422757ea0c02c95956c8"
+    },
+    {
+      "path": "backend/resources/views/legal/support.blade.php",
+      "size": 694,
+      "sha256": "cdda31def94c35256f20c3c83ea14e41d2a448477c8563edbf2fa2daca9abfa4"
+    },
+    {
+      "path": "backend/resources/views/legal/terms.blade.php",
+      "size": 784,
+      "sha256": "a81d9a5134059be5f0da18a6027813590c336f5d4513ceea5d6ec23384514a15"
+    },
+    {
+      "path": "backend/routes/api.php",
+      "size": 571,
+      "sha256": "d16c7cc56ed148e36bbce5324c36b25e8242244441e370457134900902b9f063"
+    },
+    {
+      "path": "backend/routes/console.php",
+      "size": 90,
+      "sha256": "d7d276446f0ec131f00a5479a74d3e120fca98050432a169958ab62cb308afac"
+    },
+    {
+      "path": "backend/routes/web.php",
+      "size": 1789,
+      "sha256": "a9b7faf8d73cc01a61176af7ba4e0b30ca5883cf15a887c9f4810532fe262244"
+    },
+    {
+      "path": "backend/storage/app/private/.gitignore",
+      "size": 14,
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+    },
+    {
+      "path": "backend/storage/framework/cache/data/.gitignore",
+      "size": 14,
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+    },
+    {
+      "path": "backend/storage/framework/sessions/.gitignore",
+      "size": 14,
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+    },
+    {
+      "path": "backend/storage/framework/views/.gitignore",
+      "size": 14,
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+    },
+    {
+      "path": "backend/storage/logs/.gitignore",
+      "size": 14,
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+    },
+    {
+      "path": "backend/tests/Feature/AdminTest.php",
+      "size": 974,
+      "sha256": "924f56d3afa5659d48bc4425dee63c577516235377289138edd55a4edbd362ff"
+    },
+    {
+      "path": "backend/tests/Feature/DeviceApiTest.php",
+      "size": 2071,
+      "sha256": "b52439fc4e18cdc0a55b3bdee259f4c0667fc55aa9762ff7c3d2715f611b0648"
+    },
+    {
+      "path": "backend/tests/TestCase.php",
+      "size": 656,
+      "sha256": "c8683e8c67f6d575d8ca7fd36ae8ef16d0a22d69e78f41de245496b9d4a1511e"
+    },
+    {
+      "path": "docs/FIREBASE_ADMOB_CHECKLIST_AR.md",
+      "size": 3236,
+      "sha256": "eb5a6b9c63514a66d3f8a0476e44c9fa1617c27403196db3e5605fef854470f5"
+    },
+    {
+      "path": "docs/FIREBASE_NOTIFICATIONS_V1_1_1_AR.md",
+      "size": 5267,
+      "sha256": "3c428b1bb38205506838ce94c314ac638b8c75881c79b64df686970f18305ba9"
+    },
+    {
+      "path": "docs/RELEASE_NOTES.md",
+      "size": 2524,
+      "sha256": "a295a65041d34ab36754e8adf0d59fba5577022db321fe2ca10e67f3a8a3d3bc"
+    },
+    {
+      "path": "docs/STATUS_AND_ACCEPTANCE.md",
+      "size": 1361,
+      "sha256": "ea0b00c822993cc3fb993bd559ce79b125a439374fe7b5970a0b8a6f16e001c1"
+    },
+    {
+      "path": "mobile/.github/workflows/android-debug-apk.yml",
+      "size": 1968,
+      "sha256": "bd68516ba1e96e3a56713c89bbc1463f7cf531935a83fd752126ef1961bc930b"
+    },
+    {
+      "path": "mobile/.gitignore",
+      "size": 526,
+      "sha256": "6d8c5b7dfd5c4f4fa87cbab1ec43cd9d979a641892c52a6dd104304bb2c756a8"
+    },
+    {
+      "path": "mobile/README.md",
+      "size": 2118,
+      "sha256": "9cd9bb8f8378f14c30c8ce46858cdf3a77589aa81874d503565ea8ca2cd8dcc2"
+    },
+    {
+      "path": "mobile/README_AR.md",
+      "size": 1216,
+      "sha256": "c9c22c9676b2191527cebc24f8733c91c315485b06f944221ebee37a75c6b3b8"
+    },
+    {
+      "path": "mobile/analysis_options.yaml",
+      "size": 118,
+      "sha256": "9feaff5bd7e7ca6d96341e60ac8af0c942e64f1d543943552c4c5e610a44fbec"
+    },
+    {
+      "path": "mobile/assets/branding/icon.png",
+      "size": 362765,
+      "sha256": "10f1a1e26c3d5a194d050e56e3973dded358295d784236469d32aa5d92fe67aa"
+    },
+    {
+      "path": "mobile/config/firebase/GoogleService-Info.plist",
+      "size": 887,
+      "sha256": "caacd1e961d0ce670245006981467af1615937266176255b0aaec48f8b9ff8c3"
+    },
+    {
+      "path": "mobile/config/firebase/google-services.json",
+      "size": 685,
+      "sha256": "b7aa96ec0699f28b4a5a8a40b3b0e0ba865ac4f51790df386300f755ca484fb6"
+    },
+    {
+      "path": "mobile/docs/ANDROID_APK_BUILD_AR.md",
+      "size": 2859,
+      "sha256": "b5d7b6f998204e0048ea31eac9b000f4a8dff7312c4f963119ce7a85b8f55c6c"
+    },
+    {
+      "path": "mobile/docs/QA_CHECKLIST.md",
+      "size": 3172,
+      "sha256": "19c027cc86a6915b5cd3c44d0785266f6ec1154de5bd1c159d13b94877a141a0"
+    },
+    {
+      "path": "mobile/docs/RELEASE_NOTES.md",
+      "size": 424,
+      "sha256": "d9186272711ff8d0b1c4971b0fd4cde685fa2e6161dd374311b8c5c1c0babc00"
+    },
+    {
+      "path": "mobile/docs/approved-ui-reference.png",
+      "size": 1795597,
+      "sha256": "3372d2df7dea14587940a71bb7f99ab4c9897d522943897b52784d22594ee47c"
+    },
+    {
+      "path": "mobile/docs/branding-reference.png",
+      "size": 1352851,
+      "sha256": "a5b435f613debe2f3d3e1c5e972cb85daf3a0654f9caf0e161135ac4d1b0425e"
+    },
+    {
+      "path": "mobile/lib/core/brand.dart",
+      "size": 2080,
+      "sha256": "b918f75fcd3b58ccd6f7b7116c82454c2664a21d7ac86bcb8feac3fa33c81814"
+    },
+    {
+      "path": "mobile/lib/core/strings.dart",
+      "size": 1816,
+      "sha256": "a7e793b57ba35871fb0db6d17d193167447a7b2a3d5603572a95e23ec0dc7a8d"
+    },
+    {
+      "path": "mobile/lib/data/app_store.dart",
+      "size": 3377,
+      "sha256": "4470261431375951ee43c71a9cc7660738b234ade405c6e7659420521b6c7359"
+    },
+    {
+      "path": "mobile/lib/data/models.dart",
+      "size": 4654,
+      "sha256": "61ed400cd152459ba540816b9f2d6725b9abeff0720572f539e874bebd7aaaba"
+    },
+    {
+      "path": "mobile/lib/firebase_options.dart",
+      "size": 1510,
+      "sha256": "934049c5427ac1097969e5a22f50ce34bcfeac005f937411b6cc2c8d5f1781f4"
+    },
+    {
+      "path": "mobile/lib/main.dart",
+      "size": 4776,
+      "sha256": "73fd5dedd847ed194d4fe1ee908d69e626986637f2bb5602fdc5ca87c9b5cc26"
+    },
+    {
+      "path": "mobile/lib/screens/corner_editor.dart",
+      "size": 8516,
+      "sha256": "ab88b3858f0d29181945e9c81832a10534348a3429cb66bffca65af0e6be572d"
+    },
+    {
+      "path": "mobile/lib/screens/history_screen.dart",
+      "size": 9920,
+      "sha256": "446ef57b189dfaa83a53b0b926228a5c326c0b7b60736b881562c77ae6014703"
+    },
+    {
+      "path": "mobile/lib/screens/home_screen.dart",
+      "size": 7939,
+      "sha256": "99d8f4d471352659484fafdf496ca1fab8cc63a5f0ac462ea616a910cc3c53bb"
+    },
+    {
+      "path": "mobile/lib/screens/onboarding.dart",
+      "size": 7052,
+      "sha256": "5b787e45ba086cf381bb898c968e6cb244876690eb143df1f6127cb72b354e39"
+    },
+    {
+      "path": "mobile/lib/screens/ready_screen.dart",
+      "size": 3323,
+      "sha256": "173fa94e53510a17072253d9d6ac44a6e0f2d8e300901b88324c7ed2367ece74"
+    },
+    {
+      "path": "mobile/lib/screens/review_screen.dart",
+      "size": 5862,
+      "sha256": "d8ee37944fd23ac02fdde066b525b7eb1d2228ea5f473515e1bacacfd3005c69"
+    },
+    {
+      "path": "mobile/lib/screens/settings_screen.dart",
+      "size": 13184,
+      "sha256": "cb5e824735f30fd0490991799c9cf94d8f18523eeb56564510a5154d2cf20904"
+    },
+    {
+      "path": "mobile/lib/services/ads_service.dart",
+      "size": 4420,
+      "sha256": "f70b24e40c21397d22162b4ffa1151b3e58513d31a08d33e843920b67beaeebb"
+    },
+    {
+      "path": "mobile/lib/services/notifications_service.dart",
+      "size": 8491,
+      "sha256": "4fa7562117da5cc086089899730a67f432f650eed24bf1ebf90e964a2db95694"
+    },
+    {
+      "path": "mobile/lib/services/pdf_service.dart",
+      "size": 7025,
+      "sha256": "cf06b5eb6f57b91f460c89cae8455a5c94b6d5687ddc2c53af0c30e69346dd02"
+    },
+    {
+      "path": "mobile/lib/services/sharing_service.dart",
+      "size": 1533,
+      "sha256": "2fc12a73ed1a93725219d4891875e3a2431dc72321f80d11db99cb7a775f8291"
+    },
+    {
+      "path": "mobile/lib/services/telemetry_service.dart",
+      "size": 5080,
+      "sha256": "f73b483040815ac534aff767cee98850d3e6aeecba4bc8b761b4f32b9b18c5fd"
+    },
+    {
+      "path": "mobile/lib/widgets/brand_widgets.dart",
+      "size": 2597,
+      "sha256": "207771de2538dd7530e805c8c64cfbb45093c9462de99a90c8c1b63b56053b3d"
+    },
+    {
+      "path": "mobile/pubspec.yaml",
+      "size": 1140,
+      "sha256": "b07df6326c099f80007d4bc846fffc83972892c0f5ba723c5fef508c93e2a772"
+    },
+    {
+      "path": "mobile/test/firebase_options_test.dart",
+      "size": 673,
+      "sha256": "05e7bf474aba22606d58b0bf3a668380106b9c58b4c23a0eada377cc7350b954"
+    },
+    {
+      "path": "mobile/test/models_test.dart",
+      "size": 1534,
+      "sha256": "3433d0f24eb89fd793ddb10f95960fd75e77b32ce771d9fa135d9c3b20b5b480"
+    },
+    {
+      "path": "mobile/tool/bootstrap.sh",
+      "size": 470,
+      "sha256": "b9467553850aa350c565a89d81b2b538d6885b3cd6d958b96cfec2b2ff87d818"
+    },
+    {
+      "path": "mobile/tool/build_android_apk.ps1",
+      "size": 1210,
+      "sha256": "cdde6b2a0b9e30e973612eaa2620c58185da4d51dccb638e9a44aeaa28421f59"
+    },
+    {
+      "path": "mobile/tool/build_android_apk.sh",
+      "size": 927,
+      "sha256": "a9a4335d583b30a90f32e3f84538052bf8b5267125a77118ba4ab6ea0cfe09bc"
+    },
+    {
+      "path": "mobile/tool/patch_platforms.py",
+      "size": 7898,
+      "sha256": "bb54d939f29117bfb388e1995f4e9911e15fe26764a937ad47e9fceb7ea39a70"
+    },
+    {
+      "path": "mobile/tool/verify_firebase_config.py",
+      "size": 1356,
+      "sha256": "b3bcfb47abbe740d16e34ea47a15b61e428c6aeaa8014b4f26b66429914e0ec8"
+    },
+    {
+      "path": "scripts/build_setup_zip.py",
+      "size": 244,
+      "sha256": "423a51a53a38a98e2a06c17193680aa7b0d0ef51fae123f32f9abbeb4956bc5f"
+    },
+    {
+      "path": "scripts/verify_source.py",
+      "size": 1279,
+      "sha256": "66c0daa85ceed6a800c92362151cb9bc85c54233dce2557f9138177888780faa"
+    },
+    {
+      "path": "setup/CPANEL_DEPLOY_AR.md",
+      "size": 3136,
+      "sha256": "20213eae9e398e3af5a9fa25006727364ac8f4963278bdb052249d8efcfdca5e"
+    },
+    {
+      "path": "setup/README_AR.md",
+      "size": 4788,
+      "sha256": "56c21764b7109b9459bf5dd845de542d475ab9e323f413eee88d58fd7688435a"
+    },
+    {
+      "path": "setup/RELEASE_NOTES_AR.md",
+      "size": 1081,
+      "sha256": "b928dcb2f12688da0cbf53ff43b3abf5438c73f3dffc2c470f31def5c14a6fd1"
+    },
+    {
+      "path": "setup/build_setup.py",
+      "size": 9189,
+      "sha256": "2623c3b073901688e10155819e89744869b0c55069e10e6f143357c14fa1d605"
+    },
+    {
+      "path": "setup/installer/README_AR.md",
+      "size": 792,
+      "sha256": "14acdb32d6c14b148db381b9fdc9a8d5fc119f1f538ae85176d63057349c4f6b"
+    },
+    {
+      "path": "setup/installer/install.php",
+      "size": 16605,
+      "sha256": "4cd0e791f3db3ed56e864b9562945c0b5847bf91acfb20cfe0b3b5b5bed9e609"
+    },
+    {
+      "path": "setup/output/BUILD_STATUS.json",
+      "size": 539,
+      "sha256": "c735467178e76b8f50e5fed19b64fb171f4a5630fa2bdbb7da786d9b10e57c90"
+    },
+    {
+      "path": "setup/output/README.md",
+      "size": 380,
+      "sha256": "e918d42ee8517ebe918fedbf195df9f13c0409a490fbec8ff7b20de9276c4920"
+    },
+    {
+      "path": "setup/tests/test_installer_failclosed.py",
+      "size": 1690,
+      "sha256": "e8223308ecd911229f4f4f3ec4cd6b4458527d63d7ee25872d7f446b3d15a2f8"
+    },
+    {
+      "path": "setup/tests/test_setup_builder.py",
+      "size": 4602,
+      "sha256": "b7f7bec1387a99c1cb436c3e60eef6f49ca31b012c98d9af368355fa43620b21"
+    }
+  ]
+}
