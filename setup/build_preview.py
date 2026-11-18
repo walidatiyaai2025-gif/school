@@ -60,7 +60,7 @@ def main() -> int:
     contents['PREVIEW-NOT-FOR-PRODUCTION.txt'] = (
         'WARNING: NOT FOR PRODUCTION. This is a public CI preview, not a release.\n'
         'Fresh install, upgrade, recovery and signing acceptance are not all verified.\n'
-        'A setup code bundled in a public GitHub artifact is NOT private.\n'
+        'A setup code is created only on the destination host.\n'
         'Never upload this archive to a live cPanel domain.\n'
         'Use only a throwaway, isolated environment to test the installer.\n'
     ).encode()
