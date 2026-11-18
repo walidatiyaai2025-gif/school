@@ -32,4 +32,16 @@ class InstallerFailClosedTest(unittest.TestCase):
             self.assertIn('permanently locked',r.stdout)
             self.assertNotIn('DB Host',r.stdout)
 
+    def test_public_preview_is_blocked_on_live_host(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            (root/'public').mkdir()
+            shutil.copy2(INSTALLER,root/'public/install.php')
+            (root/'PREVIEW-NOT-FOR-PRODUCTION.txt').write_text('nonproduction')
+            r=subprocess.run(['php',str(root/'public/install.php')],
+                capture_output=True,text=True)
+            self.assertEqual(r.returncode,0,r.stderr)
+            self.assertIn('blocked from live deployment',r.stdout)
+
+
 if __name__=='__main__':unittest.main()
