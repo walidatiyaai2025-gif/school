@@ -53,7 +53,10 @@ final class UpdatePackageVerifier
                     throw new RuntimeException('Duplicate ZIP entry.');
                 }
                 $seen[$folded] = true;
-                $mode = ((int)($entry['external_attributes'] ?? 0) >> 16) & 0170000;
+                $opsys = 0;
+                $attrs = 0;
+                $zip->getExternalAttributesIndex($i, $opsys, $attrs);
+                $mode = ($attrs >> 16) & 0170000;
                 if ($mode === 0120000 || ($mode !== 0 && $mode !== 0100000)) {
                     throw new RuntimeException('Symlinks and special ZIP entries are prohibited.');
                 }
@@ -70,6 +73,8 @@ final class UpdatePackageVerifier
                         in_array('storage', $segments, true) ||
                         in_array('setup-access.key', $segments, true) ||
                         in_array('install.lock', $segments, true) ||
+                        (count($segments) > 1 && $segments[0] === 'bootstrap' && $segments[1] === 'cache') ||
+                        str_ends_with($relative, '.sqlite') || str_ends_with($relative, '.sql') ||
                         (count($segments) === 1 && !in_array($relative, self::ALLOWED_FILES, true)) ||
                         (count($segments) > 1 && !in_array($segments[0], self::ALLOWED_ROOTS, true))) {
                         throw new RuntimeException('Update payload contains a protected path.');
