@@ -16,7 +16,9 @@ SCRIPT=Path(__file__).resolve().parents[1]/'build_signed_update.py'
 
 class SignedUpdateBuilderTest(unittest.TestCase):
     def fixture(self, path):
-        return SetupBuilderTest().fixture(path)
+        root = SetupBuilderTest().fixture(path)
+        (root / 'setup/RELEASE_NOTES_AR.md').write_text('Release acceptance fixture', encoding='utf-8')
+        return root
 
     def signer(self):
         php = (
