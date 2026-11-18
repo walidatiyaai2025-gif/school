@@ -5,6 +5,8 @@ on:
     paths:
       - 'mobile/**'
       - 'backend/**'
+      - 'setup/**'
+      - 'VERSION'
       - 'scripts/**'
       - '.github/workflows/fullstack-checks.yml'
 permissions:
