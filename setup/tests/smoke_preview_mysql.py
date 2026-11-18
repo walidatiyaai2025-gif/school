@@ -145,6 +145,8 @@ def main() -> None:
             f'isolated private backup verification failed: {backup_result.stderr[-450:]}')
         print('PASS: real installed archive backup, MariaDB row export, .env retention,')
         print('private backup manifest and SHA-256 verification')
+        from signed_upgrade_smoke import run_signed_upgrade_smoke
+        run_signed_upgrade_smoke(app, env, php)
         print('PASS: exact preview ZIP extraction, integrity, isolated MySQL install,')
         print('hashed super admin, completed lock, and repeated-install denial')
         print('Production upgrade, recovery and signing gates remain NOT VERIFIED.')
