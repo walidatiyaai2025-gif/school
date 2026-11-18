@@ -25,7 +25,10 @@ def check(condition: bool, message: str) -> None:
 def main() -> None:
     version = (ROOT / 'VERSION').read_text().strip()
     archive = Path(os.environ.get('SCHOOLPDF_SETUP_ARCHIVE', str(ROOT / 'setup/output' / f'SchoolPDF-Setup-v{version}-PREVIEW-UNVERIFIED.zip')))
-    checksum = (archive.with_name(archive.name + '.sha256')).read_text().split()[0]
+    digest_file = archive.with_name(archive.name + '.sha256')
+    if not digest_file.is_file():
+        digest_file = archive.with_suffix('.sha256')
+    checksum = digest_file.read_text().split()[0]
     check(hashlib.sha256(archive.read_bytes()).hexdigest() == checksum, 'SHA mismatch')
     with tempfile.TemporaryDirectory(prefix='schoolpdf-preview-smoke-') as dirname:
         temp = Path(dirname)
