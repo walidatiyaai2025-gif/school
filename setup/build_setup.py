@@ -143,9 +143,131 @@ def main() -> int:
                 raise ValueError('Ed25519 public key must be 32 bytes')
         except (ValueError, base64.binascii.Error) as exc:
             raise SystemExit('RELEASE BLOCKED: invalid trusted update verification key') from exc
-        payload['.env.example'] += (
-            '\nSCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="' + args.trusted_update_public_key + '"\n'
-        ).encode()
+        template = payload['.env.example'].decode('utf-8')
+        line = 'SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="' + args.trusted_update_public_key + '"'
+        if re.search(r'(?m)^SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY=.*
+    for d in EMPTY_DIRS:
+        payload[f'{d}/.gitkeep'] = b''
+    file_manifest = [
+        {'path': name, 'sha256': sha256_bytes(content), 'bytes': len(content)}
+        for name, content in sorted(payload.items())
+    ]
+    metadata = {
+        'project': 'School PDF', 'kind': 'fresh-install', 'version': version,
+        'git_sha': args.git_sha.lower(), 'php': '>=8.2',
+        'required_extensions': ['pdo_mysql', 'mbstring', 'fileinfo', 'openssl', 'sodium', 'zip'],
+        'features': ['web-installer', 'super-admin', 'country-push-dashboard', 'app-ads-txt'],
+        'acceptance_checks': json.loads(evidence.read_text(encoding='utf-8'))['checks'],
+        'signed_updates': bool(args.trusted_update_public_key),
+        'files': file_manifest,
+    }
+    payload['SETUP_MANIFEST.json'] = (json.dumps(metadata, indent=2, ensure_ascii=False) + '\n').encode()
+    payload['BUILD_INFO.json'] = (json.dumps({
+        'version': version, 'source_git_sha': args.git_sha.lower(),
+        'lock_sha256': sha256_bytes(payload['composer.lock']),
+        'manifest_sha256': sha256_bytes(payload['SETUP_MANIFEST.json']),
+    }, indent=2) + '\n').encode()
+    payload['START_HERE.txt'] = (
+        'School PDF cPanel fresh installation. Keep this ZIP and setup-access.key PRIVATE.\n'
+        'Upload and extract outside public web root, point DocumentRoot to public/,\n'
+        'then visit https://sclpdf.50sols.com/install.\n'
+        'Create MySQL database/user first, then read setup-access.key from File Manager after /install.\n'
+        'After installation, remove unused installation artifacts from your hosting account.\n'
+    ).encode()
+    out_dir = root / 'setup/output'
+    out_dir.mkdir(parents=True, exist_ok=True)
+    final = out_dir / f'SchoolPDF-Setup-v{version}.zip'
+    temp = out_dir / (final.name + '.partial')
+    try:
+        with zipfile.ZipFile(temp, mode='w', compression=zipfile.ZIP_DEFLATED, compresslevel=7) as z:
+            for name, content in sorted(payload.items()):
+                if name.startswith('/') or '..' in Path(name).parts:
+                    raise ValueError(f'Unsafe entry: {name}')
+                entry = zipfile.ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0))
+                entry.compress_type = zipfile.ZIP_DEFLATED
+                entry.external_attr = (0o100640 << 16)
+                z.writestr(entry, content)
+        with zipfile.ZipFile(temp) as z:
+            for item in z.infolist():
+                if z.read(item) != payload[item.filename]:
+                    raise ValueError(f'ZIP verify failed: {item.filename}')
+        temp.replace(final)
+        digest = sha256_bytes(final.read_bytes())
+        (out_dir / f'SchoolPDF-Setup-v{version}.sha256').write_text(f'{digest}  {final.name}\n')
+        (out_dir / f'SchoolPDF-Setup-v{version}-BUILD_INFO.json').write_bytes(payload['BUILD_INFO.json'])
+        print(f'RELEASE CANDIDATE GENERATED: {final}\nSHA256: {digest}')
+        print('Setup access code will be generated on the hosting server, outside public/.')
+        return 0
+    finally:
+        temp.unlink(missing_ok=True)
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
+, template):
+            template = re.sub(r'(?m)^SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY=.*
+    for d in EMPTY_DIRS:
+        payload[f'{d}/.gitkeep'] = b''
+    file_manifest = [
+        {'path': name, 'sha256': sha256_bytes(content), 'bytes': len(content)}
+        for name, content in sorted(payload.items())
+    ]
+    metadata = {
+        'project': 'School PDF', 'kind': 'fresh-install', 'version': version,
+        'git_sha': args.git_sha.lower(), 'php': '>=8.2',
+        'required_extensions': ['pdo_mysql', 'mbstring', 'fileinfo', 'openssl', 'sodium', 'zip'],
+        'features': ['web-installer', 'super-admin', 'country-push-dashboard', 'app-ads-txt'],
+        'acceptance_checks': json.loads(evidence.read_text(encoding='utf-8'))['checks'],
+        'signed_updates': bool(args.trusted_update_public_key),
+        'files': file_manifest,
+    }
+    payload['SETUP_MANIFEST.json'] = (json.dumps(metadata, indent=2, ensure_ascii=False) + '\n').encode()
+    payload['BUILD_INFO.json'] = (json.dumps({
+        'version': version, 'source_git_sha': args.git_sha.lower(),
+        'lock_sha256': sha256_bytes(payload['composer.lock']),
+        'manifest_sha256': sha256_bytes(payload['SETUP_MANIFEST.json']),
+    }, indent=2) + '\n').encode()
+    payload['START_HERE.txt'] = (
+        'School PDF cPanel fresh installation. Keep this ZIP and setup-access.key PRIVATE.\n'
+        'Upload and extract outside public web root, point DocumentRoot to public/,\n'
+        'then visit https://sclpdf.50sols.com/install.\n'
+        'Create MySQL database/user first, then read setup-access.key from File Manager after /install.\n'
+        'After installation, remove unused installation artifacts from your hosting account.\n'
+    ).encode()
+    out_dir = root / 'setup/output'
+    out_dir.mkdir(parents=True, exist_ok=True)
+    final = out_dir / f'SchoolPDF-Setup-v{version}.zip'
+    temp = out_dir / (final.name + '.partial')
+    try:
+        with zipfile.ZipFile(temp, mode='w', compression=zipfile.ZIP_DEFLATED, compresslevel=7) as z:
+            for name, content in sorted(payload.items()):
+                if name.startswith('/') or '..' in Path(name).parts:
+                    raise ValueError(f'Unsafe entry: {name}')
+                entry = zipfile.ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0))
+                entry.compress_type = zipfile.ZIP_DEFLATED
+                entry.external_attr = (0o100640 << 16)
+                z.writestr(entry, content)
+        with zipfile.ZipFile(temp) as z:
+            for item in z.infolist():
+                if z.read(item) != payload[item.filename]:
+                    raise ValueError(f'ZIP verify failed: {item.filename}')
+        temp.replace(final)
+        digest = sha256_bytes(final.read_bytes())
+        (out_dir / f'SchoolPDF-Setup-v{version}.sha256').write_text(f'{digest}  {final.name}\n')
+        (out_dir / f'SchoolPDF-Setup-v{version}-BUILD_INFO.json').write_bytes(payload['BUILD_INFO.json'])
+        print(f'RELEASE CANDIDATE GENERATED: {final}\nSHA256: {digest}')
+        print('Setup access code will be generated on the hosting server, outside public/.')
+        return 0
+    finally:
+        temp.unlink(missing_ok=True)
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
+, line, template)
+        else:
+            template = template.rstrip('\n') + '\n' + line + '\n'
+        payload['.env.example'] = template.encode('utf-8')
     for d in EMPTY_DIRS:
         payload[f'{d}/.gitkeep'] = b''
     file_manifest = [
