@@ -27,7 +27,7 @@
 5. تشغيل `python3 setup/build_setup.py --git-sha <EXACT_40_CHAR_SHA>`؛ سيظهر ZIP وSHA-256 وmanifest وbuild info في `setup/output/` عند تحقق الشروط.
 6. التحقق من سلامة ZIP والتوقيع/منظومة التحديث والاختبارات على cPanel قبل اعتبارها Release.
 
-> لا تُدرج Service Account الخاص بـFirebase أو ملف .env أو كلمات مرور القاعدة في ZIP، ولا تضع مشروع Laravel كاملًا داخل Document Root العام. المفتاح الذي يتولد مع حزمة التثبيت `setup-access.key` سري ومخصص للمشرف، ويُحذف بعد النجاح.
+> لا تُدرج Service Account الخاص بـFirebase أو ملف .env أو كلمات مرور القاعدة في ZIP، ولا تضع مشروع Laravel كاملًا داخل Document Root العام. المفتاح الذي يتولد على الاستضافة عند فتح `/install` لأول مرة `setup-access.key` سري ومخصص للمشرف، ويُحذف بعد النجاح.
 
 ## خصائص معالج التثبيت
 
