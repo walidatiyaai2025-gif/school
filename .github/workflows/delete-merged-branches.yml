@@ -1,0 +1,69 @@
+name: Delete merged branches
+
+# Keep main as the canonical branch. Never delete unmerged or advanced heads.
+on:
+  pull_request:
+    types: [closed]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup-merged-heads:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete only verified merged same-repository branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const defaultBranch = (await github.rest.repos.get({ owner, repo })).data.default_branch;
+            if (defaultBranch !== 'main') {
+              core.setFailed(`Expected default branch main; found ${defaultBranch}`);
+              return;
+            }
+
+            const prs = context.eventName === 'pull_request'
+              ? [context.payload.pull_request]
+              : await github.paginate(github.rest.pulls.list, {
+                  owner, repo, state: 'closed', base: 'main', per_page: 100,
+                });
+
+            const openPrs = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const reviewed = new Set();
+            for (const pr of prs) {
+              if (!pr || !pr.merged_at || pr.base?.ref !== 'main') continue;
+              if (pr.head?.repo?.full_name !== `${owner}/${repo}`) continue;
+              const name = pr.head?.ref;
+              const originalSha = pr.head?.sha;
+              if (!name || !originalSha || name === defaultBranch || reviewed.has(name)) continue;
+              reviewed.add(name);
+
+              if (openPrs.some(p => p.head?.repo?.full_name === `${owner}/${repo}` && p.head?.ref === name)) {
+                core.notice(`Keeping ${name}: another PR is still open`);
+                continue;
+              }
+              const ref = `heads/${name}`;
+              try {
+                const live = await github.rest.git.getRef({ owner, repo, ref });
+                if (live.data.object.sha !== originalSha) {
+                  core.notice(`Keeping ${name}: branch has advanced since PR #${pr.number} merged`);
+                  continue;
+                }
+                await github.rest.git.deleteRef({ owner, repo, ref });
+                core.notice(`Deleted merged branch ${name} from PR #${pr.number}`);
+              } catch (e) {
+                if (e.status === 404) {
+                  core.notice(`Branch ${name} was already removed`);
+                } else {
+                  throw e;
+                }
+              }
+            }
