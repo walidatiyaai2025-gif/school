@@ -14,6 +14,9 @@ header('X-Frame-Options: DENY');
 header('Referrer-Policy: no-referrer');
 header('Content-Security-Policy: default-src \'none\'; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; form-action \'self\'; base-uri \'none\'');
 if (is_file($lock)) { http_response_code(403); exit('School PDF is already installed; setup is permanently locked.'); }
+if (is_file($root.'/PREVIEW-NOT-FOR-PRODUCTION.txt') && getenv('SCHOOLPDF_CI_INSTALL_SMOKE') !== '1') {
+    http_response_code(403); exit('School PDF setup preview is blocked from live deployment.');
+}
 $isHttps=isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off' && $_SERVER['HTTPS']!=='';
 $canonicalHost=strtolower((string)($_SERVER['HTTP_HOST']??''))==='sclpdf.50sols.com';
 ini_set('session.use_strict_mode','1');
@@ -129,6 +132,11 @@ if (($_SERVER['REQUEST_METHOD']??'GET')==='POST') {
                     } catch (Throwable $exception) {
                         // Preserve DB and .env on failure for safe investigation; never auto-rollback data.
                         error_log('SchoolPDF installer incomplete: '.get_class($exception));
+                        // Only the isolated CI installer smoke receives extra SQL diagnostics.
+                        // Never expose database errors or credentials to a web visitor.
+                        if (getenv('SCHOOLPDF_CI_INSTALL_SMOKE') === '1') {
+                            error_log('SchoolPDF CI smoke SQL detail: '.substr($exception->getMessage(),0,600));
+                        }
                         http_response_code(500);
                         $errors[]='تعذّر إكمال التثبيت. قد تكون قاعدة البيانات أو .env تغيرتا؛ لا تحذف البيانات. راجع سجلات الاستضافة وخطة الاستعادة قبل إعادة المحاولة.';
                     } finally {

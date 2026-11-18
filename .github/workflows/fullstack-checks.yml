@@ -5,8 +5,11 @@ on:
     paths:
       - 'mobile/**'
       - 'backend/**'
+      - 'setup/**'
+      - 'VERSION'
       - 'scripts/**'
       - '.github/workflows/fullstack-checks.yml'
+      - '.github/workflows/setup-preview.yml'
 permissions:
   contents: read
 jobs:
