@@ -1,0 +1,77 @@
+name: School PDF Setup Preview (NOT PRODUCTION)
+
+on:
+  push:
+    branches: [main, fix/setup-preview-artifact]
+    paths:
+      - 'backend/**'
+      - 'setup/**'
+      - 'VERSION'
+      - '.github/workflows/setup-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: isolated-ci-root-only
+          MARIADB_DATABASE: schoolpdf_ci
+          MARIADB_USER: schoolpdf_ci
+          MARIADB_PASSWORD: isolated-ci-user-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      SCHOOLPDF_TEST_DB_USERNAME: schoolpdf_ci
+      SCHOOLPDF_TEST_DB_PASSWORD: isolated-ci-user-password
+      SCHOOLPDF_TEST_DB_DATABASE: schoolpdf_ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare PHP for isolated MySQL installer smoke
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          extensions: mbstring, pdo_mysql, pdo_sqlite, fileinfo, zip, openssl, sodium
+          coverage: none
+      - name: Verify source and Composer lock
+        run: |
+          test -s backend/composer.lock
+          composer validate --working-dir=backend --strict --no-check-publish
+          python3 -m unittest discover -s setup/tests -p 'test_*.py' -v
+      - name: Laravel tests and Composer security audit
+        working-directory: backend
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          vendor/bin/phpunit
+          composer audit --locked --no-interaction
+      - name: Install production dependencies, not development packages
+        working-directory: backend
+        run: |
+          rm -rf vendor
+          composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-progress
+          test -s vendor/autoload.php
+      - name: Assemble non-production preview ZIP and verify extracted installation
+        run: |
+          python3 setup/build_preview.py --git-sha "$GITHUB_SHA"
+          python3 setup/tests/smoke_preview_mysql.py
+      - name: Upload clearly marked NON-PRODUCTION ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-Setup-v1.1.2-PREVIEW-UNVERIFIED
+          path: |
+            setup/output/SchoolPDF-Setup-v1.1.2-PREVIEW-UNVERIFIED.zip
+            setup/output/SchoolPDF-Setup-v1.1.2-PREVIEW-UNVERIFIED.zip.sha256
+          if-no-files-found: error
+          retention-days: 7
