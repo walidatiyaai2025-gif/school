@@ -29,7 +29,7 @@ else
 fi
 
 rsync -av \
-  --exclude='.git/' --exclude='.env' --exclude='vendor/' \
+  --exclude='.git/' --exclude='.env' --exclude='.env.*' --exclude='vendor/' \
   --exclude='node_modules/' --exclude='.dart_tool/' \
   --exclude='build/' --exclude='Pods/' --exclude='.gradle/' \
   --exclude='dist/' --exclude='__pycache__/' \
@@ -47,11 +47,12 @@ if git diff --cached --name-only | grep -Ei '(^|/)\.env$|(^|/)vendor/|(^|/)node_
 fi
 
 if git diff --cached --quiet; then
-  echo "No changes to upload."
+  echo "No new file changes; checking for pending local commits."
 else
   git diff --cached --stat
   git commit -m "feat: import School PDF Flutter Laravel Firebase and setup source"
-  git push origin main
 fi
+# Always push: a previous run may have committed locally but failed to upload.
+git push origin main
 git rev-parse HEAD
 echo "Source upload complete. CI/release readiness must be checked separately."
