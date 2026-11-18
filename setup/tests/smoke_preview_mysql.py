@@ -24,7 +24,7 @@ def check(condition: bool, message: str) -> None:
 
 def main() -> None:
     version = (ROOT / 'VERSION').read_text().strip()
-    archive = ROOT / 'setup/output' / f'SchoolPDF-Setup-v{version}-PREVIEW-UNVERIFIED.zip'
+    archive = Path(os.environ.get('SCHOOLPDF_SETUP_ARCHIVE', str(ROOT / 'setup/output' / f'SchoolPDF-Setup-v{version}-PREVIEW-UNVERIFIED.zip')))
     checksum = (archive.with_name(archive.name + '.sha256')).read_text().split()[0]
     check(hashlib.sha256(archive.read_bytes()).hexdigest() == checksum, 'SHA mismatch')
     with tempfile.TemporaryDirectory(prefix='schoolpdf-preview-smoke-') as dirname:
@@ -40,7 +40,16 @@ def main() -> None:
             check(not any(n.startswith('/') or '..' in Path(n).parts for n in names), 'unsafe zip path')
             z.extractall(app)
         manifest = json.loads((app / 'SETUP_MANIFEST.json').read_text())
-        check(manifest['production_ready'] is False, 'preview incorrectly marked as production')
+        if os.environ.get('SCHOOLPDF_PRODUCTION_INSTALL_SMOKE') == '1':
+            check(manifest.get('kind') == 'fresh-install', 'not a genuine production Setup archive')
+            check(manifest.get('git_sha') == os.environ.get('GITHUB_SHA'), 'source SHA mismatch')
+            check(manifest.get('signed_updates') is True, 'public update trust key missing')
+            example = (app / '.env.example').read_text()
+            check('SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="' in example,
+                  'installed app missing trusted update signer')
+            check('PREVIEW-NOT-FOR-PRODUCTION.txt' not in names, 'preview marker in release')
+        else:
+            check(manifest['production_ready'] is False, 'preview incorrectly marked as production')
         check((app / 'vendor/autoload.php').exists(), 'autoload missing')
         (temp / 'sessions').mkdir()
         session = 'ci' + uuid.uuid4().hex
@@ -149,7 +158,13 @@ def main() -> None:
         run_signed_upgrade_smoke(app, env, php)
         print('PASS: exact preview ZIP extraction, integrity, isolated MySQL install,')
         print('hashed super admin, completed lock, and repeated-install denial')
-        print('Production upgrade, recovery and signing gates remain NOT VERIFIED.')
+        if os.environ.get('SCHOOLPDF_PRODUCTION_INSTALL_SMOKE') == '1':
+            check('SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="' in (app / '.env').read_text(),
+                  'installed environment lost signing trust anchor')
+            print('PASS: ACTUAL PRODUCTION SETUP ZIP installed using no server Composer,')
+            print('plus synthetic signed upgrade, DB-migration failure and isolated recovery.')
+        else:
+            print('Preview-only; production release requires independent exact ZIP proof.')
 
 
 if __name__ == '__main__':
