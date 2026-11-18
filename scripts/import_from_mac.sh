@@ -8,43 +8,20 @@ test -f "$SRC/backend/composer.json" || { echo "Missing: $SRC/backend/composer.j
 test -f "$SRC/backend/composer.lock" || { echo "Missing: $SRC/backend/composer.lock (keep locally tested dependencies)" >&2; exit 1; }
 test -f "$SRC/mobile/pubspec.yaml" || { echo "Missing: $SRC/mobile/pubspec.yaml" >&2; exit 1; }
 
-# Never overwrite or reset a previous checkout with unfinished work.
-# Retry in a new clone when that checkout has staged, unstaged, or untracked files.
-if [ -d "$DEST/.git" ] && {
-  ! git -C "$DEST" diff --quiet ||
-  ! git -C "$DEST" diff --cached --quiet ||
-  [ -n "$(git -C "$DEST" ls-files --others --exclude-standard)" ];
-}; then
+# Always import into a new clean clone. Never modify or rebase an older
+# checkout, even if its local Git status is conflicted, dirty, or untracked.
+if [ -e "$DEST" ]; then
   previous="$DEST"
   index=1
   while [ -e "${previous}-fresh-${index}" ]; do
     index=$((index + 1))
   done
   DEST="${previous}-fresh-${index}"
-  echo "Preserving existing checkout with local changes: $previous"
-  echo "Importing into a fresh checkout instead: $DEST"
+  echo "Preserving existing folder without changes: $previous"
+  echo "Using new import destination: $DEST"
 fi
 
-if [ -e "$DEST" ] && [ ! -d "$DEST/.git" ]; then
-  echo "Target exists and is not a Git clone: $DEST. Choose another SCHOOLPDF_GIT_DIR." >&2
-  exit 1
-fi
-
-if [ ! -d "$DEST/.git" ]; then
-  git clone "$REPO" "$DEST"
-else
-  origin="$(git -C "$DEST" remote get-url origin)"
-  case "$origin" in
-    "$REPO"|"git@github.com:walidatiyaai2025-gif/school.git") ;;
-    *) echo "Wrong Git remote: $origin" >&2; exit 1 ;;
-  esac
-  if ! git -C "$DEST" diff --quiet || ! git -C "$DEST" diff --cached --quiet; then
-    echo "Target has uncommitted changes; resolve them before running import." >&2
-    exit 1
-  fi
-  git -C "$DEST" fetch origin main
-  git -C "$DEST" rebase origin/main || { echo "Git rebase conflict. No push attempted; inspect $DEST." >&2; exit 1; }
-fi
+git clone "$REPO" "$DEST"
 
 rsync -av \
   --exclude='.git/' --exclude='.env' --exclude='.env.*' --exclude='vendor/' \
