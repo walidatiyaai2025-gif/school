@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/history_screen.dart';
+import 'widgets/language_toggle.dart';
 import 'core/brand.dart';
 import 'core/strings.dart';
 import 'data/app_store.dart';
@@ -87,6 +88,11 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       SettingsScreen(store:widget.store,notifications:widget.notifications),
     ];
     return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 48,
+        title: const Text('School PDF'),
+        actions: [LanguageToggle(store: widget.store)],
+      ),
       body:SafeArea(bottom:false,child:IndexedStack(index:tab,children:screens)),
       bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[
         if(tab==0 || tab==1)SchoolBanner(store:widget.store),
