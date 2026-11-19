@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:document_scan/document_scan.dart';
+import 'package:flutter/foundation.dart';
+import 'scan_models.dart';
 import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
@@ -19,47 +21,187 @@ class ScanPage {
   String get outputPath => editedPath??originalPath;
 }
 
-class ScanEngine {
-  final DocumentDetector detector = DocumentDetector();
-  final DocumentProcessor processor = const DocumentProcessor();
+/// A conservative, offline paper boundary proposal (no Android JNI).
+/// If the paper/background contrast is uncertain, return null and use the
+/// manual 4-corner editor instead of silently altering the student's photo.
+DocumentCorners? guessPaperCorners(Uint8List bytes) {
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) return null;
+  final original = img.bakeOrientation(decoded);
+  final source = original.width > 320
+      ? img.copyResize(original, width: 320)
+      : original;
+  final width = source.width, height = source.height;
+  if (width < 40 || height < 40) return null;
 
-  Future<DocumentCorners?> detect(String file) async {
-    try { return await detector.detect(ScanInput.file(file)); }
-    catch (_) { return null; }
+  double border = 0;
+  var samples = 0;
+  for (var x = 0; x < width; x += 8) {
+    border += img.getLuminance(source.getPixel(x, 0));
+    border += img.getLuminance(source.getPixel(x, height - 1));
+    samples += 2;
   }
-  static DocumentCorners insetCorners() => const DocumentCorners(
-    topLeft:(x:.02,y:.02), topRight:(x:.98,y:.02),
-    bottomRight:(x:.98,y:.98), bottomLeft:(x:.02,y:.98));
+  for (var y = 0; y < height; y += 8) {
+    border += img.getLuminance(source.getPixel(0, y));
+    border += img.getLuminance(source.getPixel(width - 1, y));
+    samples += 2;
+  }
+  border /= samples;
+  final whitePaper = border < 135;
+  final threshold = whitePaper ? border + 42 : border - 42;
+  var minX = width, minY = height, maxX = 0, maxY = 0, count = 0;
+  for (var y = 2; y < height - 2; y += 3) {
+    for (var x = 2; x < width - 2; x += 3) {
+      final lum = img.getLuminance(source.getPixel(x, y));
+      if (whitePaper ? lum > threshold : lum < threshold) {
+        minX = math.min(minX, x);
+        minY = math.min(minY, y);
+        maxX = math.max(maxX, x);
+        maxY = math.max(maxY, y);
+        count++;
+      }
+    }
+  }
+  final fraction = count / ((width / 3) * (height / 3));
+  final detectedWidth = maxX - minX, detectedHeight = maxY - minY;
+  if (fraction < 0.15 || fraction > 0.90 ||
+      detectedWidth < width * 0.45 || detectedHeight < height * 0.45 ||
+      detectedWidth > width * 0.99 || detectedHeight > height * 0.99) {
+    return null;
+  }
+  const margin = 2;
+  final left = math.max(0, minX - margin) / width;
+  final top = math.max(0, minY - margin) / height;
+  final right = math.min(width, maxX + margin) / width;
+  final bottom = math.min(height, maxY + margin) / height;
+  return DocumentCorners(
+    topLeft: (x: left, y: top),
+    topRight: (x: right, y: top),
+    bottomRight: (x: right, y: bottom),
+    bottomLeft: (x: left, y: bottom),
+  );
+}
 
-  Future<String?> process(String path,DocumentCorners corners,
-      ScanFilter filter,String quality) async {
-    final result = await processor.crop(ScanInput.file(path),corners,
-      filter:filter, output:ScanOutputFormat.jpeg,background:true,
-      maxDimension:switch(quality){'high'=>2400,'small'=>1200,_=>1800});
-    if(result==null) return null;
-    final dir=Directory(p.join((await getTemporaryDirectory()).path,'school_pdf_scans'));
-    if(!await dir.exists()) await dir.create(recursive:true);
-    final out=File(p.join(dir.path,'scan_${DateTime.now().microsecondsSinceEpoch}.jpg'));
-    await out.writeAsBytes(result.bytes,flush:true);
+class _ScanTask {
+  const _ScanTask(this.bytes, this.corners, this.filter, this.quality);
+  final Uint8List bytes;
+  final DocumentCorners corners;
+  final ScanFilter filter;
+  final String quality;
+}
+
+Uint8List _renderScan(_ScanTask request) {
+  final decoded = img.decodeImage(request.bytes);
+  if (decoded == null) throw const FormatException('Cannot decode image');
+  final source = img.bakeOrientation(decoded);
+  final corner = request.corners;
+  if (!corner.isConvex || corner.area < 0.035) {
+    throw const FormatException('Invalid document corners');
+  }
+  final width = source.width.toDouble(), height = source.height.toDouble();
+  double distance(ScanPoint a, ScanPoint b) => math.sqrt(
+    math.pow((a.x - b.x) * width, 2) +
+    math.pow((a.y - b.y) * height, 2)
+  );
+  var outWidth = math.max(distance(corner.topLeft, corner.topRight),
+      distance(corner.bottomLeft, corner.bottomRight));
+  var outHeight = math.max(distance(corner.topLeft, corner.bottomLeft),
+      distance(corner.topRight, corner.bottomRight));
+  final maxSide = switch (request.quality) {
+    'high' => 2400, 'small' => 1200, _ => 1800,
+  };
+  final scale = math.min(1.0, maxSide / math.max(outWidth, outHeight));
+  outWidth *= scale;
+  outHeight *= scale;
+
+  math.Point<int> point(ScanPoint v) => math.Point(
+      (v.x * (source.width - 1)).round(),
+      (v.y * (source.height - 1)).round());
+  var output = img.copyRectify(
+    source,
+    topLeft: point(corner.topLeft),
+    topRight: point(corner.topRight),
+    bottomRight: point(corner.bottomRight),
+    bottomLeft: point(corner.bottomLeft),
+    interpolation: img.Interpolation.linear,
+    toImage: img.Image(
+      width: math.max(1, outWidth.round()),
+      height: math.max(1, outHeight.round()),
+    ),
+  );
+  switch (request.filter) {
+    case ScanFilter.none:
+      break;
+    case ScanFilter.enhance:
+      output = img.adjustColor(output, contrast: 1.12);
+    case ScanFilter.magicColor:
+      output = img.adjustColor(output, contrast: 1.20, saturation: 1.15);
+    case ScanFilter.grayscale:
+      output = img.grayscale(output);
+    case ScanFilter.blackWhite:
+      output = img.adjustColor(img.grayscale(output), contrast: 1.75);
+    case ScanFilter.sharpen:
+      output = img.adjustColor(output, contrast: 1.3);
+  }
+  return Uint8List.fromList(img.encodeJpg(output, quality: 88));
+}
+
+class ScanEngine {
+  Future<DocumentCorners?> detect(String file) async {
+    try {
+      final bytes = await File(file).readAsBytes();
+      return await compute(guessPaperCorners, bytes);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static DocumentCorners insetCorners() => const DocumentCorners(
+    topLeft: (x: .02, y: .02), topRight: (x: .98, y: .02),
+    bottomRight: (x: .98, y: .98), bottomLeft: (x: .02, y: .98),
+  );
+
+  Future<String?> process(String path, DocumentCorners corners,
+      ScanFilter filter, String quality) async {
+    if (!corners.isConvex || corners.area < .035) {
+      throw const FormatException('Invalid document corners');
+    }
+    final bytes = await File(path).readAsBytes();
+    final result = await compute(
+      _renderScan, _ScanTask(bytes, corners, filter, quality),
+    );
+    final dir = Directory(p.join(
+      (await getTemporaryDirectory()).path, 'school_pdf_scans',
+    ));
+    if (!await dir.exists()) await dir.create(recursive: true);
+    final out = File(p.join(
+      dir.path, 'scan_${DateTime.now().microsecondsSinceEpoch}.jpg',
+    ));
+    await out.writeAsBytes(result, flush: true);
     return out.path;
   }
-  Future<String> autoProcess(String originalPath,String quality) async {
-    final corners=await detect(originalPath);
-    if (corners==null || !corners.isConvex || corners.area<.15) {
-      return originalPath; // Never silently crop homework without a valid document.
+
+  Future<String> autoProcess(String originalPath, String quality) async {
+    final corners = await detect(originalPath);
+    if (corners == null || !corners.isConvex || corners.area < .15) {
+      return originalPath;
     }
     try {
-      return await process(originalPath,corners,ScanFilter.enhance,quality)??originalPath;
-    } catch (_) { return originalPath; }
+      return await process(originalPath, corners, ScanFilter.enhance, quality)
+          ?? originalPath;
+    } catch (_) {
+      return originalPath;
+    }
   }
+
   Future<String> rotate(String source) async {
-    final raw=await File(source).readAsBytes();
-    final photo=img.decodeImage(raw);
-    if(photo==null) throw const FormatException('Cannot decode image');
-    final rotated=img.copyRotate(img.bakeOrientation(photo),angle:90);
-    final target=File(p.join((await getTemporaryDirectory()).path,
+    final raw = await File(source).readAsBytes();
+    final photo = img.decodeImage(raw);
+    if (photo == null) throw const FormatException('Cannot decode image');
+    final rotated = img.copyRotate(img.bakeOrientation(photo), angle: 90);
+    final target = File(p.join((await getTemporaryDirectory()).path,
       'rotated_${DateTime.now().microsecondsSinceEpoch}.jpg'));
-    await target.writeAsBytes(img.encodeJpg(rotated,quality:92));
+    await target.writeAsBytes(img.encodeJpg(rotated, quality: 92));
     return target.path;
   }
 }
