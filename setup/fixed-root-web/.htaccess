@@ -1,0 +1,24 @@
+Options -Indexes
+DirectoryIndex index.php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # This host must serve installer credentials over HTTPS only.
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://sclpdf.50sols.com%{REQUEST_URI} [R=301,L]
+    # Preserve cPanel AutoSSL challenges.
+    RewriteRule ^\.well-known/acme-challenge/ - [L]
+    # Deny direct traversal into internal or hidden paths even if uploaded.
+    RewriteRule ^\. - [F,L]
+    RewriteRule ^(?:app|bootstrap|config|database|resources|routes|storage|vendor|tests|node_modules)(?:/|$) - [F,L,NC]
+    RewriteRule ^(?:composer\.(?:json|lock)|artisan|setup-access\.key|SETUP_MANIFEST\.json|BUILD_INFO\.json)$ - [F,L,NC]
+    RewriteRule ^install/?$ install.php [L,QSA]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+<Files ".schoolpdf-bridge.php">
+    Require all denied
+</Files>
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
