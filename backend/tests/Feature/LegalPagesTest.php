@@ -19,7 +19,7 @@ class LegalPagesTest extends TestCase
         $this->get('/data-deletion')->assertOk()
             ->assertSee('Delete server device record')
             ->assertSee('Delete local profile and PDFs')
-            ->assertSee('no user', false) // verify below with explicit wording if needed
+            ->assertSee('No student account is created.')
             ->assertSee('mailto:info@50sols.com', false);
     }
 
