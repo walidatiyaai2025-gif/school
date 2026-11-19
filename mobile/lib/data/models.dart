@@ -50,7 +50,7 @@ class StudentSettings {
   String schoolClass = '';
   String level = 'primary';
   String ageGroup = 'unknown'; // unknown, child, teen, adult
-  bool english = false;
+  bool english = true;
   bool pdfHeader = false;
   String pdfQuality = 'balanced';
   bool notifyReady = true;
@@ -76,7 +76,7 @@ class StudentSettings {
     x.schoolClass = (j['schoolClass'] as String?)??'';
     x.level = (j['level'] as String?)??'primary';
     x.ageGroup = (j['ageGroup'] as String?)??'unknown';
-    x.english = (j['english'] as bool?)??false;
+    x.english = (j['english'] as bool?)??true;
     x.pdfHeader = (j['pdfHeader'] as bool?)??false;
     x.pdfQuality = (j['pdfQuality'] as String?)??'balanced';
     x.notifyReady = (j['notifyReady'] as bool?)??true;
@@ -95,6 +95,7 @@ const schoolSubjects = <String, List<String>>{
   'middle':['الرياضيات','اللغة العربية','English','العلوم','الدراسات الاجتماعية','ICT','التربية الدينية'],
   'secondary':['الرياضيات','اللغة العربية','English','الفيزياء','الكيمياء','الأحياء','التاريخ','الجغرافيا','ICT'],
   'university':['Statistics','Accounting','Computer Science','Economics'],
+  'other':['الرياضيات','اللغة العربية','English','العلوم','ICT'],
 };
 
 String encodeRecords(List<PdfRecord> records) => jsonEncode(records.map((e)=>e.toJson()).toList());
