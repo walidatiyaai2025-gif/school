@@ -11,11 +11,13 @@ class ReadyScreen extends StatelessWidget {
   const ReadyScreen({super.key,required this.store,required this.record});
   final AppStore store;final PdfRecord record;
   @override Widget build(BuildContext context){
-    final s=S(store.settings.english), share=SharingService(store);
+    final share=SharingService(store);
     Future<void> safe(Future<void> Function() f)async{
       try {await f();}catch(e){if(context.mounted)feedback(context,e.toString());}
     }
-    return AnimatedBuilder(animation:store,builder:(context,_)=>Scaffold(
+    return AnimatedBuilder(animation:store,builder:(context,_) {
+      final s=S(store.settings.english);
+      return Scaffold(
       appBar:AppBar(title:const Text('School PDF'),
         actions:[LanguageToggle(store:store)]),
       body:SafeArea(child:ListView(padding:const EdgeInsets.all(24),children:[
@@ -54,6 +56,7 @@ class ReadyScreen extends StatelessWidget {
             'Times share sheet opened: $count'),
             style:const TextStyle(color:Brand.muted,fontSize:12)));
         }),
-      ]))));
+      ])));
+    });
   }
 }
