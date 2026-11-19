@@ -55,6 +55,10 @@ jobs:
       - name: Verify supplied Firebase Android/iOS client configuration
         working-directory: mobile
         run: python3 tool/verify_firebase_config.py
+      - name: Ensure Kotlin Gradle build uses official Maven Central fallback
+        run: |
+          mkdir -p "$HOME/.gradle/init.d"
+          cp mobile/tool/gradle_repositories_init.gradle "$HOME/.gradle/init.d/schoolpdf-repos.gradle"
       - name: Flutter Android prepare and analysis
         working-directory: mobile
         run: |
