@@ -147,6 +147,12 @@ Uint8List _renderScan(_ScanTask request) {
   return Uint8List.fromList(img.encodeJpg(output, quality: 88));
 }
 
+/// Test the exact background-isolate image processing core without Android JNI.
+@visibleForTesting
+Uint8List renderScanBytes(Uint8List bytes, DocumentCorners corners,
+    ScanFilter filter, String quality) =>
+    _renderScan(_ScanTask(bytes, corners, filter, quality));
+
 class ScanEngine {
   Future<DocumentCorners?> detect(String file) async {
     try {
