@@ -69,9 +69,17 @@ void main() {
     store.settings..name = 'A'..schoolClass = 'B'..introDone = true;
     await store.saveSettings();
 
-    // An unremovable managed folder should fail before settings are cleared.
-    // The directory itself is absent, so no deletion is needed: the profile
-    // remains accessible until a real, confirmed reset is executed.
+    final managedRoot = Directory(p.join(root.path, 'schoolpdf'));
+    await managedRoot.create(recursive: true);
+    // Simulate a replaced managed folder: refusing to erase this path must
+    // leave student preferences untouched and provide a retriable failure.
+    final obstruction = File(p.join(managedRoot.path, 'pdf'));
+    await obstruction.writeAsString('not a directory');
+    await expectLater(
+      store.deleteLocalProfileAndPdfs(documentsDirectory: root),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(await obstruction.exists(), isTrue);
     expect(store.settings.ready, isTrue);
     expect((await AppStore.load()).settings.ready, isTrue);
   });

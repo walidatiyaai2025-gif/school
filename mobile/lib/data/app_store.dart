@@ -84,7 +84,17 @@ class AppStore extends ChangeNotifier {
     final appPdfDirectory = Directory(p.join(documents.path, 'schoolpdf', 'pdf'));
     // On failure, retain settings/metadata so the user can retry and see the
     // error instead of receiving a false "data deleted" confirmation.
-    if (await appPdfDirectory.exists()) {
+    // Reject file/symlink substitutions rather than accidentally deleting
+    // a directory outside app-managed storage.
+    final appRoot = Directory(p.join(documents.path, 'schoolpdf'));
+    final rootType = await FileSystemEntity.type(appRoot.path, followLinks: false);
+    final pdfType = await FileSystemEntity.type(appPdfDirectory.path, followLinks: false);
+    if (rootType == FileSystemEntityType.link ||
+        pdfType == FileSystemEntityType.link ||
+        pdfType == FileSystemEntityType.file) {
+      throw FileSystemException('Unexpected School PDF storage path', appPdfDirectory.path);
+    }
+    if (pdfType == FileSystemEntityType.directory) {
       await appPdfDirectory.delete(recursive: true);
     }
     await _prefs.remove('files_v1');
