@@ -78,6 +78,9 @@ jobs:
         run: |
           test -s mobile/build/app/outputs/flutter-apk/app-debug.apk
           python3 mobile/tool/check_android_16kb.py mobile/build/app/outputs/flutter-apk/app-debug.apk
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name zipalign | sort -V | tail -n 1)"
+          test -x "$ZIPALIGN"
+          "$ZIPALIGN" -c -P 16 -v 4 mobile/build/app/outputs/flutter-apk/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
           name: SchoolPDF-v1.1.1-debug-apk
