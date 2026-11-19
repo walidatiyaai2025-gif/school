@@ -87,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, entered.trim()),
-            child: Text(strings.add),
+            child: Text(strings.t('إضافة', 'Add')),
           ),
         ],
       ),
