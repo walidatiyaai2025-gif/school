@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../core/brand.dart';
+import '../core/page_order.dart';
 import '../core/strings.dart';
 import '../data/app_store.dart';
 import '../services/pdf_service.dart';
@@ -26,7 +27,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   void _moveTo(int from, int to) {
     if (busy || from == to || from < 0 || to < 0 ||
         from >= pages.length || to >= pages.length) return;
-    setState(() => pages.insert(to, pages.removeAt(from)));
+    setState(() => moveToPosition(pages, from, to));
   }
   Future<void> _addPhotos(bool camera)async{
     try {
