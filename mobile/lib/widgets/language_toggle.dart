@@ -12,7 +12,9 @@ class LanguageToggle extends StatelessWidget {
     final english = store.settings.english;
     return Padding(
       padding: const EdgeInsetsDirectional.only(end: 8),
-      child: TextButton.icon(
+      child: Tooltip(
+        message: english ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية',
+        child: TextButton.icon(
         onPressed: () async {
           store.settings.english = !store.settings.english;
           await store.saveSettings();
@@ -20,8 +22,7 @@ class LanguageToggle extends StatelessWidget {
         },
         icon: const Icon(Icons.translate, size: 19),
         label: Text(english ? 'العربية' : 'English'),
-        tooltip: english ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية',
-      ),
+      )),
     );
   }
 }
