@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../data/models.dart';
+import '../core/strings.dart';
 import '../data/app_store.dart';
 
 class ScanPage {
@@ -217,7 +218,8 @@ class PdfService {
       throw const FormatException('Select a subject and one or more photos');
     }
     final pdf = pw.Document(compress:true);
-    final header = settings.pdfHeader ? await _renderHeader(settings,subject) : null;
+    final subjectLabel=S(settings.english).subjectName(subject);
+    final header = settings.pdfHeader ? await _renderHeader(settings,subjectLabel) : null;
     for(var i=0;i<pages.length;i++) {
       final path=pages[i].editedPath??await _scanner.autoProcess(
         pages[i].originalPath,settings.pdfQuality);
@@ -249,7 +251,7 @@ class PdfService {
     final now=DateTime.now();
     final id=now.microsecondsSinceEpoch.toString();
     final stamp=DateFormat('yyyyMMdd_HHmmss').format(now);
-    final base=safeFilename('${subject}_${settings.name}_${settings.schoolClass}_$stamp');
+    final base=safeFilename('${subjectLabel}_${settings.name}_${settings.schoolClass}_$stamp');
     final filename='$base.pdf';
     final finalFile=File(p.join(root.path,filename));
     final temp=File(p.join(root.path,'.$id.tmp'));
