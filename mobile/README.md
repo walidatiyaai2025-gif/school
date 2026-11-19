@@ -37,3 +37,20 @@ bash tool/build_android_apk.sh
 The package additionally includes GitHub Actions workflows. These scripts are source only and have not been run by a Flutter toolchain in this environment.
 
 For Android/iOS signing, FCM APNs setup, Laravel service-account credentials, permissions and detailed test matrix, see `../docs/FIREBASE_NOTIFICATIONS_V1_1_1_AR.md` and `../README_AR.md`.
+
+## Official Android + iOS branding
+
+The owner's white-background School PDF logo is stored at `assets/branding/icon.png`.
+The Android and iOS launcher icons are generated from this asset (they are not
+committed as hand-edited native platform files).
+
+- Android: `dart run flutter_launcher_icons -f tool/flutter_launcher_icons_android.yaml`
+- iOS (macOS): `dart run flutter_launcher_icons -f tool/flutter_launcher_icons_ios.yaml` after generating the iOS platform.
+- Google Play and App Store marketing images: run `python3 tool/generate_store_assets.py`
+  (requires Pillow), or download the `schoolpdf-store-branding` GitHub Actions artifact.
+
+The GitHub CI checks generated iOS AppIcon assets on macOS and builds an
+Android debug APK with the new launcher icon. The store images are generated
+from the owner's supplied raster artwork; they are not vector originals.
+**This change does not publish to stores, sign iOS builds, or deploy the backend.**
+See `docs/BRANDING.md`.
