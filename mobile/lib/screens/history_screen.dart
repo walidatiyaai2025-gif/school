@@ -111,7 +111,70 @@ class _FileCard extends StatelessWidget {
 }
 
 Future<void> _renameDialog(BuildContext context,AppStore store,PdfRecord r) async {
-  final c=TextEditingController(text:r.filename.replaceAll(RegExp(r'\.pdf$',caseSensitive:false),''));
+  var name=r.filename.replaceAll(RegExp(r'\.pdf
+  final s=S(store.settings.english);
+  final result=await showDialog<String>(context:context,builder:(_)=>AlertDialog(
+    title:Text(s.t('إعادة تسمية الملف','Rename PDF')),
+    content:TextFormField(initialValue:name,autofocus:true,
+      onChanged:(v)=>name=v),
+    actions:[TextButton(onPressed:()=>Navigator.pop(context),child:Text(s.cancel)),
+      FilledButton(onPressed:()=>Navigator.pop(context,name.trim()),child:Text(s.save))]));
+  if(result!=null && result.trim().isNotEmpty){
+    try {await store.rename(r.id,result);} catch(e){if(context.mounted)feedback(context,e.toString());}
+  }
+}
+Future<void> _deleteDialog(BuildContext context,AppStore store,PdfRecord r) async {
+  final s=S(store.settings.english);
+  final yes=await showDialog<bool>(context:context,builder:(_)=>AlertDialog(
+    title:Text(s.t('حذف الملف نهائيًا؟','Delete this PDF?')),
+    content:Text(s.t('سيُحذف الملف المحفوظ داخل التطبيق، ولا يمكن التراجع.',
+      'The app copy will be permanently deleted.')),
+    actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:Text(s.cancel)),
+      FilledButton(onPressed:()=>Navigator.pop(context,true),child:Text(s.delete))]));
+  if(yes==true){
+    try {await store.delete(r.id);}catch(e){if(context.mounted)feedback(context,e.toString());}
+  }
+}
+
+class PdfDetailScreen extends StatelessWidget {
+  const PdfDetailScreen({super.key,required this.store,required this.recordId});
+  final AppStore store;final String recordId;
+  @override Widget build(BuildContext context) {
+    final s=S(store.settings.english), share=SharingService(store);
+    return AnimatedBuilder(animation:store,builder:(ctx,_){
+      final results=store.records.where((r)=>r.id==recordId);
+      if(results.isEmpty)return Scaffold(appBar:AppBar(),
+        body:Center(child:Text(s.t('الملف غير موجود','File not found'))));
+      final r=results.first;
+      return Scaffold(appBar:AppBar(title:Text(s.t('معاينة الملف','PDF Preview')),
+        actions:[LanguageToggle(store:store)]),
+        body:Column(children:[
+          Expanded(child:PdfPreview(
+            build:(_)=>File(r.path).readAsBytes(),
+            allowPrinting:false,allowSharing:false,canChangeOrientation:false,
+            canChangePageFormat:false,pdfFileName:r.filename)),
+          WhitePanel(child:Column(children:[
+            Text(r.filename,style:const TextStyle(color:Brand.navy,fontWeight:FontWeight.w800)),
+            const SizedBox(height:7),Text('${r.student} • ${r.schoolClass} • ${s.subjectName(r.subject)}',
+              style:const TextStyle(color:Brand.muted,fontSize:12)),
+            Text('${r.pageCount} ${s.pages} • ${(r.bytes/1048576).toStringAsFixed(2)} MB',
+              style:const TextStyle(color:Brand.muted,fontSize:12)),
+            const SizedBox(height:7),Text(s.t('عدد مرات فتح المشاركة: ${r.shareAttempts}',
+              'Share sheet opened ${r.shareAttempts} times'),
+              style:const TextStyle(color:Brand.blue,fontWeight:FontWeight.w700)),
+            if(r.lastShareAttempt!=null)Text(s.t('آخر محاولة:','Last attempt:')+
+              ' ${DateFormat('yyyy/MM/dd HH:mm').format(r.lastShareAttempt!)}',
+              style:const TextStyle(color:Brand.muted,fontSize:11)),
+            const SizedBox(height:10),FilledButton.icon(
+              onPressed:()async{
+                try {await share.share(r,context);}catch(e){if(context.mounted)feedback(context,e.toString());}
+              },icon:const Icon(Icons.share_outlined),label:Text(s.share)),
+          ])),
+        ]));
+    });
+  }
+}
+,caseSensitive:false),'');
   final s=S(store.settings.english);
   final result=await showDialog<String>(context:context,builder:(_)=>AlertDialog(
     title:Text(s.t('إعادة تسمية الملف','Rename PDF')),
