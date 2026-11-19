@@ -2,11 +2,11 @@ Options -Indexes
 DirectoryIndex index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    # Let cPanel renew AutoSSL certificates over HTTP before HTTPS redirect.
+    RewriteRule ^\.well-known/acme-challenge/ - [L]
     # This host must serve installer credentials over HTTPS only.
     RewriteCond %{HTTPS} !=on
     RewriteRule ^ https://sclpdf.50sols.com%{REQUEST_URI} [R=301,L]
-    # Preserve cPanel AutoSSL challenges.
-    RewriteRule ^\.well-known/acme-challenge/ - [L]
     # Deny direct traversal into internal or hidden paths even if uploaded.
     RewriteRule ^\. - [F,L]
     RewriteRule ^(?:app|bootstrap|config|database|resources|routes|storage|vendor|tests|node_modules)(?:/|$) - [F,L,NC]
