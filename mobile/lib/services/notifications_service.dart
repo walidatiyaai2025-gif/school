@@ -169,7 +169,8 @@ class NotificationService {
   /// when the local profile is erased. OS permission can remain enabled;
   /// in-app consent is stored independently and must be explicitly re-granted.
   Future<void> disableForDataReset() async {
-    await local.cancelAll();
+    // A broken notification plugin must not prevent privacy deletion.
+    try { await local.cancelAll(); } catch (_) {}
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool(_optInPreference, false);
     permissionGranted = false;
