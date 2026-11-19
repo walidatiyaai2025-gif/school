@@ -1,17 +1,21 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'package:document_scan/document_scan.dart';
+import '../services/scan_models.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import '../core/brand.dart';
+import '../core/strings.dart';
+import '../data/app_store.dart';
+import '../widgets/language_toggle.dart';
 import '../services/pdf_service.dart';
 import '../widgets/brand_widgets.dart';
 
 /// Four independent corner handles mapped onto the actual BoxFit.contain image rect.
 class CornerEditor extends StatefulWidget {
   const CornerEditor({super.key,required this.scanner,required this.page,
-    required this.quality});
+    required this.quality,required this.store});
   final ScanEngine scanner;final ScanPage page;final String quality;
+  final AppStore store;
   @override State<CornerEditor> createState()=>_CornerEditorState();
 }
 class _CornerEditorState extends State<CornerEditor> {
@@ -21,8 +25,11 @@ class _CornerEditorState extends State<CornerEditor> {
   int imageWidth=1,imageHeight=1;int? draggedCorner;
   ScanFilter filter=ScanFilter.enhance;
   bool loading=true,saving=false;
-  @override void initState(){super.initState();_detect();}
+  void _updateLanguage(){if(mounted)setState((){});}
+  @override void initState(){super.initState();widget.store.addListener(_updateLanguage);_detect();}
+  @override void dispose(){widget.store.removeListener(_updateLanguage);super.dispose();}
   Future<void> _detect()async{
+    final strings=S(widget.store.settings.english);
     if(mounted)setState(()=>loading=true);
     try {
       final raw=await File(source).readAsBytes();
@@ -39,7 +46,7 @@ class _CornerEditorState extends State<CornerEditor> {
             const Offset(.97,.97),const Offset(.03,.97)];
         }
       });
-    }catch(e){if(mounted)feedback(context,'تعذر التعرف على الورقة: $e');}
+    }catch(e){if(mounted)feedback(context,strings.t('تعذر التعرف على الورقة','Could not detect paper edges'));}
     finally{if(mounted)setState(()=>loading=false);}
   }
   Rect _imageRect(Size bounds){
@@ -76,34 +83,40 @@ class _CornerEditorState extends State<CornerEditor> {
     finally {if(mounted)setState(()=>loading=false);}
   }
   Future<void> _apply()async{
+    final strings=S(widget.store.settings.english);
     final chosen=_makeCorners();
     if(!chosen.isConvex || chosen.area<.035){
-      feedback(context,'اضبط الزوايا الأربع على حدود الورقة بدون تقاطع');return;
+      feedback(context,strings.t('اضبط الزوايا الأربع بدون تقاطع','Adjust the four corners without overlap'));return;
     }
     setState(()=>saving=true);
     try {
       final path=await widget.scanner.process(source,chosen,filter,widget.quality);
       if(path==null)throw const FormatException('Could not process image');
       if(!mounted)return;
-      final ok=await showDialog<bool>(context:context,builder:(_)=>AlertDialog(
-        title:const Text('معاينة الورقة بعد التصحيح'),
+      final ok=await showDialog<bool>(context:context,builder:(dialogContext)=>AlertDialog(
+        title:Text(strings.t('معاينة الورقة بعد التصحيح','Corrected page preview')),
         content:SizedBox(width:300,height:420,child:Image.file(File(path),fit:BoxFit.contain)),
-        actions:[TextButton(onPressed:()=>Navigator.pop(context,false),
-          child:const Text('تعديل مجددًا')),
-          FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('اعتماد الصورة'))]));
+        actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext,false),
+          child:Text(strings.t('تعديل مجددًا','Edit again'))),
+          FilledButton(onPressed:()=>Navigator.pop(dialogContext,true),
+            child:Text(strings.t('اعتماد الصورة','Accept page')))]));
       if(ok==true && mounted)Navigator.pop(context,path);
-    } catch(e){if(mounted)feedback(context,'فشل تصحيح الصورة: $e');}
+    } catch(e){if(mounted)feedback(context,strings.t('فشل تصحيح الصورة','Could not correct image'));}
     finally{if(mounted)setState(()=>saving=false);}
   }
   @override Widget build(BuildContext context){
+    final strings=S(widget.store.settings.english);
     return Scaffold(backgroundColor:const Color(0xFF0B1733),
-      appBar:AppBar(title:const Text('تعديل الصورة',style:TextStyle(color:Colors.white)),
+      appBar:AppBar(title:Text(strings.t('تعديل الصورة','Edit page'),
+        style:const TextStyle(color:Colors.white)),
         foregroundColor:Colors.white,backgroundColor:const Color(0xFF0B1733),
-        actions:[IconButton(onPressed:loading||saving?null:_apply,
+        actions:[LanguageToggle(store:widget.store,onChanged:_updateLanguage),
+          IconButton(onPressed:loading||saving?null:_apply,
           icon:const Icon(Icons.check_circle,color:Brand.aqua,size:30))]),
       body:SafeArea(child:Column(children:[
-        const SizedBox(height:5),const Text('اسحب الزوايا الأربع لتحديد الورقة فقط',
-          style:TextStyle(color:Colors.white70)),
+        const SizedBox(height:5),Text(strings.t('اسحب الزوايا الأربع لتحديد الورقة فقط',
+          'Drag the four corners around the page'),
+          style:const TextStyle(color:Colors.white70)),
         Expanded(child:Padding(padding:const EdgeInsets.all(12),
           child:LayoutBuilder(builder:(context,constraints){
             final rect=_imageRect(Size(constraints.maxWidth,constraints.maxHeight));
@@ -120,12 +133,15 @@ class _CornerEditorState extends State<CornerEditor> {
         const Divider(color:Colors.white12),
         SingleChildScrollView(scrollDirection:Axis.horizontal,
           padding:const EdgeInsets.symmetric(horizontal:12),child:Row(children:[
-            _darkAction(Icons.crop_free,'اكتشاف تلقائي',_detect),
-            _darkAction(Icons.rotate_right,'تدوير',_rotate),
+            _darkAction(Icons.crop_free,strings.t('اكتشاف تلقائي','Detect'),_detect),
+            _darkAction(Icons.rotate_right,strings.t('تدوير','Rotate'),_rotate),
             ...<ScanFilter,String>{
-              ScanFilter.none:'أصلي',ScanFilter.enhance:'محسن',
-              ScanFilter.magicColor:'مستند',ScanFilter.grayscale:'رمادي',
-              ScanFilter.blackWhite:'أبيض وأسود',ScanFilter.sharpen:'حدة',
+              ScanFilter.none:strings.t('أصلي','Original'),
+              ScanFilter.enhance:strings.t('محسن','Enhance'),
+              ScanFilter.magicColor:strings.t('مستند','Document'),
+              ScanFilter.grayscale:strings.t('رمادي','Grayscale'),
+              ScanFilter.blackWhite:strings.t('أبيض وأسود','B&W'),
+              ScanFilter.sharpen:strings.t('حدة','Sharpen'),
             }.entries.map((entry)=>Padding(padding:const EdgeInsets.symmetric(horizontal:4),
               child:ChoiceChip(label:Text(entry.value),selected:filter==entry.key,
                 onSelected:(_)=>setState(()=>filter=entry.key)))),
@@ -134,7 +150,7 @@ class _CornerEditorState extends State<CornerEditor> {
           onPressed:saving||loading?null:_apply,
           icon:saving?const SizedBox(width:20,height:20,child:CircularProgressIndicator(
             strokeWidth:2,color:Colors.white)):const Icon(Icons.done_all),
-          label:const Text('تطبيق تصحيح المنظور والتحسين'))),
+          label:Text(strings.t('تطبيق تصحيح المنظور والتحسين','Apply correction')))),
       ])));
   }
   Widget _darkAction(IconData icon,String title,VoidCallback onTap)=>TextButton.icon(
