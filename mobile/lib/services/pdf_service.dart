@@ -115,7 +115,7 @@ Uint8List _renderScan(_ScanTask request) {
   outWidth *= scale;
   outHeight *= scale;
 
-  math.Point<int> point(ScanPoint v) => math.Point(
+  img.Point point(ScanPoint v) => img.Point(
       (v.x * (source.width - 1)).round(),
       (v.y * (source.height - 1)).round());
   var output = img.copyRectify(
