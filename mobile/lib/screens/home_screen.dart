@@ -81,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const SizedBox(height:24),SectionHeader(s.subject),
       DropdownButtonFormField<String>(initialValue:subjects.contains(selectedSubject)?selectedSubject:null,
         isExpanded:true,hint:Text(s.t('اختر المادة أولًا','Choose a subject first')),
-        items:subjects.map((x)=>DropdownMenuItem(value:x,child:Text(x,overflow:TextOverflow.ellipsis))).toList(),
+        items:subjects.map((x)=>DropdownMenuItem(value:x,child:Text(s.subjectName(x),overflow:TextOverflow.ellipsis))).toList(),
         onChanged:(value)=>setState(()=>selectedSubject=value)),
       const SizedBox(height:20),
       Row(children:[
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment:CrossAxisAlignment.start,children:[
             Text(latest.filename,maxLines:2,overflow:TextOverflow.ellipsis,
               style:const TextStyle(fontWeight:FontWeight.w700,color:Brand.navy)),
-            Text('${latest.pageCount} ${s.pages} • ${latest.subject}',
+            Text('${latest.pageCount} ${s.pages} • ${s.subjectName(latest.subject)}',
               style:const TextStyle(fontSize:12,color:Brand.muted)),
           ])),IconButton(icon:const Icon(Icons.share_outlined,color:Brand.blue),
           onPressed:()=>SharingService(widget.store).share(latest,context).catchError(
