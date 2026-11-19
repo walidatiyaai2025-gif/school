@@ -1,5 +1,6 @@
 <?php
 return [
+ 'support_email'=>env('SCHOOLPDF_SUPPORT_EMAIL','info@50sols.com'),
  'base_url'=>env('SCHOOLPDF_BASE_URL','https://sclpdf.50sols.com'),
  'country_proxy_cidrs'=>array_filter(array_map('trim',explode(',',env('SCHOOLPDF_COUNTRY_PROXY_CIDRS','')))),
  'firebase_project'=>env('SCHOOLPDF_FIREBASE_PROJECT_ID',''),
