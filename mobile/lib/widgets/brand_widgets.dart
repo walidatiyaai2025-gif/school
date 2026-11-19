@@ -14,10 +14,20 @@ class SectionHeader extends StatelessWidget {
 class WhitePanel extends StatelessWidget {
   const WhitePanel({super.key,required this.child,this.padding=const EdgeInsets.all(16)});
   final Widget child;final EdgeInsets padding;
-  @override Widget build(BuildContext context)=>Container(
-    width:double.infinity,padding:padding,decoration:BoxDecoration(color:Colors.white,
-      borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFE4ECF7))),
-    child:child);
+  // ListTile and InkWell paint on their nearest Material. Avoid a decorated
+  // Container between them and Material: recent Flutter debug builds assert.
+  @override Widget build(BuildContext context)=>Material(
+    color:Colors.white,
+    clipBehavior:Clip.antiAlias,
+    shape:RoundedRectangleBorder(
+      borderRadius:BorderRadius.circular(20),
+      side:const BorderSide(color:Color(0xFFE4ECF7)),
+    ),
+    child:Padding(
+      padding:padding,
+      child:SizedBox(width:double.infinity,child:child),
+    ),
+  );
 }
 
 class InfoBanner extends StatelessWidget {
