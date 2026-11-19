@@ -254,6 +254,7 @@ jobs:
     needs: independently-install-exact-setup
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: SchoolPDF-Setup-v1.1.2-CANDIDATE-UNVERIFIED
@@ -275,6 +276,35 @@ jobs:
           assert evidence['archive_sha256']==hashlib.sha256(pathlib.Path('SchoolPDF-Setup-v1.1.2.zip').read_bytes()).hexdigest()
           print('Exact commit, checksum and acceptance evidence match.')
           PY
+      - name: Build verified fixed-DocumentRoot cPanel deployment packages
+        run: |
+          python3 setup/build_fixed_root.py \
+            --archive release/SchoolPDF-Setup-v1.1.2.zip \
+            --checksum release/SchoolPDF-Setup-v1.1.2.sha256 \
+            --acceptance release/RELEASE_ACCEPTANCE.json \
+            --output release
+          cp setup/FIXED_ROOT_DEPLOY_AR.md release/SchoolPDF-FixedRoot-DEPLOY_AR.md
+          cd release
+          sha256sum -c SchoolPDF-WebBridge-v1.1.2.zip.sha256
+          sha256sum -c SchoolPDF-FixedRoot-Setup-v1.1.2.zip.sha256
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile('SchoolPDF-WebBridge-v1.1.2.zip') as z:
+              assert set(z.namelist()) == {
+                  '.htaccess', '.schoolpdf-bridge.php', 'index.php', 'install.php'
+              }
+              assert z.testzip() is None
+          with zipfile.ZipFile('SchoolPDF-FixedRoot-Setup-v1.1.2.zip') as z:
+              names = set(z.namelist())
+              assert z.testzip() is None
+              assert 'sclpdf/vendor/autoload.php' in names
+              assert 'sclpdf/SETUP_MANIFEST.json' in names
+              assert 'public_html/sclpdf.50sols.com/index.php' in names
+              assert 'public_html/sclpdf.50sols.com/.htaccess' in names
+              assert 'public_html/sclpdf.50sols.com/vendor/autoload.php' not in names
+              assert 'public_html/sclpdf.50sols.com/.env' not in names
+          print('Fixed-root bundles contain only public bridge entries under public_html.')
+          PY
       - name: Publish School PDF cPanel Setup ZIP
         uses: actions/upload-artifact@v4
         with:
@@ -283,6 +313,19 @@ jobs:
             release/SchoolPDF-Setup-v1.1.2.zip
             release/SchoolPDF-Setup-v1.1.2.sha256
             release/SchoolPDF-Setup-v1.1.2-BUILD_INFO.json
+            release/RELEASE_ACCEPTANCE.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Publish verified fixed-root one-ZIP and web-only bridge
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-FixedRoot-v1.1.2-VERIFIED
+          path: |
+            release/SchoolPDF-WebBridge-v1.1.2.zip
+            release/SchoolPDF-WebBridge-v1.1.2.zip.sha256
+            release/SchoolPDF-FixedRoot-Setup-v1.1.2.zip
+            release/SchoolPDF-FixedRoot-Setup-v1.1.2.zip.sha256
+            release/SchoolPDF-FixedRoot-DEPLOY_AR.md
             release/RELEASE_ACCEPTANCE.json
           retention-days: 30
           if-no-files-found: error
