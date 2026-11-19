@@ -8,6 +8,8 @@ Route::get('/',fn()=>view('legal.home'));
 Route::view('/privacy','legal.privacy')->name('privacy');
 Route::view('/terms','legal.terms');
 Route::view('/support','legal.support');
+Route::view('/data-deletion','legal.data-deletion')->name('data-deletion');
+Route::view('/delete-account','legal.data-deletion'); // No consumer accounts: explain local and device-data deletion.
 Route::middleware('installed')->prefix('admin')->name('admin.')->group(function(){
  Route::get('login',[AuthController::class,'loginPage'])->name('login');
  Route::post('login',[AuthController::class,'login'])->middleware('throttle:5,1')->name('login.submit');

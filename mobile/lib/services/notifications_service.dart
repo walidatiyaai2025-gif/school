@@ -165,6 +165,26 @@ class NotificationService {
     }
   }
 
+  /// Cancel app reminders and withdraw consent for future FCM registration
+  /// when the local profile is erased. OS permission can remain enabled;
+  /// in-app consent is stored independently and must be explicitly re-granted.
+  Future<void> disableForDataReset() async {
+    // A broken notification plugin must not prevent privacy deletion.
+    try { await local.cancelAll(); } catch (_) {}
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_optInPreference, false);
+    permissionGranted = false;
+    if (pushConnected) {
+      try {
+        await FirebaseMessaging.instance.setAutoInitEnabled(false);
+        await FirebaseMessaging.instance.deleteToken();
+      } catch (_) {
+        // The server registration is removed separately and never inferred
+        // from a local Firebase call. Offline PDF access remains available.
+      }
+    }
+  }
+
   Future<void> pdfReady(String recordId) async {
     if (!permissionGranted) return;
     await local.show(

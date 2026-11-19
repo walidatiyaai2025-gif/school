@@ -105,6 +105,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await widget.store.saveSettings();
     if (mounted) setState(() {});
   }
+  Future<void> _deleteLocalProfileAndPdfs() async {
+    final s = S(widget.store.settings.english);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(s.t('حذف بيانات هذا الجهاز نهائيًا', 'Delete data on this device?')),
+        content: Text(s.t(
+          'سيُحذف اسم الطالب والمواد وملفات PDF داخل التطبيق نهائيًا. '
+          'الصور الأصلية في المعرض والنسخ المصدرة لن تُحذف. '
+          'سنبعث طلبًا لحذف سجل الجهاز الاختياري من الخادم أيضًا.',
+          'Your student profile, subjects and app-managed PDFs will be deleted permanently. '
+          'Original gallery photos and exported copies stay untouched. '
+          'We will also request removal of the optional server device record.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialog, false),
+            child: Text(s.cancel)),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: Text(s.t('تأكيد الحذف', 'Delete data')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      // Remote deletion is attempted before local reset. If offline, the
+      // pending-delete marker and secret are intentionally retained for retry.
+      // Stop analytics before unregistering so a resumed app cannot create
+      // a fresh installation record during the deletion window.
+      widget.store.settings.analyticsConsent = false;
+      await widget.store.saveSettings();
+      final serverDeleted = await TelemetryService.unregister();
+      if (!serverDeleted && mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (dialog) => AlertDialog(
+            title: Text(s.t('حذف سجل الخادم معلّق', 'Server deletion pending')),
+            content: Text(s.t(
+              'لا يوجد اتصال بالخادم حاليًا. سنحتفظ بمعلومات إعادة المحاولة الآمنة '
+              'ونحاول حذف السجل عند فتح التطبيق مجددًا.',
+              'The server could not confirm deletion. A pending request is '
+              'retained and retried when the app next starts online.',
+            )),
+            actions: [TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: Text(s.t('متابعة', 'Continue')),
+            )],
+          ),
+        );
+      }
+      await widget.notifications.disableForDataReset();
+      await widget.store.deleteLocalProfileAndPdfs();
+    } catch (_) {
+      if (mounted) feedback(context, s.t(
+        'تعذر إكمال حذف البيانات. حاول مرة أخرى.',
+        'Could not finish deleting local data. Please retry.',
+      ));
+    }
+  }
+
   @override Widget build(BuildContext context){
     final s=S(widget.store.settings.english),u=widget.store.settings;
     return ListView(padding:const EdgeInsets.fromLTRB(17,18,17,30),children:[
@@ -232,6 +293,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle:Text(s.t('لا يحذف ملفات PDF من جهازك','Does not delete local PDFs')),
           onTap:()async{u.analyticsConsent=false;await widget.store.saveSettings();
             final deleted=await TelemetryService.unregister();if(mounted){setState((){});feedback(context,deleted?s.t('تم حذف سجل هذا الجهاز','Device record deleted'):s.t('لم يتصل بالخادم؛ سيتم إعادة محاولة الحذف عند التشغيل','Deletion pending; will retry on next launch'));}}),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent),
+          title: Text(s.t('حذف بيانات الطالب وملفات PDF', 'Delete local profile and PDFs')),
+          subtitle: Text(s.t('حذف نهائي داخل التطبيق، دون حذف صور المعرض أو النسخ المصدرة',
+            'Permanent in-app deletion; gallery originals and exports remain')),
+          onTap: _deleteLocalProfileAndPdfs,
+        ),
+        ListTile(
+          leading: const Icon(Icons.help_outline),
+          title: Text(s.t('كيفية حذف البيانات', 'Data deletion instructions')),
+          onTap: () => launchUrl(Uri.parse('https://sclpdf.50sols.com/data-deletion'),
+            mode: LaunchMode.externalApplication),
+        ),
+        ListTile(
+          leading: const Icon(Icons.email_outlined),
+          title: Text(s.t('التواصل مع الدعم', 'Contact support')),
+          subtitle: const Text('info@50sols.com'),
+          onTap: () => launchUrl(Uri(scheme: 'mailto', path: 'info@50sols.com'),
+            mode: LaunchMode.externalApplication),
+        ),
         InfoBanner(text:s.t('الصور والملفات محفوظة محليًا. حذف التطبيق قد يحذف الملفات التي لم تحفظ نسخة منها.',
           'Scans stay locally on your device. Unexported files can be lost on uninstall.'),
           icon:Icons.shield_outlined),

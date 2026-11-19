@@ -1,3 +1,1 @@
-# School PDF authorized sellers
-# DO NOT publish made-up publisher IDs. Add the actual lines copied from AdMob
-# and each approved mediation network in Admin > Ads, then deploy this file.
+google.com, pub-3218037275900725, DIRECT, f08c47fec0942fa0

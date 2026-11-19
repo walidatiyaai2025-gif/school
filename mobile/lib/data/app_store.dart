@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'models.dart';
 
 class AppStore extends ChangeNotifier {
@@ -74,6 +76,34 @@ class AppStore extends ChangeNotifier {
     records.removeAt(i);
     await _persistRecords();
   }
+  /// Delete ONLY the app-managed PDF directory, not gallery originals or
+  /// files the user exported to other locations. Keep server-deletion retry
+  /// credentials in SharedPreferences until TelemetryService confirms removal.
+  Future<void> deleteLocalProfileAndPdfs({Directory? documentsDirectory}) async {
+    final documents = documentsDirectory ?? await getApplicationDocumentsDirectory();
+    final appPdfDirectory = Directory(p.join(documents.path, 'schoolpdf', 'pdf'));
+    // On failure, retain settings/metadata so the user can retry and see the
+    // error instead of receiving a false "data deleted" confirmation.
+    // Reject file/symlink substitutions rather than accidentally deleting
+    // a directory outside app-managed storage.
+    final appRoot = Directory(p.join(documents.path, 'schoolpdf'));
+    final rootType = await FileSystemEntity.type(appRoot.path, followLinks: false);
+    final pdfType = await FileSystemEntity.type(appPdfDirectory.path, followLinks: false);
+    if (rootType == FileSystemEntityType.link ||
+        pdfType == FileSystemEntityType.link ||
+        pdfType == FileSystemEntityType.file) {
+      throw FileSystemException('Unexpected School PDF storage path', appPdfDirectory.path);
+    }
+    if (pdfType == FileSystemEntityType.directory) {
+      await appPdfDirectory.delete(recursive: true);
+    }
+    await _prefs.remove('files_v1');
+    await _prefs.remove('settings_v1');
+    records.clear();
+    settings = StudentSettings();
+    notifyListeners();
+  }
+
   Future<void> _persistRecords() async {
     await _prefs.setString('files_v1',encodeRecords(records));
     notifyListeners();
