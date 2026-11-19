@@ -133,15 +133,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       // Remote deletion is attempted before local reset. If offline, the
       // pending-delete marker and secret are intentionally retained for retry.
+      // Stop analytics before unregistering so a resumed app cannot create
+      // a fresh installation record during the deletion window.
+      widget.store.settings.analyticsConsent = false;
+      await widget.store.saveSettings();
       final serverDeleted = await TelemetryService.unregister();
+      if (!serverDeleted && mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (dialog) => AlertDialog(
+            title: Text(s.t('حذف سجل الخادم معلّق', 'Server deletion pending')),
+            content: Text(s.t(
+              'لا يوجد اتصال بالخادم حاليًا. سنحتفظ بمعلومات إعادة المحاولة الآمنة '
+              'ونحاول حذف السجل عند فتح التطبيق مجددًا.',
+              'The server could not confirm deletion. A pending request is '
+              'retained and retried when the app next starts online.',
+            )),
+            actions: [TextButton(
+              onPressed: () => Navigator.pop(dialog),
+              child: Text(s.t('متابعة', 'Continue')),
+            )],
+          ),
+        );
+      }
       await widget.notifications.disableForDataReset();
       await widget.store.deleteLocalProfileAndPdfs();
-      if (!serverDeleted && mounted) {
-        feedback(context, s.t(
-          'حُذفت البيانات المحلية؛ حذف سجل الخادم معلّق وسيُعاد عند الاتصال.',
-          'Local data deleted; server deletion is pending and will retry online.',
-        ));
-      }
     } catch (_) {
       if (mounted) feedback(context, s.t(
         'تعذر إكمال حذف البيانات. حاول مرة أخرى.',
