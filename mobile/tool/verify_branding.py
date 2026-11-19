@@ -30,7 +30,8 @@ def validate_source() -> None:
             raise AssertionError(f"{name}: wrong launcher icon source")
         if "adaptive_icon_background: '#FFFFFF'" not in content:
             raise AssertionError(f"{name}: adaptive background must match white logo")
-    if "ios: true" not in pub or "android: true" not in android:
+    ios = (MOBILE / "tool/flutter_launcher_icons_ios.yaml").read_text(encoding="utf-8")
+    if "ios: true" not in pub or "android: true" not in android or "ios: true" not in ios or "android: false" not in ios:
         raise AssertionError("Missing iOS/Android launcher icon targets")
 
 def validate_stores() -> None:

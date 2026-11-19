@@ -29,7 +29,7 @@ On a macOS host with Xcode, from `mobile/` (after creating the iOS platform
 and running `flutter pub get`):
 
 ```sh
-dart run flutter_launcher_icons
+dart run flutter_launcher_icons -f tool/flutter_launcher_icons_ios.yaml
 python3 tool/verify_branding.py --ios
 ```
 

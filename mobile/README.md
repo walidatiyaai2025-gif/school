@@ -45,7 +45,7 @@ The Android and iOS launcher icons are generated from this asset (they are not
 committed as hand-edited native platform files).
 
 - Android: `dart run flutter_launcher_icons -f tool/flutter_launcher_icons_android.yaml`
-- iOS (macOS): `dart run flutter_launcher_icons` after generating the iOS platform.
+- iOS (macOS): `dart run flutter_launcher_icons -f tool/flutter_launcher_icons_ios.yaml` after generating the iOS platform.
 - Google Play and App Store marketing images: run `python3 tool/generate_store_assets.py`
   (requires Pillow), or download the `schoolpdf-store-branding` GitHub Actions artifact.
 
