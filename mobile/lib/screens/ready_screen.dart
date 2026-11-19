@@ -5,6 +5,7 @@ import '../data/models.dart';
 import '../data/app_store.dart';
 import '../services/sharing_service.dart';
 import '../widgets/brand_widgets.dart';
+import '../widgets/language_toggle.dart';
 
 class ReadyScreen extends StatelessWidget {
   const ReadyScreen({super.key,required this.store,required this.record});
@@ -14,7 +15,9 @@ class ReadyScreen extends StatelessWidget {
     Future<void> safe(Future<void> Function() f)async{
       try {await f();}catch(e){if(context.mounted)feedback(context,e.toString());}
     }
-    return Scaffold(appBar:AppBar(title:const Text('School PDF')),
+    return AnimatedBuilder(animation:store,builder:(context,_)=>Scaffold(
+      appBar:AppBar(title:const Text('School PDF'),
+        actions:[LanguageToggle(store:store)]),
       body:SafeArea(child:ListView(padding:const EdgeInsets.all(24),children:[
         const SizedBox(height:30),Center(child:Container(width:110,height:110,
           decoration:const BoxDecoration(color:Color(0xFFDCFBEA),shape:BoxShape.circle),
@@ -51,6 +54,6 @@ class ReadyScreen extends StatelessWidget {
             'Times share sheet opened: $count'),
             style:const TextStyle(color:Brand.muted,fontSize:12)));
         }),
-      ])));
+      ]))));
   }
 }
