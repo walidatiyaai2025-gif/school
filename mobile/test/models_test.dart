@@ -71,6 +71,23 @@ void main(){
     expect(corners.area,greaterThan(.45));
     expect(corners.area,lessThan(.85));
   });
+  test('four-corner PDF image processing works offline without Java JNI',(){
+    final image=img.Image(width:160,height:220);
+    for(var y=0;y<220;y++){
+      for(var x=0;x<160;x++){
+        final page=x>15 && x<143 && y>18 && y<197;
+        image.setPixelRgb(x,y,page?230:15,page?230:15,page?230:15);
+      }
+    }
+    final jpg=Uint8List.fromList(img.encodeJpg(image));
+    final result=renderScanBytes(jpg,ScanEngine.insetCorners(),
+        ScanFilter.enhance,'small');
+    final decoded=img.decodeJpg(result);
+    expect(result.length,greaterThan(100));
+    expect(decoded,isNotNull);
+    expect(decoded!.width,greaterThan(50));
+    expect(decoded.height,greaterThan(50));
+  });
   test('scan geometry rejects crossed corners',(){
     const crossed=DocumentCorners(
       topLeft:(x:.1,y:.1), topRight:(x:.9,y:.9),
