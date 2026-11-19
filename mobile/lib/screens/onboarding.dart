@@ -4,6 +4,7 @@ import '../core/strings.dart';
 import '../data/app_store.dart';
 import '../services/notifications_service.dart';
 import '../widgets/brand_widgets.dart';
+import '../widgets/language_toggle.dart';
 import '../services/telemetry_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -44,7 +45,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
   @override Widget build(BuildContext context){
     final s=S(widget.store.settings.english);
-    return Scaffold(body:SafeArea(child:ListView(padding:const EdgeInsets.all(24),children:[
+    return Scaffold(appBar:AppBar(automaticallyImplyLeading:false,
+      actions:[LanguageToggle(store:widget.store,onChanged:()=>setState((){}))]),
+      body:SafeArea(child:ListView(padding:const EdgeInsets.all(24),children:[
       const SizedBox(height:22),Center(child:const Logo(size:90)),const SizedBox(height:12),
       const Center(child:Text('School PDF',style:TextStyle(color:Brand.navy,
         fontSize:28,fontWeight:FontWeight.w900))),const SizedBox(height:8),
@@ -60,7 +63,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height:17),
           Text(s.level,style:const TextStyle(fontWeight:FontWeight.w700)),
           const SizedBox(height:8),DropdownButtonFormField<String>(
-            initialValue:level,isExpanded:true,items:['primary','middle','secondary','university']
+            initialValue:level,isExpanded:true,items:['primary','middle','secondary','university','other']
               .map((x)=>DropdownMenuItem(value:x,child:Text(s.grade(x)))).toList(),
             onChanged:(x){if(x!=null)setState(()=>level=x);}),
           const SizedBox(height:17),
