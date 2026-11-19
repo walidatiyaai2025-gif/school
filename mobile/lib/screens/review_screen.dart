@@ -37,7 +37,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         :await picker.pickMultiImage(imageQuality:94,maxWidth:3200);
       if(mounted)setState(()=>pages.addAll(selected.map((x)=>ScanPage(x.path))));
     } catch(e){if(mounted)feedback(context,S(widget.store.settings.english).t(
-      'تعذر إضافة الصور','Could not add photos'))}
+      'تعذر إضافة الصور','Could not add photos'));}
   }
   Future<void> _edit(int index)async{
     final result=await Navigator.push<String>(context,MaterialPageRoute(
@@ -60,7 +60,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       Navigator.pushReplacement(context,MaterialPageRoute<void>(builder:(_)=>
         ReadyScreen(store:widget.store,record:doc)));
     } catch(e){if(mounted)feedback(context,S(widget.store.settings.english).t(
-      'فشل إنشاء PDF','Could not create PDF: $e'))}
+      'فشل إنشاء PDF','Could not create PDF: $e'));}
     finally {if(mounted)setState(()=>busy=false);}
   }
   @override Widget build(BuildContext context){
