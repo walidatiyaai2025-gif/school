@@ -55,6 +55,10 @@ jobs:
       - name: Verify supplied Firebase Android/iOS client configuration
         working-directory: mobile
         run: python3 tool/verify_firebase_config.py
+      - name: Ensure Kotlin Gradle build uses official Maven Central fallback
+        run: |
+          mkdir -p "$HOME/.gradle/init.d"
+          cp mobile/tool/gradle_repositories_init.gradle "$HOME/.gradle/init.d/schoolpdf-repos.gradle"
       - name: Flutter Android prepare and analysis
         working-directory: mobile
         run: |
@@ -71,7 +75,12 @@ jobs:
         working-directory: mobile
         run: flutter build apk --debug --no-pub
       - name: Verify debug APK
-        run: test -s mobile/build/app/outputs/flutter-apk/app-debug.apk
+        run: |
+          test -s mobile/build/app/outputs/flutter-apk/app-debug.apk
+          python3 mobile/tool/check_android_16kb.py mobile/build/app/outputs/flutter-apk/app-debug.apk
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name zipalign | sort -V | tail -n 1)"
+          test -x "$ZIPALIGN"
+          "$ZIPALIGN" -c -P 16 -v 4 mobile/build/app/outputs/flutter-apk/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
           name: SchoolPDF-v1.1.1-debug-apk

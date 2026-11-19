@@ -39,24 +39,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
         time:widget.store.settings.reminderTime);
     }catch(e){if(mounted)feedback(context,'تعذر جدولة التذكير: $e');}
   }
-  Future<void> _addSubject()async{
-    final controller=TextEditingController();
-    final s=S(widget.store.settings.english);
-    final selected=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(
-      title:Text(s.t('أضف مادة','Add subject')),
-      content:TextField(controller:controller,maxLength:60,
-        decoration:InputDecoration(hintText:s.t('مثلاً: رياضيات متقدمة','E.g. Advanced Mathematics'))),
-      actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:Text(s.cancel)),
-        FilledButton(onPressed:()=>Navigator.pop(ctx,controller.text.trim()),child:Text(s.add))]));
-    controller.dispose();
-    if(selected==null||selected.isEmpty)return;
-    if((schoolSubjects[widget.store.settings.level]??[]).contains(selected) ||
-        widget.store.settings.customSubjects.contains(selected)){
-      if(mounted)feedback(context,s.t('المادة موجودة بالفعل','Subject already exists'));return;
+  TimeOfDay get _reminderTime {
+    final parts = widget.store.settings.reminderTime.split(':');
+    final hour = int.tryParse(parts.first) ?? 18;
+    final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+    return TimeOfDay(hour: hour.clamp(0, 23), minute: minute.clamp(0, 59));
+  }
+
+  Future<void> _chooseReminderTime() async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime,
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: false),
+        child: child!,
+      ),
+    );
+    if (time == null) return;
+    widget.store.settings.reminderTime =
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    await widget.store.saveSettings();
+    await _syncReminders();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _addSubject() async {
+    // Read the value directly, avoiding disposing a TextEditingController
+    // while Flutter's dialog exit animation still owns its TextField.
+    var entered = '';
+    final strings = S(widget.store.settings.english);
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(strings.t('أضف مادة', 'Add subject')),
+        content: TextField(
+          autofocus: true,
+          maxLength: 60,
+          onChanged: (value) => entered = value,
+          decoration: InputDecoration(
+            hintText: strings.t('مثلاً: رياضيات متقدمة', 'E.g. Advanced Mathematics'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(strings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, entered.trim()),
+            child: Text(strings.t('إضافة', 'Add')),
+          ),
+        ],
+      ),
+    );
+    if (selected == null || selected.isEmpty) return;
+    final base = schoolSubjects[widget.store.settings.level] ?? const <String>[];
+    if (base.contains(selected) ||
+        base.any((v) => S(true).subjectName(v).toLowerCase() == selected.toLowerCase()) ||
+        widget.store.settings.customSubjects.any(
+            (v) => v.toLowerCase() == selected.toLowerCase())) {
+      if (mounted) feedback(context, strings.t('المادة موجودة بالفعل', 'Subject already exists'));
+      return;
     }
     widget.store.settings.customSubjects.add(selected);
     await widget.store.saveSettings();
-    if(mounted)setState((){});
+    if (mounted) setState(() {});
   }
   @override Widget build(BuildContext context){
     final s=S(widget.store.settings.english),u=widget.store.settings;
@@ -72,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style:const TextStyle(fontWeight:FontWeight.w700)),
         const SizedBox(height:8),DropdownButtonFormField<String>(
           initialValue:u.level,isExpanded:true,
-          items:['primary','middle','secondary','university'].map((x)=>DropdownMenuItem(
+          items:['primary','middle','secondary','university','other'].map((x)=>DropdownMenuItem(
             value:x,child:Text(s.grade(x)))).toList(),
           onChanged:(v)async{if(v!=null){u.level=v;await widget.store.saveSettings();setState((){});}}),
         const SizedBox(height:14),Text(s.className,
@@ -137,13 +184,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             u.notifyReminders=v;await widget.store.saveSettings();await _syncReminders();
             setState((){});
           }:null),
-        if(u.notifyReminders)DropdownButtonFormField<String>(
-          initialValue:u.reminderTime,
-          decoration:InputDecoration(labelText:s.t('وقت التذكير','Reminder time')),
-          items:['16:00','18:00','20:00','21:00'].map((v)=>
-            DropdownMenuItem(value:v,child:Text(v))).toList(),
-          onChanged:(v)async{if(v!=null){u.reminderTime=v;
-            await widget.store.saveSettings();await _syncReminders();setState((){});}}),
+        if(u.notifyReminders)ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.schedule_outlined),
+          title: Text(s.t('وقت التذكير', 'Reminder time')),
+          subtitle: Text(MaterialLocalizations.of(context).formatTimeOfDay(
+            _reminderTime, alwaysUse24HourFormat: false)),
+          trailing: const Icon(Icons.edit_calendar_outlined),
+          onTap: _chooseReminderTime,
+        ),
         SwitchListTile.adaptive(value:u.notifyUpdates,
           title:Text(s.t('أخبار الخدمة المهمة','Important service updates')),
           onChanged:(v)async{u.notifyUpdates=v;await widget.store.saveSettings();setState((){});}),

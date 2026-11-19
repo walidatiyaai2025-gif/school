@@ -1,0 +1,18 @@
+// GitHub Actions build-only Gradle initialization.
+// Flutter 3.50's composite Kotlin DSL build may otherwise resolve the Kotlin
+// 2.3.x libraries exclusively through Gradle Plugin Portal, which sometimes
+// fails to proxy the actual Maven Central artifacts. Prefer official sources.
+gradle.beforeSettings { settings ->
+    settings.pluginManagement.repositories {
+        mavenCentral()
+        google()
+        gradlePluginPortal()
+    }
+}
+gradle.beforeProject { project ->
+    project.buildscript.repositories {
+        mavenCentral()
+        google()
+        gradlePluginPortal()
+    }
+}

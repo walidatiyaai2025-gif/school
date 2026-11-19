@@ -8,6 +8,7 @@ import '../data/app_store.dart';
 import '../data/models.dart';
 import '../services/sharing_service.dart';
 import '../widgets/brand_widgets.dart';
+import '../widgets/language_toggle.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key,required this.store});
@@ -21,7 +22,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return AnimatedBuilder(animation:widget.store,builder:(ctx,_) {
       final files=widget.store.records.where((r)=>
         (filter.isEmpty||r.subject==filter) &&
-        ('${r.filename} ${r.student} ${r.schoolClass} ${r.subject}'
+        ('${r.filename} ${r.student} ${r.schoolClass} ${r.subject} ${s.subjectName(r.subject)}'
           .toLowerCase().contains(search.trim().toLowerCase()))).toList();
       final subjects=widget.store.records.map((x)=>x.subject).toSet().toList();
       return ListView(padding:const EdgeInsets.fromLTRB(17,20,17,28),children:[
@@ -38,7 +39,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child:ChoiceChip(label:Text(s.t('الكل','All')),
                 selected:filter.isEmpty,onSelected:(_)=>setState(()=>filter=''))),
             ...subjects.map((v)=>Padding(padding:const EdgeInsetsDirectional.only(end:7),
-              child:ChoiceChip(label:Text(v),selected:filter==v,
+              child:ChoiceChip(label:Text(s.subjectName(v)),selected:filter==v,
                 onSelected:(_)=>setState(()=>filter=v)))),
           ])),const SizedBox(height:12),
         if(files.isEmpty)Padding(padding:const EdgeInsets.only(top:85),child:Column(
@@ -72,7 +73,7 @@ class _FileCard extends StatelessWidget {
             child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
               Text(record.filename,maxLines:2,overflow:TextOverflow.ellipsis,
                 style:const TextStyle(fontWeight:FontWeight.w800,color:Brand.navy,fontSize:12)),
-              const SizedBox(height:5),Text('${record.subject} • ${record.schoolClass}',
+              const SizedBox(height:5),Text('${s.subjectName(record.subject)} • ${record.schoolClass}',
                 style:const TextStyle(color:Brand.muted,fontSize:12)),
               Text('${record.pageCount} ${s.pages} • ${
                 (record.bytes/1024).toStringAsFixed(0)} KB • ${DateFormat('yyyy/MM/dd').format(record.createdAt)}',
@@ -110,14 +111,14 @@ class _FileCard extends StatelessWidget {
 }
 
 Future<void> _renameDialog(BuildContext context,AppStore store,PdfRecord r) async {
-  final c=TextEditingController(text:r.filename.replaceAll(RegExp(r'\.pdf$',caseSensitive:false),''));
+  var name=r.filename.replaceAll(RegExp(r'\.pdf$',caseSensitive:false),'');
   final s=S(store.settings.english);
   final result=await showDialog<String>(context:context,builder:(_)=>AlertDialog(
     title:Text(s.t('إعادة تسمية الملف','Rename PDF')),
-    content:TextField(controller:c,autofocus:true),
+    content:TextFormField(initialValue:name,autofocus:true,
+      onChanged:(v)=>name=v),
     actions:[TextButton(onPressed:()=>Navigator.pop(context),child:Text(s.cancel)),
-      FilledButton(onPressed:()=>Navigator.pop(context,c.text.trim()),child:Text(s.save))]));
-  c.dispose();
+      FilledButton(onPressed:()=>Navigator.pop(context,name.trim()),child:Text(s.save))]));
   if(result!=null && result.trim().isNotEmpty){
     try {await store.rename(r.id,result);} catch(e){if(context.mounted)feedback(context,e.toString());}
   }
@@ -139,13 +140,15 @@ class PdfDetailScreen extends StatelessWidget {
   const PdfDetailScreen({super.key,required this.store,required this.recordId});
   final AppStore store;final String recordId;
   @override Widget build(BuildContext context) {
-    final s=S(store.settings.english), share=SharingService(store);
+    final share=SharingService(store);
     return AnimatedBuilder(animation:store,builder:(ctx,_){
+      final s=S(store.settings.english);
       final results=store.records.where((r)=>r.id==recordId);
       if(results.isEmpty)return Scaffold(appBar:AppBar(),
         body:Center(child:Text(s.t('الملف غير موجود','File not found'))));
       final r=results.first;
-      return Scaffold(appBar:AppBar(title:Text(s.t('معاينة الملف','PDF Preview'))),
+      return Scaffold(appBar:AppBar(title:Text(s.t('معاينة الملف','PDF Preview')),
+        actions:[LanguageToggle(store:store)]),
         body:Column(children:[
           Expanded(child:PdfPreview(
             build:(_)=>File(r.path).readAsBytes(),
@@ -153,7 +156,7 @@ class PdfDetailScreen extends StatelessWidget {
             canChangePageFormat:false,pdfFileName:r.filename)),
           WhitePanel(child:Column(children:[
             Text(r.filename,style:const TextStyle(color:Brand.navy,fontWeight:FontWeight.w800)),
-            const SizedBox(height:7),Text('${r.student} • ${r.schoolClass} • ${r.subject}',
+            const SizedBox(height:7),Text('${r.student} • ${r.schoolClass} • ${s.subjectName(r.subject)}',
               style:const TextStyle(color:Brand.muted,fontSize:12)),
             Text('${r.pageCount} ${s.pages} • ${(r.bytes/1048576).toStringAsFixed(2)} MB',
               style:const TextStyle(color:Brand.muted,fontSize:12)),
