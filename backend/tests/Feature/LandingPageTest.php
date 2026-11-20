@@ -39,6 +39,18 @@ class LandingPageTest extends TestCase
         $this->assertStringNotContainsString('</i data-i18n-', $html);
     }
 
+    public function test_reference_aligned_layout_and_assets_are_in_source(): void
+    {
+        $html = $this->get('/')->assertOk()->getContent();
+        $this->assertStringContainsString('class="hero-brand"', $html);
+        $this->assertStringContainsString('hero-ornaments.svg', $html);
+        $this->assertStringContainsString('min-height:338px;height:338px', $html);
+        $this->assertStringContainsString('direction:ltr}.brand', $html);
+        $this->assertSame(7, substr_count($html, 'class="glyph" aria-hidden="true"'));
+        $this->assertFileExists(public_path('landing/hero-ornaments.svg'));
+        $this->assertFileExists(public_path('landing/worksheet-scene.svg'));
+    }
+
     public function test_legal_pages_remain_available(): void
     {
         $this->get('/privacy')->assertOk();
