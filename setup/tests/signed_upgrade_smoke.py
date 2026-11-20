@@ -167,7 +167,7 @@ try {
     assert partial.returncode == 0 and 'MIGRATION_RECOVERY_REQUIRED' in partial.stdout, (
         f'migration failure not safely contained: {partial.stderr[-450:]} {partial.stdout[-200:]}')
     assert (app / 'storage/framework/down').exists(), 'partial migration unexpectedly reopened site'
-    assert json.loads(installer_lock.read_text())['version'] == '1.1.3'
+    assert json.loads(installer_lock.read_text())['version'] == next_version
     assert upload_path.read_bytes() == b'SchoolPDF customer upload survives recovery\n'
 
     restore_root = app.parent / 'recovered-files'

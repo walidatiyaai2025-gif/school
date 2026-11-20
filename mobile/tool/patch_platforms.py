@@ -114,7 +114,9 @@ if build.exists():
             }
         }
         '''
-        s=s[:match.start()]+indent+block.replace('\n','\n'+indent)+s[match.start():]
+        # insert a clean block boundary, avoiding an invalid concatenated
+        # Gradle signingConfigs/buildTypes line.
+        s=s[:match.start()]+indent+block.rstrip()+'\n'+s[match.start():]
     s=s.replace('signingConfig = signingConfigs.getByName("debug")',
         'signingConfig = if (System.getenv("SCHOOLPDF_UPLOAD_KEYSTORE_FILE").isNullOrBlank()) null else signingConfigs.getByName("schoolPdfUpload")')
     # Fail closed if a Flutter template changed: no accidental debug-signed AAB.
