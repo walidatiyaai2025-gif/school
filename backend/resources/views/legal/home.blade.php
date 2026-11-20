@@ -27,6 +27,79 @@
 @media(max-width:1050px){.features{grid-template-columns:repeat(4,1fr)}.navlinks{gap:13px}.screens-layout{grid-template-columns:1fr}.shots{gap:12px}.hero-title{font-size:55px}}
 @media(max-width:700px){.wrap{padding-inline:18px}.site-nav{height:auto;min-height:65px}.nav-inner{padding-block:10px;gap:12px;flex-wrap:wrap}.brand img{width:38px;height:38px}.brand strong{font-size:20px}.navlinks{order:3;overflow:auto;width:100%;gap:20px;font-size:12px}.navlinks a{padding:10px 0}.hero-inner{grid-template-columns:1fr;gap:0}.hero-copy{padding-top:28px;text-align:center}.hero-title{text-align:center;font-size:49px}.hero-desc{margin-inline:auto}.trust,.store-row{justify-content:center}.hero-art{height:310px}.phone.screen-splash{height:296px;width:162px}.phone.screen-home{height:277px;width:160px}.features{grid-template-columns:repeat(2,1fr)}.shots{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 16px}.shot{min-width:165px;scroll-snap-align:center}.step-band{grid-template-columns:1fr;gap:10px}.launch-inner{padding-block:28px;flex-direction:column;gap:18px;text-align:center}.footer-inner{justify-content:center;text-align:center}.footer-links{justify-content:center}}
 @media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}}
+
+/* Reference-aligned desktop art direction, Nov 2026. Adjustments are scoped to the public landing only. */
+:root{scroll-padding-top:70px}
+.nav-inner{direction:ltr}.brand{direction:ltr}.navlinks{direction:rtl}.languages{flex:none}
+.hero{isolation:isolate;background:radial-gradient(ellipse at 27% 36%,#66a4e5 0%,#377ac4 33%,#1553aa 69%,#0a398d 100%)}
+.hero::after{content:"";position:absolute;inset:0;background-image:url("{{ asset('landing/hero-ornaments.svg') }}");background-position:center center;background-size:100% 100%;pointer-events:none;opacity:.94}
+.hero::before{content:"";position:absolute;inset:auto 0 0;background:linear-gradient(180deg,#ffffff00,#ffffff40 68%,#edf5ffb0);height:58px;border:0;border-radius:0;transform:none;font-size:0}
+.hero-brand{display:flex;align-items:center;justify-content:center;gap:20px;direction:rtl;margin:5px auto 9px}
+.hero-brand>img{width:80px;height:80px;object-fit:contain;border-radius:20px;filter:drop-shadow(0 10px 15px #00428390)}
+.hero-brand .hero-title{margin:0;direction:ltr;text-align:center;white-space:nowrap}
+.hero-copy{text-align:center}.hero-desc{margin-inline:auto;text-align:center}.trust,.store-row{justify-content:center}
+.soon-pill{border-radius:12px;box-shadow:0 8px 24px #0e367b38}
+.phone{border-color:#172032;border-width:5px;box-shadow:12px 10px 16px #092b5888,inset 0 0 0 2px #b9c7d7}
+.hero-art::after{content:"";position:absolute;bottom:4px;left:0;right:0;height:16px;background:linear-gradient(90deg,transparent,#e0eeffbf 25%,#f7f9ffb8 65%,transparent);filter:blur(5px);z-index:0}
+.hero-art .phone{z-index:2}
+.feature .glyph{display:block;height:32px;color:#1379f5}
+.feature .glyph svg{display:block;width:32px;height:32px;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.feature:nth-child(1) .glyph{color:#247aff}.feature:nth-child(2) .glyph{color:#1685fb}.feature:nth-child(3) .glyph{color:#7d42f3}
+.feature:nth-child(4) .glyph{color:#17b976}.feature:nth-child(5) .glyph{color:#8143ed}.feature:nth-child(6) .glyph{color:#197af0}.feature:nth-child(7) .glyph{color:#ffaa13}
+.shots{position:relative}.shot{transition:box-shadow .15s,transform .15s}.shot:hover{box-shadow:0 10px 22px #153d8035;transform:translateY(-2px)}
+.shot .shot-head{border-radius:8px 8px 0 0}.shot .shot-actions{font-weight:700}
+#how .section-heading{align-self:end}#how .section-sub{align-self:start;margin-top:0}
+.step-band{background:#edf4fe}.step-num{box-shadow:0 0 0 5px #fff}
+@media(min-width:1101px){
+.site-nav{height:63px}.nav-inner{gap:22px}.brand img{width:50px;height:50px}.brand strong{font-size:23px}
+.navlinks{gap:30px}.navlinks a{padding:21px 0}
+.hero,.hero-inner{min-height:338px;height:338px}
+.hero-inner{grid-template-columns:1fr 1fr;gap:20px}
+.hero-copy{padding:10px 0 10px}.hero-title{font-size:64px;line-height:1.04;letter-spacing:-2px}
+.hero-brand{margin:0 auto 8px;gap:16px}.hero-brand>img{width:81px;height:81px}
+.hero-desc{font-size:19px;line-height:1.48;max-width:545px;margin-bottom:13px}
+.soon-pill{font-size:13px;padding:7px 14px}
+.trust{gap:10px 24px;font-size:12px;margin-bottom:18px}
+.store{height:69px;min-width:222px;border-radius:17px}.store-row{gap:22px}
+.hero-art{height:338px}
+.phone.screen-splash{height:339px;width:184px;transform:rotate(-3deg) translate(27px,12px)}
+.phone.screen-home{height:324px;width:182px;transform:rotate(4deg) translate(-16px,4px)}
+#features.section{padding:0 0 13px}
+#features .section-heading{font-size:22px;line-height:1.2;margin:0 0 10px;padding-top:0}
+#features .feature{height:96px;gap:7px;border-radius:15px}
+#features .feature b{font-size:12px}
+.screens-section{padding:11px 0 7px}
+.screens-layout{grid-template-columns:195px minmax(0,1fr);gap:22px}
+.screens-layout .section-heading{font-size:22px;margin:0 0 4px}
+.screens-layout .section-sub{margin:0;font-size:12px}
+.shots{gap:24px}.shot{height:173px}.shot-body{height:147px}
+#how.section{padding:11px 0 15px}
+#how>.wrap{display:grid;grid-template-columns:195px minmax(0,1fr);grid-template-rows:auto auto;column-gap:22px;align-items:center}
+#how .section-heading{grid-column:1;grid-row:1;font-size:22px;margin:0 0 5px}
+#how .section-sub{grid-column:1;grid-row:2;font-size:12px;margin:0}
+#how .step-band{grid-column:2;grid-row:1 / span 2;min-height:84px;align-self:center}
+.step-band{padding:12px 17px;gap:14px;border-radius:25px}
+.step{padding:7px 12px;min-width:0;gap:10px}
+.step-num{width:50px;height:50px;font-size:26px}
+.step strong{font-size:14px}.step small{font-size:11px}
+.launch{margin-top:0}.launch-inner{min-height:108px}
+.launch h2{font-size:23px}
+}
+@media(max-width:1100px){
+.nav-inner{direction:ltr}.navlinks{gap:14px}
+.hero-brand>img{width:58px;height:58px}.hero-brand{gap:10px}
+.hero-brand .hero-title{font-size:clamp(34px,5vw,58px)}
+}
+@media(max-width:700px){
+.nav-inner{justify-content:space-between}.navlinks{direction:rtl}
+.hero,.hero-inner{min-height:0}
+.hero::after{background-size:auto 100%;background-position:left center;opacity:.4}
+.hero-copy{padding:25px 0 12px}.hero-brand .hero-title{font-size:clamp(33px,8vw,48px)}
+.hero-brand>img{width:55px;height:55px}
+.hero-desc{line-height:1.65}.trust{gap:12px 14px}.store{min-width:145px;height:60px}.store strong{font-size:14px}.store svg{width:29px;height:29px}.store-row{gap:9px}
+#how>.wrap{display:block}.step-band{grid-template-columns:1fr}
+.feature .glyph svg{width:30px;height:30px}
+}
 </style>
 </head>
 <body>
@@ -37,7 +110,7 @@
 </div></header>
 <main id="landing-main">
 <section id="home" class="hero"><div class="wrap hero-inner">
-<div class="hero-copy"><span class="soon-pill" data-i18n-ar="قريبًا إطلاق التطبيق الرسمي" data-i18n-en="Official App Launching Soon">قريبًا إطلاق التطبيق الرسمي</span><h1 class="hero-title">School <span>PDF</span></h1>
+<div class="hero-copy"><span class="soon-pill" data-i18n-ar="قريبًا إطلاق التطبيق الرسمي" data-i18n-en="Official App Launching Soon">قريبًا إطلاق التطبيق الرسمي</span><div class="hero-brand"><img src="{{ asset('brand-icon.png') }}" alt="" width="80" height="80"><h1 class="hero-title">School <span>PDF</span></h1></div>
 <p class="hero-desc" data-i18n-ar="تطبيق ذكي لتحويل صور الأوراق والملفات إلى PDF بجودة عالية، مصمم خصيصًا للطلاب في جميع المراحل." data-i18n-en="A smart way to turn photos of worksheets and documents into quality PDF files, made for students of every level.">تطبيق ذكي لتحويل صور الأوراق والملفات إلى PDF بجودة عالية، مصمم خصيصًا للطلاب في جميع المراحل.</p>
 <div class="trust"><span data-i18n-ar="سهل الاستخدام" data-i18n-en="Easy to use">سهل الاستخدام</span><span data-i18n-ar="جودة عالية" data-i18n-en="High quality">جودة عالية</span><span data-i18n-ar="أدوات قوية" data-i18n-en="Powerful tools">أدوات قوية</span><span data-i18n-ar="مناسب للمدرسة والجامعة" data-i18n-en="Made for school and university">مناسب للمدرسة والجامعة</span></div>
 <div class="store-row" aria-label="روابط التحميل غير متاحة قبل الإطلاق">
@@ -49,7 +122,7 @@
 <div class="phone screen-home"><div class="phone-screen" dir="rtl"><div class="app-head">School PDF</div><div class="app-welcome">👋 مرحبًا بك</div><div class="app-grid"><div class="app-tile"><i>📷</i>تصوير وتحويل</div><div class="app-tile"><i>▧</i>اختيار من المعرض</div><div class="app-tile"><i>📚</i>دمج ملفات</div><div class="app-tile"><i>▤</i>ترتيب الصفحات</div><div class="app-tile"><i>📁</i>حفظ الملفات</div><div class="app-tile"><i>🔗</i>مشاركة PDF</div></div></div></div>
 </div></div></section>
 <section id="features" class="section"><div class="wrap"><h2 class="section-heading" data-i18n-ar="أهم المميزات" data-i18n-en="Key Features">أهم المميزات</h2><div class="features">
-<div class="feature"><span class="glyph">📷</span><b data-i18n-ar="تصوير ذكي" data-i18n-en="Smart scanning">تصوير ذكي<br data-i18n-ar="للأوراق" data-i18n-en="for papers">للأوراق</b></div><div class="feature"><span class="glyph">▣</span><b data-i18n-ar="تصحيح منظور" data-i18n-en="Perspective">تصحيح منظور<br data-i18n-ar="الورقة تلقائيًا" data-i18n-en="correction">الورقة تلقائيًا</b></div><div class="feature"><span class="glyph">▤</span><b data-i18n-ar="دمج عدة صور" data-i18n-en="Combine photos">دمج عدة صور<br data-i18n-ar="في ملف واحد" data-i18n-en="into one PDF">في ملف واحد</b></div><div class="feature"><span class="glyph">↕️</span><b data-i18n-ar="ترتيب الصفحات" data-i18n-en="Reorder pages">ترتيب الصفحات<br data-i18n-ar="بسهولة" data-i18n-en="with ease">بسهولة</b></div><div class="feature"><span class="glyph">▱</span><b data-i18n-ar="ضغط حجم" data-i18n-en="Compress">ضغط حجم<br data-i18n-ar="ملف PDF" data-i18n-en="PDF file">ملف PDF</b></div><div class="feature"><span class="glyph">♧</span><b data-i18n-ar="مشاركة وحفظ" data-i18n-en="Save and share">مشاركة وحفظ<br data-i18n-ar="الملف" data-i18n-en="your file">الملف</b></div><div class="feature"><span class="glyph">♧</span><b data-i18n-ar="إشعارات وتنبيهات" data-i18n-en="Useful alerts">إشعارات وتنبيهات<br data-i18n-ar="مفيدة" data-i18n-en="and reminders">مفيدة</b></div>
+<div class="feature"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M7 7l2-3h6l2 3"/><circle cx="12" cy="14" r="4"/></svg></span><b data-i18n-ar="تصوير ذكي" data-i18n-en="Smart scanning">تصوير ذكي<br data-i18n-ar="للأوراق" data-i18n-en="for papers">للأوراق</b></div><div class="feature"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6 3h12l3 3v12l-3 3H6l-3-3V6z"/><path d="M9 2v4M15 2v4M9 22v-4M15 22v-4M2 9h4M2 15h4M22 9h-4M22 15h-4"/></svg></span><b data-i18n-ar="تصحيح منظور" data-i18n-en="Perspective">تصحيح منظور<br data-i18n-ar="الورقة تلقائيًا" data-i18n-en="correction">الورقة تلقائيًا</b></div><div class="feature"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5M2 18l10 4 10-4"/></svg></span><b data-i18n-ar="دمج عدة صور" data-i18n-en="Combine photos">دمج عدة صور<br data-i18n-ar="في ملف واحد" data-i18n-en="into one PDF">في ملف واحد</b></div><div class="feature"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 3v17m0 0-4-4m4 4 4-4M16 21V4m0 0-4 4m4-4 4 4"/></svg></span><b data-i18n-ar="ترتيب الصفحات" data-i18n-en="Reorder pages">ترتيب الصفحات<br data-i18n-ar="بسهولة" data-i18n-en="with ease">بسهولة</b></div><div class="feature"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M7 2h9l4 4v16H7z"/><path d="M16 2v5h5M10 12h7M10 16h7"/></svg></span><b data-i18n-ar="ضغط حجم" data-i18n-en="Compress">ضغط حجم<br data-i18n-ar="ملف PDF" data-i18n-en="PDF file">ملف PDF</b></div><div class="feature"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="18" cy="5" r="3"/><circle cx="5" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m7.8 10.7 7.4-4.3M7.8 13.3l7.4 4.3"/></svg></span><b data-i18n-ar="مشاركة وحفظ" data-i18n-en="Save and share">مشاركة وحفظ<br data-i18n-ar="الملف" data-i18n-en="your file">الملف</b></div><div class="feature"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9M10 21h4"/></svg></span><b data-i18n-ar="إشعارات وتنبيهات" data-i18n-en="Useful alerts">إشعارات وتنبيهات<br data-i18n-ar="مفيدة" data-i18n-en="and reminders">مفيدة</b></div>
 </div></div></section>
 <section id="screens" class="screens-section"><div class="wrap screens-layout"><div><h2 class="section-heading" data-i18n-ar="صور من التطبيق" data-i18n-en="App Screens">صور من التطبيق</h2><p class="section-sub" data-i18n-ar="تعرّف على واجهة التطبيق وتجربة الاستخدام." data-i18n-en="Explore the app interface and workflow.">تعرّف على واجهة التطبيق وتجربة الاستخدام.</p></div>
 <div class="shots" aria-label="نماذج توضيحية للشاشات وليست لقطات فعلية من التطبيق">
