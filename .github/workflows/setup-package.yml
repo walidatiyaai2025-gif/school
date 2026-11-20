@@ -21,6 +21,8 @@ permissions:
 
 jobs:
   build-candidate:
+    # 1.1.4-only release gate; never evaluate 1.1.5 source as a 1.1.4 artifact.
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'feat/1.1.5-') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     services:
