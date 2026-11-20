@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../core/brand.dart';
 import '../core/strings.dart';
 import '../data/app_store.dart';
@@ -166,6 +167,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _showAdPrivacyOptions() async {
+    try {
+      final needed = await ConsentInformation.instance
+          .getPrivacyOptionsRequirementStatus();
+      if (!mounted) return;
+      if (needed != PrivacyOptionsRequirementStatus.required) {
+        feedback(context, S(widget.store.settings.english).t(
+          'لا توجد رسالة إضافية مطلوبة حاليًا. راجع سياسة الخصوصية.',
+          'No additional ad privacy form is currently required. See our privacy policy.'));
+        return;
+      }
+      await ConsentForm.showPrivacyOptionsForm((error) {
+        if (error != null && mounted) {
+          feedback(context, S(widget.store.settings.english).t(
+            'تعذر فتح إعدادات الإعلانات، حاول مرة أخرى.',
+            'Unable to open ad privacy options. Please retry.'));
+        }
+      });
+    } catch (_) {
+      if (mounted) feedback(context, S(widget.store.settings.english).t(
+        'تعذر تحميل إعدادات خصوصية الإعلانات.',
+        'Unable to load advertising privacy settings.'));
+    }
+  }
+
   @override Widget build(BuildContext context){
     final s=S(widget.store.settings.english),u=widget.store.settings;
     return ListView(padding:const EdgeInsets.fromLTRB(17,18,17,30),children:[
@@ -300,6 +326,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle: Text(s.t('حذف نهائي داخل التطبيق، دون حذف صور المعرض أو النسخ المصدرة',
             'Permanent in-app deletion; gallery originals and exports remain')),
           onTap: _deleteLocalProfileAndPdfs,
+        ),
+        if (u.ageGroup == 'adult') ListTile(
+          leading: const Icon(Icons.shield_outlined),
+          title: Text(s.t('خيارات خصوصية الإعلانات', 'Advertising privacy options')),
+          subtitle: Text(s.t('مراجعة أو تعديل موافقات الإعلانات',
+              'Review or change your advertising privacy choices')),
+          onTap: _showAdPrivacyOptions,
         ),
         ListTile(
           leading: const Icon(Icons.help_outline),
