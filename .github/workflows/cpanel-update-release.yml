@@ -121,15 +121,15 @@ jobs:
           composer validate --working-dir=backend --no-check-publish
           composer install --working-dir=backend --no-interaction --prefer-dist --no-progress
           (cd backend && vendor/bin/phpunit && composer audit --locked --no-interaction)
-      - name: Build exact source preview and test synthetic failure recovery
-        run: |
-          python3 setup/build_preview.py --git-sha "$GITHUB_SHA"
-          SCHOOLPDF_CI_INSTALL_SMOKE=1 python3 setup/tests/smoke_preview_mysql.py
-      - name: Install locked Composer production dependencies in CI only
+      - name: Build locked Composer production vendor before packaging tests
         run: |
           rm -rf backend/vendor
           composer install --working-dir=backend --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-progress
           test -s backend/vendor/autoload.php
+      - name: Build exact source preview and test synthetic failure recovery
+        run: |
+          python3 setup/build_preview.py --git-sha "$GITHUB_SHA"
+          SCHOOLPDF_CI_INSTALL_SMOKE=1 python3 setup/tests/smoke_preview_mysql.py
       - name: Create Setup ZIP and signed Update ZIP from exact same tested SHA
         run: |
           python3 - <<'PY'
