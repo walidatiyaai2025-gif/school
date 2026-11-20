@@ -47,6 +47,8 @@ class LandingPageTest extends TestCase
         $this->assertStringContainsString('min-height:338px;height:338px', $html);
         $this->assertStringContainsString('direction:ltr}.brand', $html);
         $this->assertSame(7, substr_count($html, 'class="glyph" aria-hidden="true"'));
+        $this->assertStringContainsString('class="launch-waitlist"', $html);
+        $this->assertStringContainsString('type="email" disabled', $html);
         $this->assertFileExists(public_path('landing/hero-ornaments.svg'));
         $this->assertFileExists(public_path('landing/worksheet-scene.svg'));
     }
