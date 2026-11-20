@@ -1,4 +1,4 @@
-name: School PDF cPanel Setup v1.1.2 - Verified First Install
+name: School PDF cPanel Setup v1.1.3 - Verified First Install
 on:
   push:
     branches: [main, test/cpanel-db-recovery-release-gates]
@@ -123,7 +123,7 @@ jobs:
               },
               'scope':{
                   'fresh_install':'EXTRACTED_PREVIEW_PACKAGE_MYSQL',
-                  'upgrade':'CI_SYNTHETIC_SIGNED_1.1.2_TO_1.1.3',
+                  'upgrade':'CI_SYNTHETIC_SIGNED_1.1.3_TO_1.1.3',
                   'recovery':'POST_DDL_FAILURE_RESTORED_TO_SEPARATE_MARIADB',
                   'update_zip_from_prior_production':'NOT_APPLICABLE_INITIAL_RELEASE'
               }
@@ -134,10 +134,10 @@ jobs:
         run: |
           python3 setup/build_setup.py --git-sha "$GITHUB_SHA" --trusted-update-public-key "$SCHOOLPDF_RELEASE_ED25519_PUBLIC_B64"
           cd setup/output
-          sha256sum -c SchoolPDF-Setup-v1.1.2.sha256
+          sha256sum -c SchoolPDF-Setup-v1.1.3.sha256
           python3 - <<'PY'
           import json, zipfile
-          with zipfile.ZipFile('SchoolPDF-Setup-v1.1.2.zip') as z:
+          with zipfile.ZipFile('SchoolPDF-Setup-v1.1.3.zip') as z:
               assert z.testzip() is None
               names=set(z.namelist())
               assert 'vendor/autoload.php' in names
@@ -155,11 +155,11 @@ jobs:
       - name: Upload provisional ZIP (not approved until exact archive install succeeds)
         uses: actions/upload-artifact@v4
         with:
-          name: SchoolPDF-Setup-v1.1.2-CANDIDATE-UNVERIFIED
+          name: SchoolPDF-Setup-v1.1.3-CANDIDATE-UNVERIFIED
           path: |
-            setup/output/SchoolPDF-Setup-v1.1.2.zip
-            setup/output/SchoolPDF-Setup-v1.1.2.sha256
-            setup/output/SchoolPDF-Setup-v1.1.2-BUILD_INFO.json
+            setup/output/SchoolPDF-Setup-v1.1.3.zip
+            setup/output/SchoolPDF-Setup-v1.1.3.sha256
+            setup/output/SchoolPDF-Setup-v1.1.3-BUILD_INFO.json
           retention-days: 7
           if-no-files-found: error
 
@@ -204,7 +204,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: SchoolPDF-Setup-v1.1.2-CANDIDATE-UNVERIFIED
+          name: SchoolPDF-Setup-v1.1.3-CANDIDATE-UNVERIFIED
           path: setup/output
       - name: Prepare PHP 8.3 without installing Composer packages
         uses: shivammathur/setup-php@v2
@@ -216,10 +216,10 @@ jobs:
         env:
           SCHOOLPDF_CI_INSTALL_SMOKE: '1'
           SCHOOLPDF_PRODUCTION_INSTALL_SMOKE: '1'
-          SCHOOLPDF_SETUP_ARCHIVE: ${{ github.workspace }}/setup/output/SchoolPDF-Setup-v1.1.2.zip
+          SCHOOLPDF_SETUP_ARCHIVE: ${{ github.workspace }}/setup/output/SchoolPDF-Setup-v1.1.3.zip
         run: |
           cd setup/output
-          sha256sum -c SchoolPDF-Setup-v1.1.2.sha256
+          sha256sum -c SchoolPDF-Setup-v1.1.3.sha256
           cd ../..
           python3 setup/tests/smoke_preview_mysql.py
       - name: Record independent release artifact acceptance
@@ -227,7 +227,7 @@ jobs:
           python3 - <<'PY'
           import hashlib, json, os
           from pathlib import Path
-          archive=Path('setup/output/SchoolPDF-Setup-v1.1.2.zip')
+          archive=Path('setup/output/SchoolPDF-Setup-v1.1.3.zip')
           evidence={
               'source_git_sha':os.environ['GITHUB_SHA'],
               'archive_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),
@@ -244,7 +244,7 @@ jobs:
       - name: Upload exact archive acceptance evidence
         uses: actions/upload-artifact@v4
         with:
-          name: SchoolPDF-Setup-v1.1.2-ACCEPTANCE-EVIDENCE
+          name: SchoolPDF-Setup-v1.1.3-ACCEPTANCE-EVIDENCE
           path: setup/output/RELEASE_ACCEPTANCE.json
           retention-days: 30
           if-no-files-found: error
@@ -257,44 +257,44 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: SchoolPDF-Setup-v1.1.2-CANDIDATE-UNVERIFIED
+          name: SchoolPDF-Setup-v1.1.3-CANDIDATE-UNVERIFIED
           path: release
       - uses: actions/download-artifact@v4
         with:
-          name: SchoolPDF-Setup-v1.1.2-ACCEPTANCE-EVIDENCE
+          name: SchoolPDF-Setup-v1.1.3-ACCEPTANCE-EVIDENCE
           path: release
       - name: Cross-check immutable ZIP SHA and final commit acceptance
         run: |
           cd release
-          sha256sum -c SchoolPDF-Setup-v1.1.2.sha256
+          sha256sum -c SchoolPDF-Setup-v1.1.3.sha256
           python3 - <<'PY'
           import hashlib,json,os,pathlib
           evidence=json.loads(pathlib.Path('RELEASE_ACCEPTANCE.json').read_text())
           assert evidence['source_git_sha']==os.environ['GITHUB_SHA']
           assert evidence['exact_setup_zip_fresh_install']=='PASS'
           assert evidence['migration_failure_isolated_recovery']=='PASS'
-          assert evidence['archive_sha256']==hashlib.sha256(pathlib.Path('SchoolPDF-Setup-v1.1.2.zip').read_bytes()).hexdigest()
+          assert evidence['archive_sha256']==hashlib.sha256(pathlib.Path('SchoolPDF-Setup-v1.1.3.zip').read_bytes()).hexdigest()
           print('Exact commit, checksum and acceptance evidence match.')
           PY
       - name: Build verified fixed-DocumentRoot cPanel deployment packages
         run: |
           python3 setup/build_fixed_root.py \
-            --archive release/SchoolPDF-Setup-v1.1.2.zip \
-            --checksum release/SchoolPDF-Setup-v1.1.2.sha256 \
+            --archive release/SchoolPDF-Setup-v1.1.3.zip \
+            --checksum release/SchoolPDF-Setup-v1.1.3.sha256 \
             --acceptance release/RELEASE_ACCEPTANCE.json \
             --output release
           cp setup/FIXED_ROOT_DEPLOY_AR.md release/SchoolPDF-FixedRoot-DEPLOY_AR.md
           cd release
-          sha256sum -c SchoolPDF-WebBridge-v1.1.2.zip.sha256
-          sha256sum -c SchoolPDF-FixedRoot-Setup-v1.1.2.zip.sha256
+          sha256sum -c SchoolPDF-WebBridge-v1.1.3.zip.sha256
+          sha256sum -c SchoolPDF-FixedRoot-Setup-v1.1.3.zip.sha256
           python3 - <<'PY'
           import zipfile
-          with zipfile.ZipFile('SchoolPDF-WebBridge-v1.1.2.zip') as z:
+          with zipfile.ZipFile('SchoolPDF-WebBridge-v1.1.3.zip') as z:
               assert set(z.namelist()) == {
                   '.htaccess', '.schoolpdf-bridge.php', 'index.php', 'install.php'
               }
               assert z.testzip() is None
-          with zipfile.ZipFile('SchoolPDF-FixedRoot-Setup-v1.1.2.zip') as z:
+          with zipfile.ZipFile('SchoolPDF-FixedRoot-Setup-v1.1.3.zip') as z:
               names = set(z.namelist())
               assert z.testzip() is None
               assert 'sclpdf/vendor/autoload.php' in names
@@ -308,23 +308,23 @@ jobs:
       - name: Publish School PDF cPanel Setup ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: SchoolPDF-Setup-v1.1.2-VERIFIED
+          name: SchoolPDF-Setup-v1.1.3-VERIFIED
           path: |
-            release/SchoolPDF-Setup-v1.1.2.zip
-            release/SchoolPDF-Setup-v1.1.2.sha256
-            release/SchoolPDF-Setup-v1.1.2-BUILD_INFO.json
+            release/SchoolPDF-Setup-v1.1.3.zip
+            release/SchoolPDF-Setup-v1.1.3.sha256
+            release/SchoolPDF-Setup-v1.1.3-BUILD_INFO.json
             release/RELEASE_ACCEPTANCE.json
           retention-days: 30
           if-no-files-found: error
       - name: Publish verified fixed-root one-ZIP and web-only bridge
         uses: actions/upload-artifact@v4
         with:
-          name: SchoolPDF-FixedRoot-v1.1.2-VERIFIED
+          name: SchoolPDF-FixedRoot-v1.1.3-VERIFIED
           path: |
-            release/SchoolPDF-WebBridge-v1.1.2.zip
-            release/SchoolPDF-WebBridge-v1.1.2.zip.sha256
-            release/SchoolPDF-FixedRoot-Setup-v1.1.2.zip
-            release/SchoolPDF-FixedRoot-Setup-v1.1.2.zip.sha256
+            release/SchoolPDF-WebBridge-v1.1.3.zip
+            release/SchoolPDF-WebBridge-v1.1.3.zip.sha256
+            release/SchoolPDF-FixedRoot-Setup-v1.1.3.zip
+            release/SchoolPDF-FixedRoot-Setup-v1.1.3.zip.sha256
             release/SchoolPDF-FixedRoot-DEPLOY_AR.md
             release/RELEASE_ACCEPTANCE.json
           retention-days: 30
