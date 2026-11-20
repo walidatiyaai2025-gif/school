@@ -4,16 +4,18 @@ import 'package:printing/printing.dart';
 import 'package:open_filex/open_filex.dart';
 import '../services/incoming_documents.dart';
 import '../services/office_text_reader.dart';
+import '../services/office_conversion_service.dart';
 
 
 /// Explicit, privacy-first choice between on-device preview and server conversion.
 /// Server conversion is intentionally unavailable until a verified secure endpoint exists.
 class OfficePreviewChoice extends StatelessWidget {
   const OfficePreviewChoice({super.key, required this.english,
-    required this.onLocal, required this.onExternal});
+    required this.onLocal, required this.onExternal, required this.onServer});
   final bool english;
   final VoidCallback onLocal;
   final VoidCallback onExternal;
+  final VoidCallback onServer;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -40,16 +42,15 @@ class OfficePreviewChoice extends StatelessWidget {
       const SizedBox(height: 10),
       Card(child: Padding(padding: const EdgeInsets.all(14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(english ? '2. Server conversion — coming soon'
-              : '٢. تحويل عبر الخادم — قريبًا',
+          Text(english ? '2. Server PDF conversion'
+              : '٢. تحويل إلى PDF عبر الخادم',
             style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(english
-              ? 'This option would upload the selected document over an encrypted connection for PDF conversion. It will require your separate approval each time. Never automatic. Not available until security and deletion checks pass.'
-              : 'هذه الطريقة سترفع المستند المختار عبر اتصال مشفر لتحويله إلى PDF، بعد موافقتك الصريحة في كل مرة. لن يتم الرفع تلقائيًا. غير متاحة حتى اجتياز اختبارات الأمان وحذف الملفات.'),
+              ? 'With your explicit approval, this file will be uploaded over HTTPS to our server for PDF conversion. Do not use for sensitive documents. Conversion may be unavailable on this hosting environment. The server is configured to delete temporary files after processing.'
+              : 'بعد موافقتك الصريحة، سيُرفع هذا الملف عبر HTTPS إلى خادمنا لتحويله إلى PDF. لا تستخدمها للمستندات الحساسة. قد لا تتوفر الخدمة على الاستضافة الحالية. الخادم مهيأ لحذف الملفات المؤقتة بعد المعالجة.'),
           const SizedBox(height: 10),
-          FilledButton(onPressed: null,
-            child: Text(english ? 'Server conversion unavailable'
-                : 'التحويل عبر الخادم غير متاح حاليًا')),
+          FilledButton(onPressed: onServer,
+            child: Text(english ? 'Convert via server' : 'تحويل عبر الخادم')),
         ]))),
     ]),
   );
@@ -66,6 +67,33 @@ class IncomingDocumentScreen extends StatefulWidget {
 
 class _IncomingDocumentScreenState extends State<IncomingDocumentScreen> {
   bool localSelected = false;
+  String? convertedPath;
+  bool converting = false;
+  String? conversionError;
+
+  Future<void> convertWithConsent() async {
+    final english = widget.english;
+    final accepted = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: Text(english ? 'Upload this document?' : 'هل توافق على رفع هذا المستند؟'),
+      content: Text(english
+        ? 'Only this selected document will be sent over HTTPS for conversion. The server should delete temporary files after conversion. Do not upload confidential files. Continue?'
+        : 'سيُرسل هذا المستند فقط عبر HTTPS للتحويل. يجب أن يحذف الخادم الملفات المؤقتة بعد التحويل. لا ترفع ملفات سرية. هل تريد المتابعة؟'),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(english ? 'Cancel' : 'إلغاء')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(english ? 'I agree, upload' : 'أوافق على الرفع'))],
+    ));
+    if (accepted != true || !mounted) return;
+    setState(() { converting = true; conversionError = null; });
+    try {
+      final pdf = await OfficeConversionService.convert(widget.path);
+      if (mounted) setState(() { convertedPath = pdf; localSelected = true; });
+    } catch (_) {
+      if (mounted) setState(() { conversionError = english
+          ? 'Server conversion is unavailable. You can still use the on-device option.'
+          : 'التحويل عبر الخادم غير متاح. يمكنك استخدام المعاينة على الجهاز.'; });
+    } finally {
+      if (mounted) setState(() => converting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +103,9 @@ class _IncomingDocumentScreenState extends State<IncomingDocumentScreen> {
     final path = widget.path;
     final title = english ? 'Open document' : 'فتح المستند';
     Widget content;
-    if (ext == 'pdf') {
+    if (convertedPath != null) {
+      content = PdfPreview(build: (_) => File(convertedPath!).readAsBytes(), allowPrinting: false);
+    } else if (ext == 'pdf') {
       content = PdfPreview(build: (_) => file.readAsBytes(), allowPrinting: false);
     } else if (const {'jpg','jpeg','png','webp'}.contains(ext)) {
       content = InteractiveViewer(child: Center(child: Image.file(file)));
@@ -150,17 +180,20 @@ class _IncomingDocumentScreenState extends State<IncomingDocumentScreen> {
         ));
       }
     }
-    if (const {'doc','docx','xls','xlsx','ppt','pptx'}.contains(ext) && !localSelected) {
-      content = SingleChildScrollView(child: OfficePreviewChoice(
+    if (const {'doc','docx','xls','xlsx','ppt','pptx'}.contains(ext) && !localSelected && convertedPath == null) {
+      content = converting ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(child: Column(children: [
+        if (conversionError != null) Padding(padding: const EdgeInsets.all(12), child: Text(conversionError!)),
+        OfficePreviewChoice(
         english: english,
         onLocal: () => setState(() => localSelected = true),
+        onServer: convertWithConsent,
         onExternal: () async {
           final result = await OpenFilex.open(path);
           if (!mounted || result.type == ResultType.done) return;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
             english ? 'No compatible viewer installed' : 'لا يوجد تطبيق عرض متوافق مثبت')));
         },
-      ));
+      )]));
     }
     return Scaffold(
       appBar: AppBar(title: Text(title)),
