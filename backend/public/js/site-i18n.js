@@ -1,0 +1,52 @@
+/* UI copy only. Do not translate user content, machine states or technical identifiers. */
+(() => {
+  'use strict';
+  const pairs = [["الرئيسية","Home"],["الخصوصية","Privacy"],["الدعم","Support"],["حذف البيانات","Delete data"],["Dashboard","لوحة التحكم"],["Privacy","الخصوصية"],["Terms","الشروط"],["Support","الدعم"],["Delete data","حذف البيانات"],["📊 لوحة إدارة School PDF","📊 School PDF Dashboard"],["إعدادات الإعلانات","Ads settings"],["تحديثات النظام","System updates"],["خروج","Log out"],["الإحصاءات التالية لأجهزة فتحت التطبيق ووافقت على القياس، وليست تنزيلات مؤكدة من Google Play أو App Store.","The following figures count devices that opened the app and consented to measurement, not confirmed Google Play or App Store downloads."],["أجهزة فريدة مسجلة (بموافقة)","Unique registered devices (opt-in)"],["نشطة خلال 7 أيام","Active in last 7 days"],["نشطة خلال 30 يومًا","Active in last 30 days"],["أجهزة متاحة لـPush","Devices eligible for push"],["التنزيلات الرسمية — تقارير متجر مستوردة","Official installs — imported store reports"],["مجموع صفوف CSV المستوردة يدويًا؛ لا يُتحقق آليًا من مصدرها، وليست بيانات Live. يجب تصدير تقارير التثبيت من Google Play Console وApp Store Connect ثم تحويلها لصيغة القالب.","Sum of manually imported CSV rows. Their source is not automatically verified and they are not live data. Export install reports from Google Play Console and App Store Connect and convert them to the template format."],["استيراد CSV","Import CSV"],["🌍 توزيع الأجهزة حسب الدولة","🌍 Device distribution by country"],["الدولة تُستنتج من Proxy موثوق إن كان مهيأً. ?? = غير معروفة.","Country is inferred from a configured trusted proxy. ?? means unknown."],["الدولة","Country"],["الأجهزة","Devices"],["لا توجد بيانات بعد","No data yet"],["🔔 إنشاء حملة إشعارات","🔔 Create notification campaign"],["العنوان","Title"],["نص الإشعار","Notification body"],["استهداف الدولة","Target country"],["كل الدول المسموح بها","All eligible countries"],["سيُحفظ كمسودة أولًا؛ يجب تأكيد الإرسال يدويًا. استهداف الدولة غير المتوفرة لا يصل إلى أي جهاز.","Campaigns are saved as drafts first; sending requires manual confirmation. A country with no eligible devices receives no notifications."],["إنشاء مسودة","Create draft"],["الحملات الأخيرة","Recent campaigns"],["معالجة حتى 20 مهمة معلّقة","Process up to 20 pending jobs"],["الأفضل تشغيل عامل Queue على الاستضافة؛ الإرسال قد يتأخر إذا لم يكن هناك Worker.","Run a queue worker on hosting where supported; delivery may be delayed without a worker."],["الحملة","Campaign"],["الحالة","Status"],["مستهدف","Targeted"],["أُرسلت لـFCM","Sent to FCM"],["فشلت","Failed"],["الإجراء","Action"],["اعتماد وإرسال","Approve and send"],["لا توجد حملات","No campaigns"],["نجاح الاستدعاء إلى FCM ليس إثباتًا أن الجهاز عرض الإشعار أو أن المستخدم قرأه.","FCM accepting a request does not prove a device displayed it or that the user read it."],["💰 إعدادات مزوّدي الإعلانات","💰 Advertising providers"],["العودة للوحة","Back to dashboard"],["نطاق الناشر:","Publisher domain:"],["مزود إعلان جديد / تعديل","Add or edit ad provider"],["الشبكة / Provider","Network / Provider"],["المنصة","Platform"],["App ID (إن توفر)","App ID (if available)"],["ملاحظات","Notes"],["طلب تفعيل الشبكة بعد اعتماد سياسة الأطفال والموافقة","Request enabling this network after child-safety review and approval"],["التفعيل يتطلب إعدادات أمان الخادم والتطبيق؛ يحتاج فحص CMP وسياسة القاصرين وتهيئة SDKs على التطبيق.","Activation requires compliant server and app configuration, CMP, age-policy review and mobile SDK setup."],["حفظ المعرفات مع تعطيلها","Save IDs without enabling"],["app-ads.txt — البائعون المعتمدون","app-ads.txt — authorized sellers"],["انسخ أسطر sellers من لوحة كل شبكة. لا تستخدم أرقامًا وهمية.","Copy seller lines from each ad network's console. Do not use placeholder IDs."],["حفظ app-ads.txt","Save app-ads.txt"],["المزوّدون المسجلون","Registered providers"],["المزوّد","Provider"],["لم تتم إضافة معرّفات بعد","No IDs added yet"],["Active","نشط"],["Safety disabled","معطّل للأمان"],["Google Ads UMP/privacy configuration remains in AdMob console + SDK. This domain hosts the public policy and authorized seller file only.","تظل إعدادات Google Ads UMP والخصوصية في AdMob والـSDK. يستضيف هذا النطاق السياسة العامة وملف البائعين المعتمدين فقط."],["دخول لوحة التحكم","Admin sign in"],["Super Admin only","للمدير العام فقط"],["البريد الإلكتروني","Email address"],["كلمة المرور","Password"],["تسجيل الدخول","Sign in"],["⚙️ Settings → System → System Updates","⚙️ الإعدادات ← النظام ← تحديثات النظام"],["Version & Release Notes — الإصدار الحالي","الإصدار وملاحظات الإصدار"],["Current Version:","الإصدار الحالي:"],["Latest Available Version:","آخر إصدار متاح:"],["Release Notes:","ملاحظات الإصدار:"],["Signed Update Verification:","حالة التحقق من توقيع التحديث:"],["تأكد من أن مفتاح التحقق العام تم تثبيته بواسطة جهة النشر الموثوقة. لا تقبل أي ZIP دون توقيع أصلي.","Ensure the public verification key was installed by the trusted publisher. Reject any ZIP without a valid signature."],["1. Upload Update ZIP → Verify Package","١. رفع ZIP التحديث ← فحص الحزمة"],["Signed update archive (.zip)","حزمة التحديث الموقّعة (.zip)"],["Verify Package","فحص الحزمة"],["2. Backup Now → 3. Install Update","٢. إنشاء نسخة احتياطية ← ٣. تثبيت التحديث"],["Creates a private, integrity-checked files + MySQL/MariaDB backup. No uploaded documents or live settings are removed.","ينشئ نسخة احتياطية خاصة ومتحققًا من سلامتها للملفات وقاعدة MySQL/MariaDB، دون حذف المستندات المرفوعة أو الإعدادات الحية."],["Backup Now","إنشاء نسخة احتياطية"],["Verified target:","الإصدار المستهدف الموثّق:"],[". A fresh verified backup is required automatically before modification.",". يلزم إنشاء نسخة احتياطية جديدة موثّقة تلقائيًا قبل التعديل."],["Type INSTALL to confirm","اكتب INSTALL للتأكيد"],["Install Verified Update","تثبيت التحديث الموثّق"],["Install Update is unavailable until a verified, compatible signed ZIP is uploaded.","لا يمكن التحديث قبل رفع حزمة ZIP متوافقة وموقّعة والتحقق منها."],["Update Progress","تقدم التحديث"],["State:","الحالة:"],["Last change:","آخر تعديل:"],["Recovery required: database migrations may have changed data. Do not repeat the update or reset the database. Verify and download the backup below, then follow the documented recovery plan.","الاستعادة مطلوبة: قد تكون ترحيلات قاعدة البيانات غيّرت البيانات. لا تكرر التحديث أو تعيد ضبط القاعدة. افحص النسخة الاحتياطية ونزّلها واتبع خطة الاستعادة الموثّقة."],["Backup & Recovery","النسخ الاحتياطي والاستعادة"],["Backup archives remain outside the public web directory. A backup must pass SHA-256 and manifest inspection before download or use.","تُحفَظ النسخ الاحتياطية خارج المجلد العام. ويجب اجتياز فحص SHA-256 وManifest قبل التنزيل أو الاستخدام."],["Backup:","نسخة احتياطية:"],["Verify Backup","التحقق من النسخة الاحتياطية"],["Download Backup","تنزيل النسخة الاحتياطية"],["No backups exist yet.","لا توجد نسخ احتياطية بعد."],["Verified backup:","نسخة احتياطية موثّقة:"],["Original version:","الإصدار الأصلي:"],["Recovery safety:","أمان الاستعادة:"],["If a migration was attempted, automatic database rollback is deliberately disabled. Preserve the current site and use a separately validated restore plan. Backups should be tested on a disposable database before live recovery.","في حال محاولة ترحيل قاعدة البيانات، تُعطَّل العودة التلقائية عمدًا. احتفظ بالموقع الحالي واستخدم خطة استعادة مختبرة بشكل مستقل. اختبر النسخ الاحتياطية على قاعدة مؤقتة قبل استعادة الإنتاج."],["Update History","سجل التحديثات"],["No completed update attempts.","لا توجد محاولات تحديث مكتملة."],["العودة إلى لوحة الإدارة","Back to dashboard"],["No verified upload yet","لا توجد حزمة موثقة بعد"],["Not supplied by signer","لم يقدّمه الموقّع"],["Configured","مهيأ"],["Not configured — updates blocked","غير مهيأ — التحديثات محظورة"],["Google AdMob Mediation","Google AdMob Mediation"],["Banner Ad Unit ID","معرّف وحدة إعلان Banner"],["Banner Unit","وحدة Banner"],["App ID","معرّف التطبيق"]];
+  const arToEn = new Map(pairs.map(pair => [pair[0], pair[1]]));
+  const enToAr = new Map(pairs.map(pair => [pair[1], pair[0]]));
+  const originals = new WeakMap();
+  const valid = value => value === 'ar' || value === 'en';
+  const queryLanguage = new URLSearchParams(location.search).get('lang');
+  let persisted = null;
+  try { persisted = localStorage.getItem('schoolpdf-language'); } catch (_) {}
+  function applyLanguage(lang) {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'en' ? 'ltr' : 'rtl';
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      const tag = node.parentElement?.tagName;
+      if (!tag || ['SCRIPT','STYLE','CODE','TEXTAREA','OPTION'].includes(tag)) continue;
+      if (node.parentElement.closest('[data-site-languages]')) continue;
+      if (!originals.has(node)) originals.set(node, node.textContent);
+      const initial = originals.get(node);
+      const plain = initial.trim();
+      const mapped = lang === 'en' ? arToEn.get(plain) : enToAr.get(plain);
+      // Preserve whitespace and templates around the localized label.
+      if (mapped != null && mapped !== plain) {
+        node.textContent = initial.replace(plain, mapped);
+      } else {
+        node.textContent = initial;
+      }
+    }
+    document.querySelectorAll('[data-site-languages] button').forEach(button => {
+      const active = button.dataset.lang === lang;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    document.querySelectorAll('.card[lang="ar"],.card[lang="en"]').forEach(card => {
+      card.hidden = card.getAttribute('lang') !== lang;
+    });
+    document.querySelectorAll('[data-l10n-placeholder-en]').forEach(input => {
+      input.placeholder = input.getAttribute('data-l10n-placeholder-' + lang);
+    });
+    try { localStorage.setItem('schoolpdf-language', lang); } catch (_) {}
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    applyLanguage(valid(queryLanguage) ? queryLanguage : (valid(persisted) ? persisted : 'ar'));
+    document.querySelectorAll('[data-site-languages] button').forEach(button => {
+      button.addEventListener('click', () => applyLanguage(button.dataset.lang));
+    });
+  });
+})();
