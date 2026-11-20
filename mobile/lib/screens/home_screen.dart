@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if(lost.files?.isNotEmpty==true && mounted){
         final subject=selectedSubject;
         if(subject==null){
-          feedback(context,'تم استرجاع صور؛ اختر المادة ثم أعد تحديدها');
+          feedback(context,S(widget.store.settings.english).t('تم استرجاع صور؛ اختر المادة ثم أعد تحديدها','Photos were recovered; select a subject and choose them again.'));
         } else {_openReview(lost.files!,subject);}
       }
     } catch (_) {}
@@ -43,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final List<XFile> photos=camera?(shot==null?<XFile>[]:[shot])
         :await picker.pickMultiImage(imageQuality:94,maxWidth:3200);
       if(photos.isNotEmpty && mounted)_openReview(photos,subject);
-    } catch (e) {if(mounted)feedback(context,'تعذر الوصول للصور أو الكاميرا: $e');}
+    } catch (_) {if(mounted)feedback(context,S(widget.store.settings.english).t('تعذر الوصول للصور أو الكاميرا. راجع الأذونات وحاول مجددًا.','Could not access photos or camera. Check permissions and try again.'));}
     finally {if(mounted)setState(()=>picking=false);}
   }
   void _openReview(List<XFile> files,String subject){
@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style:const TextStyle(fontSize:12,color:Brand.muted)),
           ])),IconButton(icon:const Icon(Icons.share_outlined,color:Brand.blue),
           onPressed:()=>SharingService(widget.store).share(latest,context).catchError(
-            (Object e){if(context.mounted)feedback(context,e.toString());})),
+            (Object _){if(context.mounted)feedback(context,S(widget.store.settings.english).t('تعذرت مشاركة الملف. حاول مرة أخرى.','Could not share the PDF. Please try again.'));})),
       ])),
     ]);
   }
