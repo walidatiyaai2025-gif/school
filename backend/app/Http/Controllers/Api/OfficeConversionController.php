@@ -3,11 +3,11 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OfficeConversionController extends Controller
 {
-    public function convert(Request $request): BinaryFileResponse
+    public function convert(Request $request): StreamedResponse
     {
         abort_unless(config('services.schoolpdf_office.enabled', false), 503, 'Office conversion unavailable');
         $validated = $request->validate([
