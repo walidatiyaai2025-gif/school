@@ -30,7 +30,7 @@ jobs:
           php artisan key:generate --force
       - name: Landing feature tests
         working-directory: backend
-        run: php artisan test --filter=LandingPageTest
+        run: ./vendor/bin/phpunit --filter=LandingPageTest
       - name: Render exact HTML/CSS in Chrome at reference and mobile viewports
         shell: bash
         run: |
