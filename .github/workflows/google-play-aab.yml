@@ -77,6 +77,28 @@ jobs:
             echo 'SCHOOLPDF_RELEASE_SIGNED=false' >> "$GITHUB_ENV"
             echo "::warning::No persistent Play upload key; build only UNSIGNED AAB for compilation testing."
           fi
+      - name: Regression - strict verification trusts self-signed upload key
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$(mktemp -d)"
+          trap 'rm -rf "$fixture"' EXIT
+          printf 'School PDF CI signing fixture\\n' > "$fixture/payload.txt"
+          (cd "$fixture" && jar cf fixture.jar payload.txt)
+          keytool -genkeypair -noprompt -storetype PKCS12 \
+            -keystore "$fixture/ci-upload.jks" -storepass 'ci-not-a-real-secret' \
+            -keypass 'ci-not-a-real-secret' -alias ci-upload \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=School PDF CI Upload Test" >/dev/null 2>&1
+          jarsigner -keystore "$fixture/ci-upload.jks" \
+            -storepass 'ci-not-a-real-secret' -keypass 'ci-not-a-real-secret' \
+            "$fixture/fixture.jar" ci-upload >/dev/null
+          jarsigner -verify -strict -verbose -certs \
+            -keystore "$fixture/ci-upload.jks" \
+            -storepass 'ci-not-a-real-secret' "$fixture/fixture.jar" \
+            > "$fixture/verify.txt"
+          grep -Fq 'jar verified.' "$fixture/verify.txt"
+          echo "Strict signing verification with trusted self-signed test key: PASS"
       - name: Build release AAB without production or test ads
         working-directory: mobile
         run: |
@@ -105,10 +127,30 @@ jobs:
       - name: Verify protected upload signature when configured
         if: env.SCHOOLPDF_RELEASE_SIGNED == 'true'
         working-directory: mobile
+        shell: bash
         run: |
-          jarsigner -verify -strict -verbose -certs build/app/outputs/bundle/release/app-release.aab > /dev/null
-          keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | grep -E 'SHA256:|Owner:' || true
-          echo 'Verified upload-signed AAB (Google Play account certificate match still must be confirmed).'
+          set -euo pipefail
+          bundle=build/app/outputs/bundle/release/app-release.aab
+          # Android Play upload certificates are normally self-signed. Strict
+          # verification without this trusted keystore incorrectly exits 4
+          # despite a cryptographically valid signing chain.
+          jarsigner -verify -strict -verbose -certs \
+            -keystore "$SCHOOLPDF_UPLOAD_KEYSTORE_FILE" \
+            -storepass "$SCHOOLPDF_UPLOAD_STORE_PASSWORD" \
+            "$bundle" > "$RUNNER_TEMP/schoolpdf-signature-verification.txt"
+          grep -Fq 'jar verified.' "$RUNNER_TEMP/schoolpdf-signature-verification.txt"
+          bundle_cert="$(keytool -printcert -jarfile "$bundle" | awk '/SHA256:/{print $2; exit}')"
+          upload_cert="$(keytool -list -v \
+            -keystore "$SCHOOLPDF_UPLOAD_KEYSTORE_FILE" \
+            -storepass "$SCHOOLPDF_UPLOAD_STORE_PASSWORD" \
+            -alias "$SCHOOLPDF_UPLOAD_KEY_ALIAS" | awk '/SHA256:/{print $2; exit}')"
+          test -n "$bundle_cert" && test -n "$upload_cert"
+          if [ "$bundle_cert" != "$upload_cert" ]; then
+            echo "::error::Signed AAB certificate does not match the configured upload-key alias"
+            exit 1
+          fi
+          echo "AAB upload certificate SHA-256: $bundle_cert"
+          echo 'Cryptographic JAR verification and upload key match PASS. Compare this public certificate fingerprint with Google Play Console before uploading.'
       - name: Publish exact AAB checksum and build metadata
         working-directory: mobile
         run: |
