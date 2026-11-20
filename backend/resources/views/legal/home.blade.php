@@ -53,7 +53,7 @@
 @media(min-width:1101px){
 .site-nav{height:63px}.nav-inner{gap:22px}.site-nav .wrap{max-width:1430px;padding-inline:28px}.brand img{width:50px;height:50px}.brand strong{font-size:23px}
 .navlinks{gap:30px}.navlinks a{padding:21px 0}
-.hero,.hero-inner{min-height:338px;height:338px}
+.hero,.hero-inner{min-height:338px;height:338px}.hero{overflow:visible}.hero-inner{z-index:3}
 .hero-inner{grid-template-columns:1fr 1fr;gap:20px}
 .hero-copy{padding:10px 0 10px}.hero-title{font-size:64px;line-height:1.04;letter-spacing:-2px}
 .hero-brand{margin:0 auto 8px;gap:16px}.hero-brand>img{width:81px;height:81px}
@@ -64,7 +64,7 @@
 .hero-art{height:338px}
 .phone.screen-splash{height:339px;width:184px;transform:rotate(-3deg) translate(27px,12px)}
 .phone.screen-home{height:324px;width:182px;transform:rotate(4deg) translate(-16px,4px)}
-#features.section{padding:0 0 13px}
+#features.section{padding:0 0 13px;position:relative;z-index:2}
 #features .section-heading{font-size:22px;line-height:1.2;margin:0 0 -2px;padding-top:0;transform:translateY(-7px)}
 #features .feature{height:96px;gap:7px;border-radius:15px}
 #features .feature b{font-size:12px}
@@ -72,12 +72,12 @@
 .screens-layout{grid-template-columns:195px minmax(0,1fr);gap:22px}
 .screens-layout .section-heading{font-size:22px;margin:0 0 4px}
 .screens-layout .section-sub{margin:0;font-size:12px}
-.shots{gap:24px}.shot{height:173px}.shot-body{height:147px}
+.shots{gap:42px;max-width:965px;margin-left:86px;margin-right:0}.shot{height:173px}.shot-body{height:147px}
 #how.section{padding:11px 0 15px}
 #how>.wrap{display:grid;grid-template-columns:195px minmax(0,1fr);grid-template-rows:auto auto;column-gap:22px;align-items:center}
 #how .section-heading{grid-column:1;grid-row:1;font-size:22px;margin:0 0 5px}
 #how .section-sub{grid-column:1;grid-row:2;font-size:12px;margin:0}
-#how .step-band{grid-column:2;grid-row:1 / span 2;min-height:84px;align-self:center}
+#how .step-band{grid-column:2;grid-row:1 / span 2;min-height:84px;align-self:center;margin-left:-60px;grid-template-columns:repeat(3,minmax(0,280px));justify-content:space-between;padding-left:120px;padding-right:34px;gap:18px}
 .step-band{padding:12px 17px;gap:14px;border-radius:25px}
 .step{padding:7px 12px;min-width:0;gap:10px}
 .step-num{width:50px;height:50px;font-size:26px}
