@@ -8,7 +8,7 @@ import '../services/office_conversion_service.dart';
 
 
 /// Explicit, privacy-first choice between on-device preview and server conversion.
-/// Server conversion is intentionally unavailable until a verified secure endpoint exists.
+/// Server conversion is disabled on shared hosting unless explicitly enabled in a verified build.
 class OfficePreviewChoice extends StatelessWidget {
   const OfficePreviewChoice({super.key, required this.english,
     required this.onLocal, required this.onExternal, required this.onServer});
@@ -16,6 +16,7 @@ class OfficePreviewChoice extends StatelessWidget {
   final VoidCallback onLocal;
   final VoidCallback onExternal;
   final VoidCallback onServer;
+  static const serverEnabled = bool.fromEnvironment('SCHOOLPDF_SERVER_CONVERSION_ENABLED', defaultValue: false);
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -46,11 +47,17 @@ class OfficePreviewChoice extends StatelessWidget {
               : '٢. تحويل إلى PDF عبر الخادم',
             style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(english
-              ? 'With your explicit approval, this file will be uploaded over HTTPS to our server for PDF conversion. Do not use for sensitive documents. Conversion may be unavailable on this hosting environment. The server is configured to delete temporary files after processing.'
-              : 'بعد موافقتك الصريحة، سيُرفع هذا الملف عبر HTTPS إلى خادمنا لتحويله إلى PDF. لا تستخدمها للمستندات الحساسة. قد لا تتوفر الخدمة على الاستضافة الحالية. الخادم مهيأ لحذف الملفات المؤقتة بعد المعالجة.'),
+              ? serverEnabled
+                  ? 'With your explicit approval, this file will be uploaded over HTTPS for PDF conversion. Do not upload sensitive files.'
+                  : 'Unavailable on the current shared hosting. No document will be uploaded. Use the on-device preview or a compatible viewer.'
+              : serverEnabled
+                  ? 'بعد موافقتك الصريحة، سيُرفع هذا الملف عبر HTTPS لتحويله إلى PDF. لا ترفع ملفات حساسة.'
+                  : 'غير متاح على الاستضافة المشتركة الحالية. لن يتم رفع أي ملف. استخدم المعاينة على الجهاز أو تطبيق عرض متوافق.'),
           const SizedBox(height: 10),
-          FilledButton(onPressed: onServer,
-            child: Text(english ? 'Convert via server' : 'تحويل عبر الخادم')),
+          FilledButton(onPressed: serverEnabled ? onServer : null,
+            child: Text(english
+                ? (serverEnabled ? 'Convert via server' : 'Server conversion unavailable')
+                : (serverEnabled ? 'تحويل عبر الخادم' : 'التحويل عبر الخادم غير متاح حاليًا'))),
         ]))),
     ]),
   );
