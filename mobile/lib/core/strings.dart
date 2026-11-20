@@ -25,6 +25,8 @@ class S {
   String get open => t('فتح الملف','Open file');
   String get delete => t('حذف','Delete');
   String get error => t('حدث خطأ. جرّب مرة أخرى.','Something went wrong. Please retry.');
+  String get pdfReadyBody => t('ملف PDF جاهز للمشاركة','Your PDF is ready to share');
+  String get reminderBody => t('وقت مراجعة واجباتك 📚','Time to review your homework 📚');
   /// Localize builtin subjects, keeping stored IDs/previous PDF records intact.
   /// Custom user-entered subjects remain exactly as entered.
   String subjectName(String value) {
