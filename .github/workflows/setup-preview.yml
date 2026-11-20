@@ -9,6 +9,13 @@ on:
       - 'VERSION'
       - '.github/workflows/setup-preview.yml'
       - '.github/workflows/fullstack-checks.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'setup/**'
+      - 'VERSION'
+      - '.github/workflows/setup-preview.yml'
   workflow_dispatch:
 
 permissions:
@@ -83,12 +90,22 @@ jobs:
         run: |
           python3 setup/build_preview.py --git-sha "$GITHUB_SHA"
           SCHOOLPDF_CI_INSTALL_SMOKE=1 python3 setup/tests/smoke_preview_mysql.py
+      - name: Verify versioned preview ZIP and SHA-256 without hardcoded versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(cat VERSION)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          archive="SchoolPDF-Setup-v${version}-PREVIEW-UNVERIFIED.zip"
+          (cd setup/output && sha256sum -c "${archive}.sha256")
+          test -s "setup/output/${archive}"
+          echo "SCHOOLPDF_PREVIEW_VERSION=$version" >> "$GITHUB_ENV"
       - name: Upload clearly marked NON-PRODUCTION ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: SchoolPDF-Setup-v1.1.2-PREVIEW-UNVERIFIED
+          name: SchoolPDF-Setup-v${{ env.SCHOOLPDF_PREVIEW_VERSION }}-PREVIEW-UNVERIFIED
           path: |
-            setup/output/SchoolPDF-Setup-v1.1.2-PREVIEW-UNVERIFIED.zip
-            setup/output/SchoolPDF-Setup-v1.1.2-PREVIEW-UNVERIFIED.zip.sha256
+            setup/output/SchoolPDF-Setup-v${{ env.SCHOOLPDF_PREVIEW_VERSION }}-PREVIEW-UNVERIFIED.zip
+            setup/output/SchoolPDF-Setup-v${{ env.SCHOOLPDF_PREVIEW_VERSION }}-PREVIEW-UNVERIFIED.zip.sha256
           if-no-files-found: error
           retention-days: 7
