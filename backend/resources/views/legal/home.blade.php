@@ -51,7 +51,7 @@
 #how .section-heading{align-self:end}#how .section-sub{align-self:start;margin-top:0}
 .step-band{background:#edf4fe}.step-num{box-shadow:0 0 0 5px #fff}
 @media(min-width:1101px){
-.site-nav{height:63px}.nav-inner{gap:22px}.brand img{width:50px;height:50px}.brand strong{font-size:23px}
+.site-nav{height:63px}.nav-inner{gap:22px}.site-nav .wrap{max-width:1430px;padding-inline:28px}.brand img{width:50px;height:50px}.brand strong{font-size:23px}
 .navlinks{gap:30px}.navlinks a{padding:21px 0}
 .hero,.hero-inner{min-height:338px;height:338px}
 .hero-inner{grid-template-columns:1fr 1fr;gap:20px}
@@ -65,10 +65,10 @@
 .phone.screen-splash{height:339px;width:184px;transform:rotate(-3deg) translate(27px,12px)}
 .phone.screen-home{height:324px;width:182px;transform:rotate(4deg) translate(-16px,4px)}
 #features.section{padding:0 0 13px}
-#features .section-heading{font-size:22px;line-height:1.2;margin:0 0 10px;padding-top:0}
+#features .section-heading{font-size:22px;line-height:1.2;margin:0 0 -2px;padding-top:0;transform:translateY(-7px)}
 #features .feature{height:96px;gap:7px;border-radius:15px}
 #features .feature b{font-size:12px}
-.screens-section{padding:11px 0 7px}
+.screens-section{padding:16px 0 7px}
 .screens-layout{grid-template-columns:195px minmax(0,1fr);gap:22px}
 .screens-layout .section-heading{font-size:22px;margin:0 0 4px}
 .screens-layout .section-sub{margin:0;font-size:12px}
