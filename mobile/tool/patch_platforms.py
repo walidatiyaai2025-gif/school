@@ -23,14 +23,27 @@ manifest=root/'android/app/src/main/AndroidManifest.xml'
 if manifest.exists():
     x=manifest.read_text()
     x=x.replace('android:label="school_pdf"','android:label="School PDF"')
-    # This first Play release has no advertising. The Ads SDK may merge
-    # AD_ID from its library manifest, so explicitly remove the permission.
-    # Firebase Installation IDs are separate and remain disclosed in Data Safety.
+    # Mixed audience: deliberately omit Android Advertising ID permission.
+    # This prevents AAID for child/unknown users even before age screening.
+    # All AdMob requests use non-personalized, age-limited Google inventory.
+    # Note: SDK/Play Data Safety declarations must still be audited for older Android.
     if 'xmlns:tools=' not in x:
         x=x.replace('xmlns:android=', 'xmlns:tools="http://schemas.android.com/tools" xmlns:android=',1)
     if 'com.google.android.gms.permission.AD_ID' not in x:
         x=x.replace('<application',
             '<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />\n    <application',1)
+    # Android image_picker uses the Android Photo Picker / system selector.
+    # Do not request broad Photos/Videos permissions: Play requires a separate
+    # high-trust declaration for broad media access that School PDF does not need.
+    for permission in [
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+        'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
+        'android.permission.READ_EXTERNAL_STORAGE',
+    ]:
+        marker = f'<uses-permission android:name="{permission}" tools:node="remove" />'
+        if marker not in x:
+            x = x.replace('<application', marker + '\n    <application', 1)
     before='<application'
     for permission in ['android.permission.INTERNET',
                        'android.permission.POST_NOTIFICATIONS',

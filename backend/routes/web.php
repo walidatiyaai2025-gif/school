@@ -21,6 +21,7 @@ Route::middleware('installed')->prefix('admin')->name('admin.')->group(function(
   Route::post('store-report/import',[StoreReportController::class,'import'])->name('store.import');
   Route::get('ads',[AdsController::class,'index'])->name('ads');
   Route::post('ads',[AdsController::class,'save'])->name('ads.save');
+  Route::post('ads/policy',[AdsController::class,'policy'])->middleware('throttle:5,1')->name('ads.policy');
   Route::post('ads/sellers',[AdsController::class,'sellers'])->name('ads.sellers');
   Route::get('system-updates',[SystemUpdateController::class,'index'])->name('updates');
   Route::post('system-updates/verify',[SystemUpdateController::class,'verify'])->middleware('throttle:5,1')->name('updates.verify');

@@ -73,7 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ?s.t('الفرقة الثالثة - محاسبة - B','Year 3 - Accounting - B')
               :s.t('الصف السادس - A','Grade 6 - A'))),
           const SizedBox(height:17),
-          Text(s.t('الفئة العمرية (لضبط الخصوصية)','Age group (for privacy)'),
+          Text(s.t('الفئة العمرية (لحماية خصوصيتك والإعلانات)','Age group (for privacy and safe ads)'),
             style:const TextStyle(fontWeight:FontWeight.w700)),
           const SizedBox(height:8),DropdownButtonFormField<String>(initialValue:age,
             items:[
