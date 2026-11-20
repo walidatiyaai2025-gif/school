@@ -67,6 +67,10 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress
           libreoffice --version
+          printf 'School PDF office conversion acceptance fixture\n' > /tmp/schoolpdf-office-sample.txt
+          timeout 45 libreoffice -env:UserInstallation=file:///tmp/schoolpdf-office-qa-profile --headless --convert-to pdf --outdir /tmp /tmp/schoolpdf-office-sample.txt
+          test -s /tmp/schoolpdf-office-sample.pdf
+          head -c 5 /tmp/schoolpdf-office-sample.pdf | grep -q '%PDF-'
       - run: |
           php -l routes/api.php
           php -l app/Http/Controllers/Api/OfficeConversionController.php
