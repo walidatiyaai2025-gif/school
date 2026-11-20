@@ -170,6 +170,15 @@ function setLanguage(lang){
  document.querySelectorAll('[data-placeholder-ar][data-placeholder-en]').forEach(el=>el.setAttribute('placeholder',el.getAttribute(english?'data-placeholder-en':'data-placeholder-ar')));
  buttons.forEach(el=>{const active=el.dataset.lang===lang;el.classList.toggle('active',active);el.setAttribute('aria-pressed',active?'true':'false')});
 }
- buttons.forEach(el=>el.addEventListener('click',()=>setLanguage(el.dataset.lang)));
+ buttons.forEach(el=>el.addEventListener('click',()=>{
+   const lang=el.dataset.lang;
+   setLanguage(lang);
+   try { localStorage.setItem('schoolpdf-language',lang); } catch (_) {}
+ }));
+ const chosen=new URLSearchParams(location.search).get('lang');
+ let remembered=null;
+ try { remembered=localStorage.getItem('schoolpdf-language'); } catch (_) {}
+ const initial=chosen==='en'||chosen==='ar'?chosen:(remembered==='en'?'en':'ar');
+ setLanguage(initial);
 })();
 </script></body></html>
