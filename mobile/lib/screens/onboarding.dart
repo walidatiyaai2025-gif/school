@@ -91,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           subtitle:Text(s.t('اختياري: نوع الجهاز وإصدار التطبيق والدولة التقريبية، بدون اسمك أو صورك.',
             'Optional: device platform, version and approximate country; never your name or files.')),
         ),
-        TextButton.icon(onPressed:()=>launchUrl(Uri.parse('https://sclpdf.50sols.com/privacy'),mode:LaunchMode.externalApplication),
+        TextButton.icon(onPressed:()=>launchUrl(Uri.https('sclpdf.50sols.com','/privacy',{'lang':widget.store.settings.english?'en':'ar'}),mode:LaunchMode.externalApplication),
           icon:const Icon(Icons.privacy_tip_outlined),label:Text(s.t('سياسة الخصوصية','Privacy policy'))),
         const SizedBox(height:18),
         InfoBanner(text:s.t('صورك وملفات PDF تظل على جهازك. لا يلزم إنشاء حساب.',
