@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'services/incoming_documents.dart';
+import 'screens/incoming_document_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/history_screen.dart';
 import 'widgets/language_toggle.dart';
@@ -31,10 +34,25 @@ class SchoolPdfApp extends StatefulWidget {
 }
 class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver {
   int tab=0;
+  StreamSubscription<String>? incomingSubscription;
+  String? pendingIncoming;
+  void openIncoming(String path) {
+    if (!mounted) return;
+    if (!widget.store.settings.ready) { pendingIncoming = path; return; }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) navKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => IncomingDocumentScreen(
+          path: path, english: widget.store.settings.english)));
+    });
+  }
   final navKey=GlobalKey<NavigatorState>();
   @override void initState(){
     super.initState();WidgetsBinding.instance.addObserver(this);
     widget.store.addListener(_updated);
+    incomingSubscription = IncomingDocuments.events.stream.listen(openIncoming);
+    IncomingDocuments.initialize().then((path) {
+      if (path != null) openIncoming(path);
+    }).catchError((Object _) {});
     widget.notifications.onTokenRefresh=(_) {TelemetryService.sync(widget.store,widget.notifications);};
     WidgetsBinding.instance.addPostFrameCallback((_) {
       TelemetryService.sync(widget.store, widget.notifications);
@@ -54,7 +72,15 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       }
     };
   }
-  void _updated(){if(mounted)setState((){});}
+  void _updated(){
+    if (!mounted) return;
+    setState(() {});
+    if (widget.store.settings.ready && pendingIncoming != null) {
+      final path = pendingIncoming!;
+      pendingIncoming = null;
+      openIncoming(path);
+    }
+  }
   @override void didChangeAppLifecycleState(AppLifecycleState state){
     if(state==AppLifecycleState.resumed){
       widget.notifications.refreshPermissionStatus().then((_) {
@@ -63,7 +89,7 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       }).catchError((Object _){});
     }
   }
-  @override void dispose(){widget.store.removeListener(_updated);
+  @override void dispose(){incomingSubscription?.cancel();widget.store.removeListener(_updated);
     WidgetsBinding.instance.removeObserver(this);super.dispose();}
   @override Widget build(BuildContext context){
     final store=widget.store, s=S(store.settings.english);
