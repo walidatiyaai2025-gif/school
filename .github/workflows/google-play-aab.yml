@@ -99,6 +99,14 @@ jobs:
             > "$fixture/verify.txt"
           grep -Fq 'jar verified.' "$fixture/verify.txt"
           echo "Strict signing verification with trusted self-signed test key: PASS"
+      - name: Build release AAB with nonpersonalized child-safe banners
+        working-directory: mobile
+        run: |
+          flutter build appbundle --release --no-pub \
+            --build-name=1.1.4 --build-number=4 \
+            --dart-define=SCHOOLPDF_PRODUCTION_ADS=true \
+            --dart-define=SCHOOLPDF_TEST_ADS=false \
+            --dart-define=ADMOB_ANDROID_BANNER_ID=ca-app-pub-3218037275900725/8379591348
       - name: Audit Families-safe Flutter source and resolved Google SDK
         working-directory: mobile
         run: |
@@ -110,14 +118,6 @@ jobs:
           (cd android && ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --console=plain) > /tmp/schoolpdf-deps.txt
           grep -E 'com.google.android.gms:play-services-ads:2[0-9]' /tmp/schoolpdf-deps.txt
           ! grep -Ei 'com.(applovin|unity3d.ads|facebook.android:audience-network|ironsource|mbridge)' /tmp/schoolpdf-deps.txt
-      - name: Build release AAB with nonpersonalized child-safe banners
-        working-directory: mobile
-        run: |
-          flutter build appbundle --release --no-pub \
-            --build-name=1.1.4 --build-number=4 \
-            --dart-define=SCHOOLPDF_PRODUCTION_ADS=true \
-            --dart-define=SCHOOLPDF_TEST_ADS=false \
-            --dart-define=ADMOB_ANDROID_BANNER_ID=ca-app-pub-3218037275900725/8379591348
       - name: Validate bundle contents, 16KB native ELF, manifest & no Advertising ID
         working-directory: mobile
         run: |
