@@ -113,7 +113,7 @@ jobs:
           Path('setup/ci-evidence.json').write_text(json.dumps({
               'git_sha':os.environ['GITHUB_SHA'],
               'passed':True,
-              'release_kind':'FIRST_INSTALL_NO_PRIOR_PRODUCTION_BASE',
+              'release_kind':'SETUP_CANDIDATE_WITH_SEPARATE_REAL_UPGRADE_GATE',
               'checks':{
                   'laravel_tests':'PASS',
                   'security_checks':'PASS',
@@ -123,9 +123,9 @@ jobs:
               },
               'scope':{
                   'fresh_install':'EXTRACTED_PREVIEW_PACKAGE_MYSQL',
-                  'upgrade':'CI_SYNTHETIC_SIGNED_1.1.3_TO_1.1.3',
+                  'upgrade':'CI_SYNTHETIC_SIGNED_1.1.3_TO_1.1.4',
                   'recovery':'POST_DDL_FAILURE_RESTORED_TO_SEPARATE_MARIADB',
-                  'update_zip_from_prior_production':'NOT_APPLICABLE_INITIAL_RELEASE'
+                  'update_zip_from_prior_production':'VALIDATED_IN_SEPARATE_CPANEl_UPDATE_RELEASE_WORKFLOW'
               }
           },indent=2)+'\n')
           print('Exact SHA test evidence written on CI runner after acceptance; not committed.')
@@ -234,7 +234,7 @@ jobs:
               'exact_setup_zip_fresh_install':'PASS',
               'migration_failure_isolated_recovery':'PASS',
               'ephemeral_signed_upgrade_engine':'PASS',
-              'prior_production_update_package':'NOT_APPLICABLE_INITIAL_RELEASE',
+              'prior_production_update_package':'VALIDATED_IN_SEPARATE_CPANEl_UPDATE_RELEASE_WORKFLOW',
               'source_tests':'PASS',
               'no_production_terminal_dependency':'PASS'
           }
@@ -250,7 +250,9 @@ jobs:
           if-no-files-found: error
 
   publish-verified-cpanel-setup:
-    if: github.ref == 'refs/heads/main'
+    # Legacy Setup-only workflow cannot certify a real previous-version upgrade.
+    # Publish both verified artifacts only via cpanel-update-release.yml.
+    if: false
     needs: independently-install-exact-setup
     runs-on: ubuntu-latest
     steps:
