@@ -28,6 +28,8 @@ class _SchoolBannerState extends State<SchoolBanner> {
   bool _remoteEnabled = false;
   String _remoteBannerId = '';
   int _generation = 0;
+  // Discard an adult-configured ad when the age group changes.
+  String? _adAge;
 
   static const remoteApi = String.fromEnvironment('SCHOOLPDF_API_BASE',
       defaultValue: 'https://sclpdf.50sols.com/api');
@@ -90,6 +92,15 @@ class _SchoolBannerState extends State<SchoolBanner> {
   }
 
   void _sync() {
+    if (_adAge != _age) {
+      _adAge = _age;
+      ++_generation;
+      _ad?.dispose();
+      _ad = null;
+      _loaded = false;
+      _requesting = false;
+      if (mounted) setState(() {});
+    }
     if (!_eligible) {
       ++_generation;
       _ad?.dispose();
