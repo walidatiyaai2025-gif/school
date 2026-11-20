@@ -112,9 +112,16 @@ class _SchoolBannerState extends State<SchoolBanner> {
         ConsentRequestParameters(
           tagForUnderAgeOfConsent:
               FamiliesAdPolicy.requiresUnderAgeConsentTreatment(_age)),
-        () {
+        () async {
           if (FamiliesAdPolicy.requiresUnderAgeConsentTreatment(_age)) {
-            if (!completer.isCompleted) completer.complete(true);
+            // Underage is not an exemption from UMP readiness checks. No
+            // ad requests unless UMP explicitly allows serving ads.
+            try {
+              final allowed = await ConsentInformation.instance.canRequestAds();
+              if (!completer.isCompleted) completer.complete(allowed);
+            } catch (_) {
+              if (!completer.isCompleted) completer.complete(false);
+            }
             return;
           }
           ConsentForm.loadAndShowConsentFormIfRequired((error) async {
