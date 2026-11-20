@@ -100,6 +100,23 @@
 #how>.wrap{display:block}.step-band{grid-template-columns:1fr}
 .feature .glyph svg{width:30px;height:30px}
 }
+
+/* Final measured visual refinements at the reference 1672x941 viewport. */
+.launch-waitlist{display:flex;align-items:center;background:#fff;border:5px solid #fff;border-radius:50px;width:375px;height:47px;direction:ltr;box-shadow:0 4px 15px #06357620;overflow:hidden}
+.launch-waitlist button{width:58px;height:37px;flex:none;border:0;border-radius:50px;background:linear-gradient(135deg,#0a8bed,#2287dd);color:white;font-size:24px;opacity:.9;cursor:not-allowed}
+.launch-waitlist input{width:100%;min-width:0;border:0;background:white;text-align:right;padding:0 19px;color:#7082a1;font-size:12px;outline:none;cursor:not-allowed}
+.launch-waitlist input::placeholder{color:#7185a4;opacity:1}
+@media(min-width:1101px){
+.hero-brand{transform:translateX(30px)}.hero-art{transform:translateX(-16px)}
+.trust{gap:10px 31px}
+.store-row{direction:ltr;transform:translateX(-13px)}
+.shots{transform:translateX(-64px)}
+.launch-inner{justify-content:space-between;gap:45px;padding-inline:225px 220px}
+.launch h2{font-size:22px;white-space:nowrap}
+.launch p{font-size:12px}
+}
+@media(max-width:1100px){.store-row{direction:ltr}.launch-waitlist{width:min(375px,100%)}}
+@media(max-width:700px){.launch-waitlist{height:47px}.launch h2{font-size:20px}}
 </style>
 </head>
 <body>
@@ -137,7 +154,7 @@
 <div class="step"><span class="step-num">2</span><span><strong data-i18n-ar="عدّل ورتّب" data-i18n-en="Edit and arrange">عدّل ورتّب</strong><small data-i18n-ar="يمكنك تصحيح الصورة وترتيب الصفحات" data-i18n-en="Correct the image and reorder pages">يمكنك تصحيح الصورة وترتيب الصفحات</small></span></div>
 <div class="step"><span class="step-num">3</span><span><strong data-i18n-ar="احفظ وشارك" data-i18n-en="Save and share">احفظ وشارك</strong><small data-i18n-ar="احصل على ملف PDF جاهز للمذاكرة أو الإرسال" data-i18n-en="Get a PDF ready to study or share">احصل على ملف PDF جاهز للمذاكرة أو الإرسال</small></span></div>
 </div></div></section>
-<section class="launch"><div class="wrap launch-inner"><div><h2>🔔 كن أول من يعرف بموعد الإطلاق</h2><p data-i18n-ar="قريبًا على Google Play وApp Store — تواصل معنا للاستفسارات عن موعد الإصدار." data-i18n-en="Coming soon to Google Play and App Store — contact us for launch updates.">قريبًا على Google Play وApp Store — تواصل معنا للاستفسارات عن موعد الإصدار.</p></div><a href="mailto:{{ config('schoolpdf.support_email') }}?subject=School%20PDF%20Launch">تواصل معنا ✉</a></div></section>
+<section class="launch"><div class="wrap launch-inner"><div><h2>🔔 كن أول من يعرف بموعد الإطلاق</h2><p data-i18n-ar="قريبًا على Google Play وApp Store — تواصل معنا للاستفسارات عن موعد الإصدار." data-i18n-en="Coming soon to Google Play and App Store — contact us for launch updates.">قريبًا على Google Play وApp Store — تواصل معنا للاستفسارات عن موعد الإصدار.</p></div><div class="launch-waitlist" aria-label="التسجيل بإشعارات الإطلاق سيتاح قريبًا" title="التسجيل بإشعارات الإطلاق سيتاح قريبًا"><button type="button" disabled aria-label="إشعارات الإطلاق قريبًا">➤</button><input type="email" disabled placeholder="أدخل بريدك الإلكتروني" aria-label="إدخال البريد سيتاح قريبًا"></div></div></section>
 </main>
 <footer class="site-footer"><div class="wrap footer-inner"><span>© {{ date('Y') }} School PDF · sclpdf.50sols.com</span><div class="footer-links"><a href="{{ url('/privacy') }}" data-i18n-ar="سياسة الخصوصية" data-i18n-en="Privacy Policy">سياسة الخصوصية</a><a href="{{ url('/terms') }}" data-i18n-ar="الشروط والأحكام" data-i18n-en="Terms">الشروط والأحكام</a><a href="{{ url('/support') }}" data-i18n-ar="الدعم" data-i18n-en="Support">الدعم</a><a href="{{ url('/data-deletion') }}" data-i18n-ar="حذف البيانات" data-i18n-en="Delete Data">حذف البيانات</a><a href="{{ url('/admin') }}" data-i18n-ar="لوحة الإدارة" data-i18n-en="Admin Dashboard">لوحة الإدارة</a></div></div></footer>
 <script>
