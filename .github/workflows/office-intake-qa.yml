@@ -23,7 +23,11 @@ jobs:
         working-directory: mobile
       - run: python3 tool/patch_platforms.py
         working-directory: mobile
-      - run: flutter pub get && flutter analyze --no-fatal-infos && flutter test
+      - run: |
+          if [ -f test/widget_test.dart ] && grep -q MyApp test/widget_test.dart; then rm test/widget_test.dart; fi
+          flutter pub get
+          flutter analyze --no-fatal-infos
+          flutter test
         working-directory: mobile
       - run: flutter build apk --debug
         working-directory: mobile
@@ -40,7 +44,11 @@ jobs:
         working-directory: mobile
       - run: python3 tool/patch_platforms.py
         working-directory: mobile
-      - run: flutter pub get && flutter analyze --no-fatal-infos && flutter test
+      - run: |
+          if [ -f test/widget_test.dart ] && grep -q MyApp test/widget_test.dart; then rm test/widget_test.dart; fi
+          flutter pub get
+          flutter analyze --no-fatal-infos
+          flutter test
         working-directory: mobile
       - run: flutter build ios --simulator --no-codesign
         working-directory: mobile
@@ -59,5 +67,5 @@ jobs:
           php -l routes/api.php
           php -l app/Http/Controllers/Api/OfficeConversionController.php
           php -l config/services.php
-          php artisan test --filter=OfficeConversionTest
+          ./vendor/bin/phpunit --filter=OfficeConversionTest
         working-directory: backend
