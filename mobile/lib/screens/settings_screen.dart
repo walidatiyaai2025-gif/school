@@ -288,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             else {await TelemetryService.unregister();} if(mounted)setState((){});}),
         ListTile(leading:const Icon(Icons.privacy_tip_outlined),
           title:Text(s.t('سياسة الخصوصية','Privacy policy')),
-          onTap:()=>launchUrl(Uri.parse('https://sclpdf.50sols.com/privacy'),mode:LaunchMode.externalApplication)),
+          onTap:()=>launchUrl(Uri.https('sclpdf.50sols.com','/privacy',{'lang':widget.store.settings.english?'en':'ar'}),mode:LaunchMode.externalApplication)),
         ListTile(leading:const Icon(Icons.delete_outline),
           title:Text(s.t('حذف سجل الجهاز من الخادم','Delete server device record')),
           subtitle:Text(s.t('لا يحذف ملفات PDF من جهازك','Does not delete local PDFs')),
@@ -305,7 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ListTile(
           leading: const Icon(Icons.help_outline),
           title: Text(s.t('كيفية حذف البيانات', 'Data deletion instructions')),
-          onTap: () => launchUrl(Uri.parse('https://sclpdf.50sols.com/data-deletion'),
+          onTap: () => launchUrl(Uri.https('sclpdf.50sols.com','/data-deletion',{'lang':widget.store.settings.english?'en':'ar'}),
             mode: LaunchMode.externalApplication),
         ),
         ListTile(
