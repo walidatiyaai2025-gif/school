@@ -91,7 +91,7 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       appBar: AppBar(
         toolbarHeight: 48,
         title: const Text('School PDF'),
-        actions: [LanguageToggle(store: widget.store)],
+        actions: [LanguageToggle(store: widget.store, notifications: widget.notifications)],
       ),
       body:SafeArea(bottom:false,child:IndexedStack(index:tab,children:screens)),
       bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[
