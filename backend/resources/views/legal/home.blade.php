@@ -116,7 +116,7 @@
 .launch p{font-size:12px}
 }
 @media(max-width:1100px){.store-row{direction:ltr}.launch-waitlist{width:min(375px,100%)}}
-@media(max-width:700px){.launch-waitlist{height:47px}.launch h2{font-size:20px}}
+@media(max-width:700px){.launch-waitlist{height:47px}.launch h2{font-size:20px}.hero-art{height:324px;padding-bottom:16px}.hero::after{opacity:.12}}
 </style>
 </head>
 <body>
