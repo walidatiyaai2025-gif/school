@@ -1,3 +1,5 @@
+> **2026-11-20 — RELEASE 1.1.4 IN PROGRESS, NOT YET LIVE:** the previously verified 1.1.3 signed cPanel update and signed Play AAB remain the last confirmed released artifacts. School PDF 1.1.4 Families-safe AdMob work is on `feat/schoolpdf-1.1.4-families-safe-admob`. Do not upload 1.1.4 until real signed Setup/Update 1.1.3→1.1.4, AAB and exact-head CI all pass. See `docs/GOOGLE_PLAY_ADMOB_FAMILIES_1_1_4_AR.md`. Preserve Issue #10 as launch master record.
+
 # School PDF — سجل التسليم المستمر / Worker Handoff (v1.1.3)
 
 > **سجل العمل المعتمد لأي Worker جديد.** آخر فحص مباشر: **2026-11-20**. ارجع دائمًا إلى [Issue #10](https://github.com/walidatiyaai2025-gif/school/issues/10) وGitHub الحالي قبل التعديل. هذا سجل حالة موثّق وقت كتابته وليس تأكيدًا أن الاستضافة الحية أو Google Play تغيرا تلقائيًا.

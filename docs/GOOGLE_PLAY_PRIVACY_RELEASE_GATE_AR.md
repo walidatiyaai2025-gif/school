@@ -1,3 +1,5 @@
+> **Update 2026-11-20:** School PDF v1.1.4 is being built with child-safe non-personalized Google AdMob banners and explicit Super Admin approval. Families/Data Safety and AdMob privacy messaging are still owner-gated. See `docs/GOOGLE_PLAY_ADMOB_FAMILIES_1_1_4_AR.md`. The v1.1.3 no-ads answers must not be reused for v1.1.4 without checking the signed AAB.
+
 # School PDF — Google Play privacy & deletion release gate
 
 ## Source verified on GitHub
