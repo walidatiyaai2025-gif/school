@@ -46,3 +46,7 @@ https://support.google.com/googleplay/android-developer/answer/12955712
 https://support.google.com/admob/answer/6223431
 https://developers.google.com/admob/flutter/targeting
 https://developers.google.com/admob/flutter/privacy
+
+## Google Play Photos and Videos permission gate
+
+The app uses Flutter `image_picker` / Android system Photo Picker for explicit single/multi-image selection. The 1.1.4 Manifest uses `tools:node="remove"` for `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`, `READ_MEDIA_VISUAL_USER_SELECTED` and `READ_EXTERNAL_STORAGE`. The AAB workflow checks both merged Manifest and final bundle. This addresses the broad photo/video-access policy without claiming access to all photos. Camera and gallery picker runtime must still be tested on API 24/32/33/36; the app only receives user-selected content.

@@ -130,11 +130,19 @@ jobs:
             assert 'base/manifest/AndroidManifest.xml' in z.namelist()
             assert any(n.startswith('base/lib/') and n.endswith('.so') for n in z.namelist())
             assert b'com.google.android.gms.permission.AD_ID' not in z.read('base/manifest/AndroidManifest.xml'), 'Advertising ID permission present in Play AAB'
+            for permission in (
+                b'android.permission.READ_MEDIA_IMAGES',
+                b'android.permission.READ_MEDIA_VIDEO',
+                b'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
+                b'android.permission.READ_EXTERNAL_STORAGE',
+            ):
+                assert permission not in z.read('base/manifest/AndroidManifest.xml'), f'Broad media permission present: {permission!r}'
           print('AAB valid ZIP with native ELF and no merged advertising ID permission.')
           PY
           manifest="$(find build/app/intermediates/merged_manifests -type f -name AndroidManifest.xml | head -n 1)"
           test -n "$manifest" && test -s "$manifest"
           ! grep -q 'com.google.android.gms.permission.AD_ID' "$manifest"
+          ! grep -Eq 'android.permission.(READ_MEDIA_IMAGES|READ_MEDIA_VIDEO|READ_MEDIA_VISUAL_USER_SELECTED|READ_EXTERNAL_STORAGE)' "$manifest"
       - name: Verify protected upload signature when configured
         if: env.SCHOOLPDF_RELEASE_SIGNED == 'true'
         working-directory: mobile

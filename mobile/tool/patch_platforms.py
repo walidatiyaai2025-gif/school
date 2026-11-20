@@ -32,6 +32,18 @@ if manifest.exists():
     if 'com.google.android.gms.permission.AD_ID' not in x:
         x=x.replace('<application',
             '<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />\n    <application',1)
+    # Android image_picker uses the Android Photo Picker / system selector.
+    # Do not request broad Photos/Videos permissions: Play requires a separate
+    # high-trust declaration for broad media access that School PDF does not need.
+    for permission in [
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+        'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
+        'android.permission.READ_EXTERNAL_STORAGE',
+    ]:
+        marker = f'<uses-permission android:name="{permission}" tools:node="remove" />'
+        if marker not in x:
+            x = x.replace('<application', marker + '\n    <application', 1)
     before='<application'
     for permission in ['android.permission.INTERNET',
                        'android.permission.POST_NOTIFICATIONS',
