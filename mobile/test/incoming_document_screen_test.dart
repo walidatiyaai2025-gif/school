@@ -6,23 +6,23 @@ void main() {
   testWidgets('Arabic choices explain no upload and disabled server conversion', (tester) async {
     await tester.pumpWidget(MaterialApp(home: Scaffold(
       body: SingleChildScrollView(child: OfficePreviewChoice(
-        english: false, onLocal: () {}, onExternal: () {},
+        english: false, onLocal: () {}, onExternal: () {}, onServer: () {},
       )),
     )));
     expect(find.textContaining('بدون رفع الملف'), findsOneWidget);
     expect(find.textContaining('موافقتك الصريحة'), findsOneWidget);
-    expect(find.text('التحويل عبر الخادم غير متاح حاليًا'), findsOneWidget);
+    expect(find.text('تحويل عبر الخادم'), findsOneWidget);
     expect(tester.widget<FilledButton>(find.widgetWithText(
-      FilledButton, 'التحويل عبر الخادم غير متاح حاليًا')).onPressed, isNull);
+      FilledButton, 'تحويل عبر الخادم')).onPressed, isNotNull);
   });
 
   testWidgets('English choices disclose per-file approval', (tester) async {
     await tester.pumpWidget(MaterialApp(home: Scaffold(
       body: SingleChildScrollView(child: OfficePreviewChoice(
-        english: true, onLocal: () {}, onExternal: () {},
+        english: true, onLocal: () {}, onExternal: () {}, onServer: () {},
       )),
     )));
     expect(find.textContaining('No upload'), findsOneWidget);
-    expect(find.textContaining('separate approval each time'), findsOneWidget);
+    expect(find.textContaining('explicit approval'), findsOneWidget);
   });
 }
