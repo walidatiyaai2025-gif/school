@@ -262,6 +262,7 @@ class MainActivity : FlutterActivity() {
                 pending = null
             } else result.notImplemented()
         }
+        // Cold-start intent is delivered after Dart requests initialDocument.
         receive(intent)
     }
 
@@ -282,11 +283,8 @@ class MainActivity : FlutterActivity() {
             contentResolver.openInputStream(uri)?.use { input ->
                 target.outputStream().use { output -> input.copyTo(output) }
             } ?: return
-            if (channel == null) pending = target.absolutePath
-            else {
-                pending = target.absolutePath
-                channel?.invokeMethod("onOpenDocument", target.absolutePath)
-            }
+            pending = target.absolutePath
+            channel?.invokeMethod("onOpenDocument", target.absolutePath)
         } catch (_: Exception) { /* Do not crash on revoked or malformed provider URIs. */ }
     }
 
