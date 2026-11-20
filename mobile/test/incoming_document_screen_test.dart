@@ -10,10 +10,10 @@ void main() {
       )),
     )));
     expect(find.textContaining('بدون رفع الملف'), findsOneWidget);
-    expect(find.textContaining('موافقتك الصريحة'), findsOneWidget);
-    expect(find.text('تحويل عبر الخادم'), findsOneWidget);
+    expect(find.textContaining('غير متاح على الاستضافة المشتركة'), findsOneWidget);
+    expect(find.text('التحويل عبر الخادم غير متاح حاليًا'), findsOneWidget);
     expect(tester.widget<FilledButton>(find.widgetWithText(
-      FilledButton, 'تحويل عبر الخادم')).onPressed, isNotNull);
+      FilledButton, 'التحويل عبر الخادم غير متاح حاليًا')).onPressed, isNull);
   });
 
   testWidgets('English choices disclose per-file approval', (tester) async {
@@ -23,6 +23,8 @@ void main() {
       )),
     )));
     expect(find.textContaining('No upload'), findsOneWidget);
-    expect(find.textContaining('explicit approval'), findsOneWidget);
+    expect(find.textContaining('Unavailable on the current shared hosting'), findsOneWidget);
+    expect(tester.widget<FilledButton>(find.widgetWithText(
+      FilledButton, 'Server conversion unavailable')).onPressed, isNull);
   });
 }
