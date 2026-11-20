@@ -10,7 +10,7 @@
     const secondArabic = /[\u0600-\u06ff]/.test(second);
     let ar = first, en = second;
     if ((!firstArabic && secondArabic) ||
-        (firstArabic && secondArabic && /^[A-Za-z]/.test(first))) {
+        (firstArabic && secondArabic && /^[^\u0600-\u06ff]*[A-Za-z]/.test(first))) {
       ar = second; en = first;
     }
     if (ar !== en && /[\u0600-\u06ff]/.test(ar)) {
@@ -31,7 +31,7 @@
     while (walker.nextNode()) nodes.push(walker.currentNode);
     for (const node of nodes) {
       const tag = node.parentElement?.tagName;
-      if (!tag || ['SCRIPT','STYLE','CODE','TEXTAREA','OPTION'].includes(tag)) continue;
+      if (!tag || ['SCRIPT','STYLE','CODE','TEXTAREA'].includes(tag)) continue;
       if (node.parentElement.closest('[data-site-languages]')) continue;
       if (!originals.has(node)) originals.set(node, node.textContent);
       const initial = originals.get(node);
