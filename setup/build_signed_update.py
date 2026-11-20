@@ -101,7 +101,9 @@ def main() -> int:
         raise RuntimeError('BLOCKED: production dependencies changed; requires a separately verified upgrade path')
     payload={}
     for source,name in files_to_package(backend):
-        if name=='.env.example' or name.startswith('bootstrap/cache/'):
+        # app-ads.txt is editable from the live Admin dashboard. Never
+        # overwrite a production site's authorized-seller records.
+        if name in ('.env.example', 'public/app-ads.txt') or name.startswith('bootstrap/cache/'):
             continue
         payload[name]=source.read_bytes()
     files=[{'path':name,'sha256':sha256_bytes(blob),'bytes':len(blob)}

@@ -45,7 +45,7 @@ def main() -> None:
         manifest = json.loads((app / 'SETUP_MANIFEST.json').read_text())
         if os.environ.get('SCHOOLPDF_PRODUCTION_INSTALL_SMOKE') == '1':
             check(manifest.get('kind') == 'fresh-install', 'not a genuine production Setup archive')
-            check(manifest.get('git_sha') == os.environ.get('GITHUB_SHA'), 'source SHA mismatch')
+            check(manifest.get('git_sha') == os.environ.get('SCHOOLPDF_EXPECTED_SETUP_SHA', os.environ.get('GITHUB_SHA')), 'source SHA mismatch')
             check(manifest.get('signed_updates') is True, 'public update trust key missing')
             example = (app / '.env.example').read_text()
             check('SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="' in example,
@@ -157,15 +157,19 @@ def main() -> None:
             f'isolated private backup verification failed: {backup_result.stderr[-450:]}')
         print('PASS: real installed archive backup, MariaDB row export, .env retention,')
         print('private backup manifest and SHA-256 verification')
-        from signed_upgrade_smoke import run_signed_upgrade_smoke
-        run_signed_upgrade_smoke(app, env, php)
+        if os.environ.get('SCHOOLPDF_REAL_UPDATE_ARCHIVE'):
+            from real_update_smoke import run_real_update_smoke
+            run_real_update_smoke(app, env, php)
+        else:
+            from signed_upgrade_smoke import run_signed_upgrade_smoke
+            run_signed_upgrade_smoke(app, env, php)
         print('PASS: exact preview ZIP extraction, integrity, isolated MySQL install,')
         print('hashed super admin, completed lock, and repeated-install denial')
         if os.environ.get('SCHOOLPDF_PRODUCTION_INSTALL_SMOKE') == '1':
             check('SCHOOLPDF_ED25519_UPDATE_PUBLIC_KEY="' in (app / '.env').read_text(),
                   'installed environment lost signing trust anchor')
             print('PASS: ACTUAL PRODUCTION SETUP ZIP installed using no server Composer,')
-            print('plus synthetic signed upgrade, DB-migration failure and isolated recovery.')
+            print('plus selected real or synthetic signed upgrade and isolated recovery checks.')
         else:
             print('Preview-only; production release requires independent exact ZIP proof.')
 

@@ -46,7 +46,9 @@ def verify(apk: Path) -> bool:
         if archive.testzip() is not None:
             raise ValueError('APK ZIP integrity failure')
         for entry in archive.infolist():
-            if not entry.filename.startswith('lib/') or not entry.filename.endswith('.so'):
+            # APKs use lib/<abi>; Android App Bundles use base/lib/<abi>.
+            relative = entry.filename.removeprefix('base/')
+            if not relative.startswith('lib/') or not relative.endswith('.so'):
                 continue
             found += 1
             try:
