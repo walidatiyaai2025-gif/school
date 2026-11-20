@@ -36,7 +36,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p landing-visual
-          php -S 127.0.0.1:8765 -t backend/public backend/public/index.php > /tmp/schoolpdf-landing-server.log 2>&1 &
+          cat > /tmp/schoolpdf-landing-router.php <<'PHP'
+          <?php
+          $path = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/');
+          $static = getcwd() . '/backend/public' . $path;
+          if ($path !== '/' && is_file($static)) {
+              return false;
+          }
+          require getcwd() . '/backend/public/index.php';
+          PHP
+          php -S 127.0.0.1:8765 -t backend/public /tmp/schoolpdf-landing-router.php > /tmp/schoolpdf-landing-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           for i in {1..35}; do
@@ -45,6 +54,8 @@ jobs:
           done
           grep -q 'hero-brand' landing-visual/rendered.html
           grep -q 'hero-ornaments.svg' landing-visual/rendered.html
+          test "$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/brand-icon.png)" = 200
+          test "$(curl -fsS -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/landing/hero-ornaments.svg)" = 200
           if command -v google-chrome >/dev/null; then
             CHROME=google-chrome
           elif command -v chromium >/dev/null; then
