@@ -11,6 +11,9 @@ class WebsiteI18nTest extends TestCase
             ->assertSee('data-lang="en"', false)
             ->assertSee('data-lang="ar"', false)
             ->assertSee("localStorage.setItem('schoolpdf-language',lang)", false);
+        $html = $this->get('/?lang=en')->assertOk()->getContent();
+        $this->assertStringNotContainsString('<br data-i18n-', $html);
+        $this->assertSame(7, substr_count($html, '<b><span data-i18n-ar='));
     }
 
     public function test_legal_pages_have_separate_complete_language_sections(): void
