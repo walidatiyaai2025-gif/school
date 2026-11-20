@@ -64,6 +64,10 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
         working-directory: backend
       - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress
+          libreoffice --version
+      - run: |
           php -l routes/api.php
           php -l app/Http/Controllers/Api/OfficeConversionController.php
           php -l config/services.php
