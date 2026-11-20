@@ -1,3 +1,7 @@
+> **تنبيه بتاريخ 2026-11-20:** هذا المستند يحتوي معلومات تاريخية قديمة. الحالة المعتمدة الحالية لإصدار 1.1.3، وملفات GitHub الموقّعة، وخطوات المالك والـWorkers موثقة في [سجل تسليم School PDF v1.1.3](../docs/SCHOOLPDF_V1_1_3_RELEASE_HANDOFF_AR.md) و[Issue #10](https://github.com/walidatiyaai2025-gif/school/issues/10). لا تفترض SOURCE-ONLY أو عدم وجود ZIP موثّق بالاعتماد على الأسطر التاريخية أدناه؛ تحقق من CI الحالي دائمًا.
+
+---
+
 # خطوات الرفع إلى sclpdf.50sols.com — بعد قبول Build الإنتاج
 
 **لا ترفع SOURCE ZIP الحالي إلى مجلد public_html كأنه Setup نهائي.** ارفع فقط `SchoolPDF-Setup-v1.1.2.zip` الذي ينتج بعد نجاح جميع CI gates، والذي يحتوي على `vendor/` و`composer.lock` و`SETUP_MANIFEST.json`.
