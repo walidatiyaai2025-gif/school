@@ -351,7 +351,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           'Scans stay locally on your device. Unexported files can be lost on uninstall.'),
           icon:Icons.shield_outlined),
       ])),
-      const SizedBox(height:15),const Center(child:Text('School PDF 1.1.3',
+      const SizedBox(height:15),const Center(child:Text('School PDF 1.1.4',
         style:TextStyle(color:Brand.muted,fontSize:11))),
     ]);
   }

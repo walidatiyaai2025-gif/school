@@ -17,14 +17,14 @@ def run_real_update_smoke(app: Path, env: dict, php: str) -> None:
     archive = Path(os.environ["SCHOOLPDF_REAL_UPDATE_ARCHIVE"]).resolve()
     target = os.environ["SCHOOLPDF_REAL_UPDATE_TARGET_VERSION"]
     assert archive.is_file(), "exact Update ZIP missing"
-    assert json.loads((app / "storage/app/private/install.lock").read_text())["version"] == "1.1.2"
+    assert json.loads((app / "storage/app/private/install.lock").read_text())["version"] == "1.1.3"
     with zipfile.ZipFile(archive) as z:
         assert z.testzip() is None
         manifest_raw = z.read("manifest.json")
         manifest = json.loads(manifest_raw)
         assert manifest["kind"] == "schoolpdf-update"
         assert manifest["target_version"] == target
-        assert manifest["supported_base_versions"] == ["1.1.2"]
+        assert manifest["supported_base_versions"] == ["1.1.3"]
         assert manifest["git_sha"] == os.environ["GITHUB_SHA"]
         assert "public/app-ads.txt" not in [f["path"] for f in manifest["files"]]
         assert not any("storage/" in f["path"] or f["path"] == ".env" for f in manifest["files"])
@@ -78,7 +78,7 @@ use Illuminate\Support\Facades\DB;
 DB::table("device_registrations")->insert([
   "installation_id"=>"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   "token_hash"=>str_repeat("a",64),"platform"=>"android",
-  "app_version"=>"1.1.2","locale"=>"en",
+  "app_version"=>"1.1.3","locale"=>"en",
   "notifications_enabled"=>0,"push_opt_in"=>0,"analytics_consent"=>1,
   "last_seen_at"=>now(),"created_at"=>now(),"updated_at"=>now()
 ]);
@@ -121,6 +121,7 @@ echo "REAL_ZIP_UPGRADE_OK";''', archive)
     assert ads_file.read_bytes() == original_ads, "live app-ads.txt overwritten"
     assert json.loads((app / "storage/app/private/install.lock").read_text())["version"] == target
     assert (app / "resources/views/legal/data-deletion.blade.php").is_file()
+    assert (app / "app/Models/AdApproval.php").is_file(), "new ad policy model missing"
     assert not (app / "storage/framework/down").exists()
 
     post = run_php(r'''
@@ -137,6 +138,6 @@ $m=$app->make(App\Services\SystemUpdateManager::class);
 try {$m->inspect($argv[2]);exit(10);}
 catch (RuntimeException $e) {echo "REPLAY_BLOCKED";}''',archive)
     assert replay.returncode == 0 and "REPLAY_BLOCKED" in replay.stdout
-    print(f"PASS: exact signed ZIP upgraded actual verified base Setup 1.1.2→{target}.")
+    print(f"PASS: exact signed ZIP upgraded actual verified base Setup 1.1.3→{target}.")
     print("PASS: manifest signature, tamper/replay rejection, backup verified,")
     print("admin/device database records, .env, uploads, live app-ads.txt preserved.")
