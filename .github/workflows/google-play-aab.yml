@@ -147,8 +147,18 @@ jobs:
           path: mobile/dist
           retention-days: 14
           if-no-files-found: error
-      - name: Fail closed for public Play delivery without a persistent upload key
-        if: github.ref == 'refs/heads/main' && env.SCHOOLPDF_RELEASE_SIGNED != 'true'
+      - name: Explicitly report Play delivery is blocked for unsigned build
+        if: env.SCHOOLPDF_RELEASE_SIGNED != 'true'
+        shell: bash
         run: |
-          echo "::error::Upload key missing. UNSIGNED AAB is available only as a build candidate. Configure four SchoolPDF Android GitHub Actions secrets before Play delivery."
+          echo "::warning::AAB build verified, but only UNSIGNED-NOT-FOR-PLAY was produced. Google Play submission is BLOCKED pending the persistent upload keystore."
+          {
+            echo "### Play delivery: BLOCKED (unsigned build only)"
+            echo "The release AAB passed compilation and package validation but CANNOT be uploaded to Google Play."
+            echo "Provide all four SCHOOLPDF_ANDROID_UPLOAD_* secrets, then run this workflow manually on main to verify a signed artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Require persistent upload key for explicit Play release requests
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && env.SCHOOLPDF_RELEASE_SIGNED != 'true'
+        run: |
+          echo "::error::Explicit Play delivery cannot proceed without all four SCHOOLPDF_ANDROID_UPLOAD_* secrets. No signed AAB exists."
           exit 1
