@@ -1,0 +1,77 @@
+name: School PDF AR EN UI Acceptance
+on:
+  pull_request:
+    paths:
+      - 'backend/resources/views/**'
+      - 'backend/public/js/site-i18n.js'
+      - 'backend/tests/Feature/WebsiteI18nTest.php'
+      - 'mobile/**'
+      - '.github/workflows/i18n-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web-language-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, fileinfo, zip
+          coverage: none
+      - name: Install CI dependencies and run localized Laravel tests
+        working-directory: backend
+        run: |
+          cp .env.example .env
+          composer install --prefer-dist --no-interaction --no-progress
+          php artisan key:generate --force
+          ./vendor/bin/phpunit --filter=WebsiteI18nTest
+      - name: Check browser language script
+        run: node --check backend/public/js/site-i18n.js
+      - name: Inspect real bilingual DOM with headless Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p i18n-evidence backend/storage/app/private
+          printf '{"installed":true,"version":"1.1.3"}' > backend/storage/app/private/install.lock
+          cat > /tmp/schoolpdf-i18n-router.php <<'PHP'
+          <?php
+          $uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/');
+          $file = getcwd() . '/backend/public' . $uri;
+          if ($uri !== '/' && is_file($file)) return false;
+          require getcwd() . '/backend/public/index.php';
+          PHP
+          php -S 127.0.0.1:8765 -t backend/public /tmp/schoolpdf-i18n-router.php >/tmp/site-i18n-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS 'http://127.0.0.1:8765/privacy?lang=en' > /dev/null; then break; fi
+            sleep 1
+          done
+          CHROME="$(command -v google-chrome || command -v chromium)"
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=2500 --dump-dom 'http://127.0.0.1:8765/privacy?lang=en' > i18n-evidence/privacy-en.html
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=2500 --dump-dom 'http://127.0.0.1:8765/privacy?lang=ar' > i18n-evidence/privacy-ar.html
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=2500 --dump-dom 'http://127.0.0.1:8765/?lang=en' > i18n-evidence/landing-en.html
+          python3 - <<'PY'
+          from pathlib import Path
+          en = Path('i18n-evidence/privacy-en.html').read_text()
+          ar = Path('i18n-evidence/privacy-ar.html').read_text()
+          home = Path('i18n-evidence/landing-en.html').read_text()
+          assert '<html lang="en" dir="ltr"' in en, 'English direction not applied'
+          assert '<html lang="ar" dir="rtl"' in ar, 'Arabic direction not applied'
+          assert 'class="card" lang="ar" hidden' in en, 'Arabic privacy text not hidden'
+          assert 'class="card en" lang="en" hidden' in ar, 'English privacy text not hidden'
+          assert 'School PDF privacy practices' in en
+          assert '<html lang="en" dir="ltr"' in home
+          assert 'Key Features' in home, 'Landing English copy missing'
+          print('English and Arabic DOM/RTL/LTR acceptance passed')
+          PY
+      - name: Save language proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-AR-EN-DOM-Acceptance
+          path: i18n-evidence/
+          retention-days: 14

@@ -79,7 +79,7 @@ class _CornerEditorState extends State<CornerEditor> {
     if(loading||saving)return;
     setState(()=>loading=true);
     try {source=await widget.scanner.rotate(source);await _detect();}
-    catch(e){if(mounted)feedback(context,'فشل التدوير: $e');}
+    catch(_){if(mounted)feedback(context,S(widget.store.settings.english).t('فشل تدوير الصورة','Could not rotate the image'));}
     finally {if(mounted)setState(()=>loading=false);}
   }
   Future<void> _apply()async{

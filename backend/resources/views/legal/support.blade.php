@@ -1,5 +1,5 @@
 <x-shell title="School PDF — Support">
-<div class="card"><h1>الدعم والمساعدة | School PDF Support</h1>
+<div class="card" lang="ar"><h1>الدعم والمساعدة | School PDF Support</h1>
 <p>للاستفسارات المتعلقة بتطبيق School PDF والخصوصية وطلبات حذف البيانات، تواصل معنا على البريد الرسمي:</p>
 <p><a class="btn" href="mailto:{{ config('schoolpdf.support_email') }}">{{ config('schoolpdf.support_email') }}</a></p>
 <p>لا يتطلب التطبيق إنشاء حساب مستخدم. يمكنك تعديل بيانات الطالب من إعدادات التطبيق، وحذف سجل الجهاز من الخادم أو مسح الملفات المحلية من قسم الخصوصية.</p>

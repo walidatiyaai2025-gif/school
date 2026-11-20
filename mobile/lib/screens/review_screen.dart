@@ -54,13 +54,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
         onProgress:(n,total){if(mounted)setState(()=>completed=n);});
       await widget.store.addRecord(doc);
       if(widget.store.settings.notifyReady){
-        try {await widget.notifications.pdfReady(doc.id);} catch(_){}
+        try {await widget.notifications.pdfReady(doc.id,english:widget.store.settings.english);} catch(_){}
       }
       if(!mounted)return;
       Navigator.pushReplacement(context,MaterialPageRoute<void>(builder:(_)=>
         ReadyScreen(store:widget.store,record:doc)));
     } catch(e){if(mounted)feedback(context,S(widget.store.settings.english).t(
-      'فشل إنشاء PDF','Could not create PDF: $e'));}
+      'فشل إنشاء PDF','Could not create PDF'));}
     finally {if(mounted)setState(()=>busy=false);}
   }
   @override Widget build(BuildContext context){

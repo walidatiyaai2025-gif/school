@@ -19,7 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override void dispose(){name.dispose();group.dispose();super.dispose();}
   Future<void> _save() async {
     if(name.text.trim().isEmpty||group.text.trim().isEmpty){
-      feedback(context,'الاسم والفصل مطلوبان');return;
+      feedback(context,S(widget.store.settings.english).t('الاسم والفصل مطلوبان','Name and class are required'));return;
     }
     widget.store.settings..name=name.text.trim()..schoolClass=group.text.trim();
     await widget.store.saveSettings();
@@ -29,15 +29,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try{
       final ok=await widget.notifications.requestPermission();
       if(ok) TelemetryService.sync(widget.store,widget.notifications);
-      if(mounted){setState((){});feedback(context,ok?'الإشعارات مفعّلة':'لم يُمنح الإذن. راجع إعدادات الهاتف.');}
-    }catch(e){if(mounted)feedback(context,'تعذر طلب الإذن: $e');}
+      if(mounted){setState((){});feedback(context,S(widget.store.settings.english).t(ok?'الإشعارات مفعّلة':'لم يُمنح الإذن. راجع إعدادات الهاتف.',ok?'Notifications enabled':'Permission not granted. Check device settings.'));}
+    }catch(_){if(mounted)feedback(context,S(widget.store.settings.english).t('تعذر طلب إذن الإشعارات','Unable to request notification permission'));}
   }
   Future<void> _syncReminders()async{
     try{
       await widget.notifications.configureReminder(
         enabled:widget.store.settings.notifyReminders,
-        time:widget.store.settings.reminderTime);
-    }catch(e){if(mounted)feedback(context,'تعذر جدولة التذكير: $e');}
+        time:widget.store.settings.reminderTime,
+        english:widget.store.settings.english);
+    }catch(_){if(mounted)feedback(context,S(widget.store.settings.english).t('تعذر جدولة التذكير','Could not schedule study reminder'));}
   }
   TimeOfDay get _reminderTime {
     final parts = widget.store.settings.reminderTime.split(':');
@@ -287,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             else {await TelemetryService.unregister();} if(mounted)setState((){});}),
         ListTile(leading:const Icon(Icons.privacy_tip_outlined),
           title:Text(s.t('سياسة الخصوصية','Privacy policy')),
-          onTap:()=>launchUrl(Uri.parse('https://sclpdf.50sols.com/privacy'),mode:LaunchMode.externalApplication)),
+          onTap:()=>launchUrl(Uri.https('sclpdf.50sols.com','/privacy',{'lang':widget.store.settings.english?'en':'ar'}),mode:LaunchMode.externalApplication)),
         ListTile(leading:const Icon(Icons.delete_outline),
           title:Text(s.t('حذف سجل الجهاز من الخادم','Delete server device record')),
           subtitle:Text(s.t('لا يحذف ملفات PDF من جهازك','Does not delete local PDFs')),
@@ -304,7 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ListTile(
           leading: const Icon(Icons.help_outline),
           title: Text(s.t('كيفية حذف البيانات', 'Data deletion instructions')),
-          onTap: () => launchUrl(Uri.parse('https://sclpdf.50sols.com/data-deletion'),
+          onTap: () => launchUrl(Uri.https('sclpdf.50sols.com','/data-deletion',{'lang':widget.store.settings.english?'en':'ar'}),
             mode: LaunchMode.externalApplication),
         ),
         ListTile(

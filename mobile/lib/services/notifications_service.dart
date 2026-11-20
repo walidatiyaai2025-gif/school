@@ -1,3 +1,4 @@
+import '../core/strings.dart';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -185,16 +186,16 @@ class NotificationService {
     }
   }
 
-  Future<void> pdfReady(String recordId) async {
+  Future<void> pdfReady(String recordId, {bool english = true}) async {
     if (!permissionGranted) return;
     await local.show(
       id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
-      title: 'School PDF', body: 'ملف PDF جاهز للمشاركة',
+      title: 'School PDF', body: S(english).pdfReadyBody,
       notificationDetails: _tasks, payload: recordId);
   }
 
   /// Inexact daily notifications: avoids SCHEDULE_EXACT_ALARM privileged access.
-  Future<void> configureReminder({required bool enabled, required String time}) async {
+  Future<void> configureReminder({required bool enabled, required String time, bool english = true}) async {
     await local.cancel(id: 9211);
     if (!enabled || !permissionGranted) return;
     final parts = time.split(':');
@@ -203,7 +204,7 @@ class NotificationService {
     var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (!scheduled.isAfter(now)) scheduled = scheduled.add(const Duration(days: 1));
     await local.zonedSchedule(
-      id: 9211, title: 'School PDF', body: 'وقت مراجعة واجباتك 📚',
+      id: 9211, title: 'School PDF', body: S(english).reminderBody,
       scheduledDate: scheduled, notificationDetails: _tasks,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time);

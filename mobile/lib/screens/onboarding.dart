@@ -23,7 +23,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override void dispose(){name.dispose();group.dispose();super.dispose();}
   Future<void> _continue()async{
     if(name.text.trim().isEmpty || group.text.trim().isEmpty || age=='unknown'){
-      feedback(context,'أدخل الاسم والفصل والفئة العمرية / Complete all required fields');return;
+      feedback(context,S(widget.store.settings.english).t('أدخل الاسم والفصل والفئة العمرية','Complete your name, class and age group'));return;
     }
     widget.store.settings
       ..name=name.text.trim()..schoolClass=group.text.trim()
@@ -35,7 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if(busy)return;setState(()=>busy=true);
     if(request){
       try {await widget.notifications.requestPermission();}catch(_){
-        if(mounted)feedback(context,'يمكنك تفعيل الإشعارات لاحقًا من إعدادات الهاتف');
+        if(mounted)feedback(context,S(widget.store.settings.english).t('يمكنك تفعيل الإشعارات لاحقًا من إعدادات الهاتف','You can enable notifications later in your device settings'));
       }
     }
     widget.store.settings.introDone=true;
@@ -46,7 +46,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override Widget build(BuildContext context){
     final s=S(widget.store.settings.english);
     return Scaffold(appBar:AppBar(automaticallyImplyLeading:false,
-      actions:[LanguageToggle(store:widget.store,onChanged:()=>setState((){}))]),
+      actions:[LanguageToggle(store:widget.store,notifications:widget.notifications,onChanged:()=>setState((){}))]),
       body:SafeArea(child:ListView(padding:const EdgeInsets.all(24),children:[
       const SizedBox(height:22),Center(child:const Logo(size:90)),const SizedBox(height:12),
       const Center(child:Text('School PDF',style:TextStyle(color:Brand.navy,
@@ -91,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           subtitle:Text(s.t('اختياري: نوع الجهاز وإصدار التطبيق والدولة التقريبية، بدون اسمك أو صورك.',
             'Optional: device platform, version and approximate country; never your name or files.')),
         ),
-        TextButton.icon(onPressed:()=>launchUrl(Uri.parse('https://sclpdf.50sols.com/privacy'),mode:LaunchMode.externalApplication),
+        TextButton.icon(onPressed:()=>launchUrl(Uri.https('sclpdf.50sols.com','/privacy',{'lang':widget.store.settings.english?'en':'ar'}),mode:LaunchMode.externalApplication),
           icon:const Icon(Icons.privacy_tip_outlined),label:Text(s.t('سياسة الخصوصية','Privacy policy'))),
         const SizedBox(height:18),
         InfoBanner(text:s.t('صورك وملفات PDF تظل على جهازك. لا يلزم إنشاء حساب.',

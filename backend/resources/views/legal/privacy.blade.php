@@ -1,5 +1,5 @@
 <x-shell title="School PDF — Privacy Policy | سياسة الخصوصية">
-<div class="card">
+<div class="card" lang="ar">
 <h1>سياسة خصوصية School PDF | Privacy Policy</h1>
 <p class="muted">آخر تحديث: 20 نوفمبر 2026 / Last updated: 20 November 2026</p>
 <p>التطبيق: <strong>School PDF</strong> · التواصل بشأن الخصوصية: <a href="mailto:{{ config('schoolpdf.support_email') }}">{{ config('schoolpdf.support_email') }}</a></p>
