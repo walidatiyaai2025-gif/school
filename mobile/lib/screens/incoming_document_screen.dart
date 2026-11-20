@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'package:open_filex/open_filex.dart';
 import '../services/incoming_documents.dart';
 import '../services/office_text_reader.dart';
 
@@ -36,6 +37,24 @@ class IncomingDocumentScreen extends StatelessWidget {
               ));
             }
             return ListView(padding: const EdgeInsets.all(20), children: [
+              const SizedBox(height: 8),
+              FilledButton.icon(
+                onPressed: () async {
+                  final result = await OpenFilex.open(path);
+                  if (!context.mounted) return;
+                  if (result.type != ResultType.done) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(english
+                        ? 'No compatible document viewer is available on this device.'
+                        : 'لا يوجد تطبيق متوافق لعرض المستند على هذا الجهاز.'),
+                    ));
+                  }
+                },
+                icon: const Icon(Icons.open_in_new),
+                label: Text(english
+                  ? 'View original formatting in a compatible app'
+                  : 'عرض التنسيق الأصلي في تطبيق متوافق'),
+              ),
               Text(english
                   ? 'Text-only preview. Original Office formatting is not preserved.'
                   : 'معاينة نصية فقط؛ تنسيق ملف Office الأصلي غير محفوظ.',
@@ -48,10 +67,27 @@ class IncomingDocumentScreen extends StatelessWidget {
       } else {
         content = Center(child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(english
-              ? 'Legacy Office files (.doc, .xls, .ppt) cannot be previewed in this build.'
-              : 'لا تتوفر معاينة ملفات Office القديمة (.doc و.xls و.ppt) في هذا الإصدار.',
-            textAlign: TextAlign.center),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(english
+              ? 'Legacy Office documents require a compatible viewer.'
+              : 'مستندات Office القديمة تحتاج تطبيق عرض متوافق.',
+              textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () async {
+                final result = await OpenFilex.open(path);
+                if (!context.mounted) return;
+                if (result.type != ResultType.done) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(english ? 'No compatible viewer installed'
+                        : 'لا يوجد تطبيق عرض متوافق مثبت'),
+                  ));
+                }
+              },
+              icon: const Icon(Icons.open_in_new),
+              label: Text(english ? 'Open original document' : 'فتح المستند الأصلي'),
+            ),
+          ]),
         ));
       }
     }
