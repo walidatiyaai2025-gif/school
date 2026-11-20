@@ -28,6 +28,17 @@ class LandingPageTest extends TestCase
         $this->assertStringNotContainsString('apps.apple.com/app/', $html);
     }
 
+    public function test_language_switch_and_local_illustration_are_shipped(): void
+    {
+        $html = $this->get('/')->assertOk()->getContent();
+        $this->assertStringContainsString('data-lang="en"', $html);
+        $this->assertStringContainsString('data-lang="ar"', $html);
+        $this->assertStringContainsString('data-i18n-en="Key Features"', $html);
+        $this->assertStringContainsString('landing/worksheet-scene.svg', $html);
+        $this->assertFileExists(public_path('landing/worksheet-scene.svg'));
+        $this->assertStringNotContainsString('</i data-i18n-', $html);
+    }
+
     public function test_legal_pages_remain_available(): void
     {
         $this->get('/privacy')->assertOk();
