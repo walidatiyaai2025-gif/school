@@ -1,5 +1,5 @@
 <x-shell title="School PDF — Delete data / حذف البيانات">
-<div class="card">
+<div class="card" lang="ar">
 <h1>حذف بيانات School PDF | Delete School PDF data</h1>
 <p><strong>School PDF لا ينشئ حسابات مستخدمين للطلاب.</strong> إدخال الاسم والصف في التطبيق لا ينشئ حسابًا على خوادمنا. بيانات مدير لوحة التحكم منفصلة عن حسابات مستخدمي التطبيق.</p>
 <h2>١. حذف سجل الجهاز من الخادم (اختياري للبالغين)</h2>
