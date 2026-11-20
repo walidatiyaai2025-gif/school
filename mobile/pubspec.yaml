@@ -1,7 +1,7 @@
 name: school_pdf
 description: School PDF - a private, offline homework document scanner for Android and iOS.
 publish_to: none
-version: 1.1.4+4
+version: 1.1.5+5
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -28,6 +28,8 @@ dependencies:
   google_mobile_ads: ^9.2.0
   intl: ^0.20.2
   path: ^1.9.1
+  archive: ^4.0.7
+  xml: ^7.0.1
   url_launcher: ^6.3.2
   flutter_secure_storage: ^9.2.4
 

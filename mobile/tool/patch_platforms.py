@@ -208,3 +208,161 @@ if podfile.exists():
     podfile.write_text(s)
 
 print('Native Firebase config, Gradle plugin, Xcode resource and notification channels patched.')
+
+
+# Register document open-with types on generated Android/iOS projects.
+manifest=root/'android/app/src/main/AndroidManifest.xml'
+if manifest.exists():
+    x=manifest.read_text()
+    if 'schoolpdf.open.document' not in x:
+        intent='''<intent-filter android:label="School PDF">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="application/msword" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <data android:mimeType="application/vnd.ms-excel" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <data android:mimeType="application/vnd.ms-powerpoint" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+                <data android:mimeType="image/jpeg" />
+                <data android:mimeType="image/png" />
+                <data android:mimeType="image/webp" />
+            </intent-filter>
+            <!-- schoolpdf.open.document -->'''
+        x=x.replace('</activity>',intent+'\n        </activity>',1)
+    manifest.write_text(x)
+
+activity=root/'android/app/src/main/kotlin/com/fiftysols/schoolpdf/MainActivity.kt'
+if activity.exists():
+    activity.write_text('''package com.fiftysols.schoolpdf
+
+import android.content.Intent
+import android.net.Uri
+import android.provider.OpenableColumns
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+import java.io.File
+
+class MainActivity : FlutterActivity() {
+    private val channelName = "com.fiftysols.schoolpdf/open_document"
+    private var channel: MethodChannel? = null
+    private var pending: String? = null
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
+        channel?.setMethodCallHandler { call, result ->
+            if (call.method == "initialDocument") {
+                result.success(pending)
+                pending = null
+            } else result.notImplemented()
+        }
+        // Cold-start intent is delivered after Dart requests initialDocument.
+        receive(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        receive(intent)
+    }
+
+    private fun receive(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        try {
+            val name = displayName(uri)
+            val ext = name.substringAfterLast('.', "").lowercase()
+            if (ext !in setOf("pdf","doc","docx","xls","xlsx","ppt","pptx","jpg","jpeg","png","webp")) return
+            val target = File.createTempFile("incoming_", ".$ext", cacheDir)
+            contentResolver.openInputStream(uri)?.use { input ->
+                target.outputStream().use { output -> input.copyTo(output) }
+            } ?: return
+            pending = target.absolutePath
+            channel?.invokeMethod("onOpenDocument", target.absolutePath)
+        } catch (_: Exception) { /* Do not crash on revoked or malformed provider URIs. */ }
+    }
+
+    private fun displayName(uri: Uri): String {
+        if (uri.scheme == "content") {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
+                if (it.moveToFirst()) return it.getString(0) ?: "unknown"
+            }
+        }
+        return uri.lastPathSegment ?: "unknown"
+    }
+}
+''')
+
+info=root/'ios/Runner/Info.plist'
+if info.exists():
+    with info.open('rb') as f: plist=plistlib.load(f)
+    plist['LSSupportsOpeningDocumentsInPlace']=True
+    plist['UIFileSharingEnabled']=True
+    plist['CFBundleDocumentTypes']=[{
+        'CFBundleTypeName':'School PDF supported documents',
+        'CFBundleTypeRole':'Viewer',
+        'LSHandlerRank':'Alternate',
+        'LSItemContentTypes':[
+            'com.adobe.pdf','public.jpeg','public.png','org.webmproject.webp',
+            'com.microsoft.word.doc','org.openxmlformats.wordprocessingml.document',
+            'com.microsoft.excel.xls','org.openxmlformats.spreadsheetml.sheet',
+            'com.microsoft.powerpoint.ppt','org.openxmlformats.presentationml.presentation'
+        ]
+    }]
+    with info.open('wb') as f: plistlib.dump(plist,f,sort_keys=False)
+
+app_delegate=root/'ios/Runner/AppDelegate.swift'
+if app_delegate.exists():
+    app_delegate.write_text('''import Flutter
+import UIKit
+
+@main
+@objc class AppDelegate: FlutterAppDelegate {
+  private var incomingChannel: FlutterMethodChannel?
+  private var pendingDocument: String?
+
+  override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
+    let controller = window?.rootViewController as! FlutterViewController
+    incomingChannel = FlutterMethodChannel(
+      name: "com.fiftysols.schoolpdf/open_document",
+      binaryMessenger: controller.binaryMessenger)
+    incomingChannel?.setMethodCallHandler { [weak self] call, result in
+      if call.method == "initialDocument" {
+        result(self?.pendingDocument)
+        self?.pendingDocument = nil
+      } else {
+        result(FlutterMethodNotImplemented)
+      }
+    }
+    GeneratedPluginRegistrant.register(with: self)
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  override func application(_ app: UIApplication, open url: URL,
+                            options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+    let allowed = Set(["pdf","doc","docx","xls","xlsx","ppt","pptx",
+                       "jpg","jpeg","png","webp"])
+    guard allowed.contains(url.pathExtension.lowercased()) else { return false }
+    let scoped = url.startAccessingSecurityScopedResource()
+    defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+    do {
+      let target = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString)
+        .appendingPathExtension(url.pathExtension)
+      try FileManager.default.copyItem(at: url, to: target)
+      pendingDocument = target.path
+      incomingChannel?.invokeMethod("onOpenDocument", arguments: target.path)
+      return true
+    } catch { return false }
+  }
+}
+''')

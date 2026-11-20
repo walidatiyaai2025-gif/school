@@ -60,4 +60,15 @@ class LandingPageTest extends TestCase
         $this->get('/support')->assertOk();
         $this->get('/data-deletion')->assertOk();
     }
+    public function test_coming_soon_office_preview_is_bilingual_and_not_claimed_live(): void
+    {
+        $html = $this->get('/')->assertOk()->getContent();
+        $this->assertStringContainsString('id="office-preview"', $html);
+        $this->assertStringContainsString('Coming in 1.1.5', $html);
+        $this->assertStringContainsString('قيد التجهيز والاختبار', $html);
+        foreach (['.pdf', '.docx', '.xlsx', '.pptx'] as $extension) {
+            $this->assertStringContainsString($extension, $html);
+        }
+    }
+
 }

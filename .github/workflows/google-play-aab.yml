@@ -1,4 +1,4 @@
-name: School PDF 1.1.4 Google Play AAB
+name: School PDF 1.1.5 Google Play AAB
 on:
   pull_request:
     branches: [main]
@@ -40,7 +40,7 @@ jobs:
       - name: Source and native setup for Android release
         working-directory: mobile
         run: |
-          test "$(cat ../VERSION)" = '1.1.4'
+          test "$(cat ../VERSION)" = '1.1.5'
           python3 tool/verify_firebase_config.py
           mkdir -p "$HOME/.gradle/init.d"
           cp tool/gradle_repositories_init.gradle "$HOME/.gradle/init.d/schoolpdf-repos.gradle"
@@ -104,7 +104,7 @@ jobs:
         working-directory: mobile
         run: |
           flutter build appbundle --release --no-pub \
-            --build-name=1.1.4 --build-number=4 \
+            --build-name=1.1.5 --build-number=5 \
             --dart-define=SCHOOLPDF_PRODUCTION_ADS=true \
             --dart-define=SCHOOLPDF_TEST_ADS=false \
             --dart-define=ADMOB_ANDROID_BANNER_ID=ca-app-pub-3218037275900725/8379591348
@@ -176,9 +176,9 @@ jobs:
         run: |
           mkdir -p dist
           if [ "$SCHOOLPDF_RELEASE_SIGNED" = true ]; then
-            name=SchoolPDF-v1.1.4-release-SIGNED.aab
+            name=SchoolPDF-v1.1.5-release-SIGNED.aab
           else
-            name=SchoolPDF-v1.1.4-UNSIGNED-NOT-FOR-PLAY.aab
+            name=SchoolPDF-v1.1.5-UNSIGNED-NOT-FOR-PLAY.aab
           fi
           cp build/app/outputs/bundle/release/app-release.aab "dist/$name"
           (cd dist && sha256sum "$name" > "$name.sha256")
@@ -187,7 +187,7 @@ jobs:
           from pathlib import Path
           signed=os.getenv('SCHOOLPDF_RELEASE_SIGNED')=='true'
           Path('dist/BUILD_INFO.json').write_text(json.dumps({
-            'git_sha':os.getenv('GITHUB_SHA'),'version_name':'1.1.4','version_code':4,
+            'git_sha':os.getenv('GITHUB_SHA'),'version_name':'1.1.5','version_code':5,
             'application_id':'com.fiftysols.schoolpdf','target_sdk':36,
             'type':'SIGNED_PLAY_UPLOAD_CANDIDATE' if signed else 'UNSIGNED_NOT_FOR_GOOGLE_PLAY',
             'production_ads':True,'families_safe_age_treatment':True,'ad_id_permission':False,
@@ -198,14 +198,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: env.SCHOOLPDF_RELEASE_SIGNED == 'true'
         with:
-          name: SchoolPDF-v1.1.4-GooglePlay-AAB-SIGNED
+          name: SchoolPDF-v1.1.5-GooglePlay-AAB-SIGNED
           path: mobile/dist
           retention-days: 30
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: env.SCHOOLPDF_RELEASE_SIGNED != 'true'
         with:
-          name: SchoolPDF-v1.1.4-AAB-UNSIGNED-NOT-FOR-PLAY
+          name: SchoolPDF-v1.1.5-AAB-UNSIGNED-NOT-FOR-PLAY
           path: mobile/dist
           retention-days: 14
           if-no-files-found: error
