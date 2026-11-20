@@ -1,0 +1,154 @@
+name: School PDF 1.1.3 Google Play AAB
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'VERSION'
+      - '.github/workflows/google-play-aab.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'VERSION'
+      - '.github/workflows/google-play-aab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  release-appbundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    env:
+      ADMOB_ANDROID_APP_ID: 'ca-app-pub-3218037275900725~8048418854'
+      SCHOOLPDF_UPLOAD_KEYSTORE_B64: ${{github.ref == 'refs/heads/main' && secrets.SCHOOLPDF_ANDROID_UPLOAD_KEYSTORE_B64 || ''}}
+      SCHOOLPDF_UPLOAD_STORE_PASSWORD: ${{github.ref == 'refs/heads/main' && secrets.SCHOOLPDF_ANDROID_UPLOAD_STORE_PASSWORD || ''}}
+      SCHOOLPDF_UPLOAD_KEY_ALIAS: ${{github.ref == 'refs/heads/main' && secrets.SCHOOLPDF_ANDROID_UPLOAD_KEY_ALIAS || ''}}
+      SCHOOLPDF_UPLOAD_KEY_PASSWORD: ${{github.ref == 'refs/heads/main' && secrets.SCHOOLPDF_ANDROID_UPLOAD_KEY_PASSWORD || ''}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Source and native setup for Android release
+        working-directory: mobile
+        run: |
+          test "$(cat ../VERSION)" = '1.1.3'
+          python3 tool/verify_firebase_config.py
+          mkdir -p "$HOME/.gradle/init.d"
+          cp tool/gradle_repositories_init.gradle "$HOME/.gradle/init.d/schoolpdf-repos.gradle"
+          flutter create --project-name school_pdf --platforms android --org com.fiftysols .
+          python3 tool/patch_platforms.py
+          if [ -f test/widget_test.dart ] && grep -q MyApp test/widget_test.dart; then rm test/widget_test.dart; fi
+          flutter pub get
+          dart run flutter_launcher_icons -f tool/flutter_launcher_icons_android.yaml
+          flutter analyze --no-fatal-infos
+          flutter test
+          grep -Eq 'targetSdk[[:space:]]*=[[:space:]]*36' android/app/build.gradle.kts
+          grep -Eq 'compileSdk[[:space:]]*=[[:space:]]*36' android/app/build.gradle.kts
+          grep -q 'tools:node="remove"' android/app/src/main/AndroidManifest.xml
+          grep -q 'com.fiftysols.schoolpdf' android/app/build.gradle.kts
+          grep -q 'ca-app-pub-3218037275900725~8048418854' android/app/src/main/AndroidManifest.xml
+      - name: Load protected upload certificate only if fully provisioned
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$SCHOOLPDF_UPLOAD_KEYSTORE_B64" ] &&
+             [ -n "$SCHOOLPDF_UPLOAD_STORE_PASSWORD" ] &&
+             [ -n "$SCHOOLPDF_UPLOAD_KEY_ALIAS" ] &&
+             [ -n "$SCHOOLPDF_UPLOAD_KEY_PASSWORD" ]; then
+            printf '%s' "$SCHOOLPDF_UPLOAD_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/schoolpdf-upload.jks"
+            chmod 600 "$RUNNER_TEMP/schoolpdf-upload.jks"
+            keytool -list -keystore "$RUNNER_TEMP/schoolpdf-upload.jks" -storepass "$SCHOOLPDF_UPLOAD_STORE_PASSWORD" -alias "$SCHOOLPDF_UPLOAD_KEY_ALIAS" >/dev/null
+            echo "SCHOOLPDF_UPLOAD_KEYSTORE_FILE=$RUNNER_TEMP/schoolpdf-upload.jks" >> "$GITHUB_ENV"
+            echo 'SCHOOLPDF_RELEASE_SIGNED=true' >> "$GITHUB_ENV"
+            echo 'Protected persistent Play upload key validated.'
+          else
+            if [ -n "$SCHOOLPDF_UPLOAD_KEYSTORE_B64$SCHOOLPDF_UPLOAD_STORE_PASSWORD$SCHOOLPDF_UPLOAD_KEY_ALIAS$SCHOOLPDF_UPLOAD_KEY_PASSWORD" ]; then
+              echo "::error::Partial upload signing configuration is unsafe"
+              exit 1
+            fi
+            echo 'SCHOOLPDF_RELEASE_SIGNED=false' >> "$GITHUB_ENV"
+            echo "::warning::No persistent Play upload key; build only UNSIGNED AAB for compilation testing."
+          fi
+      - name: Build release AAB without production or test ads
+        working-directory: mobile
+        run: |
+          flutter build appbundle --release --no-pub \
+            --build-name=1.1.3 --build-number=3 \
+            --dart-define=SCHOOLPDF_PRODUCTION_ADS=false \
+            --dart-define=SCHOOLPDF_TEST_ADS=false \
+            --dart-define=SCHOOLPDF_PRIVACY_CMP_REVIEWED=false
+      - name: Validate bundle contents, 16KB native ELF, manifest & no Advertising ID
+        working-directory: mobile
+        run: |
+          test -s build/app/outputs/bundle/release/app-release.aab
+          python3 tool/check_android_16kb.py build/app/outputs/bundle/release/app-release.aab
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile('build/app/outputs/bundle/release/app-release.aab') as z:
+            assert z.testzip() is None
+            assert 'base/manifest/AndroidManifest.xml' in z.namelist()
+            assert any(n.startswith('base/lib/') and n.endswith('.so') for n in z.namelist())
+            assert b'com.google.android.gms.permission.AD_ID' not in z.read('base/manifest/AndroidManifest.xml'), 'Advertising ID permission present in Play AAB'
+          print('AAB valid ZIP with native ELF and no merged advertising ID permission.')
+          PY
+          manifest="$(find build/app/intermediates/merged_manifests -type f -name AndroidManifest.xml | head -n 1)"
+          test -n "$manifest" && test -s "$manifest"
+          ! grep -q 'com.google.android.gms.permission.AD_ID' "$manifest"
+      - name: Verify protected upload signature when configured
+        if: env.SCHOOLPDF_RELEASE_SIGNED == 'true'
+        working-directory: mobile
+        run: |
+          jarsigner -verify -strict -verbose -certs build/app/outputs/bundle/release/app-release.aab > /dev/null
+          keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | grep -E 'SHA256:|Owner:' || true
+          echo 'Verified upload-signed AAB (Google Play account certificate match still must be confirmed).'
+      - name: Publish exact AAB checksum and build metadata
+        working-directory: mobile
+        run: |
+          mkdir -p dist
+          if [ "$SCHOOLPDF_RELEASE_SIGNED" = true ]; then
+            name=SchoolPDF-v1.1.3-release-SIGNED.aab
+          else
+            name=SchoolPDF-v1.1.3-UNSIGNED-NOT-FOR-PLAY.aab
+          fi
+          cp build/app/outputs/bundle/release/app-release.aab "dist/$name"
+          (cd dist && sha256sum "$name" > "$name.sha256")
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          signed=os.getenv('SCHOOLPDF_RELEASE_SIGNED')=='true'
+          Path('dist/BUILD_INFO.json').write_text(json.dumps({
+            'git_sha':os.getenv('GITHUB_SHA'),'version_name':'1.1.3','version_code':3,
+            'application_id':'com.fiftysols.schoolpdf','target_sdk':36,
+            'type':'SIGNED_PLAY_UPLOAD_CANDIDATE' if signed else 'UNSIGNED_NOT_FOR_GOOGLE_PLAY',
+            'production_ads':False,'ad_id_permission':False,
+            'runtime_families_and_data_safety_review':'REQUIRED_BEFORE_PUBLICATION',
+            'play_upload_certificate_match':'REQUIRES_OWNER_VERIFICATION'
+          },indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: env.SCHOOLPDF_RELEASE_SIGNED == 'true'
+        with:
+          name: SchoolPDF-v1.1.3-GooglePlay-AAB-SIGNED
+          path: mobile/dist
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: env.SCHOOLPDF_RELEASE_SIGNED != 'true'
+        with:
+          name: SchoolPDF-v1.1.3-AAB-UNSIGNED-NOT-FOR-PLAY
+          path: mobile/dist
+          retention-days: 14
+          if-no-files-found: error
+      - name: Fail closed for public Play delivery without a persistent upload key
+        if: github.ref == 'refs/heads/main' && env.SCHOOLPDF_RELEASE_SIGNED != 'true'
+        run: |
+          echo "::error::Upload key missing. UNSIGNED AAB is available only as a build candidate. Configure four SchoolPDF Android GitHub Actions secrets before Play delivery."
+          exit 1
