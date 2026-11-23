@@ -22,6 +22,7 @@ class GameStages {
     switch (game) {
       case 'xo': return (68 - band * 2).clamp(25, 66).toInt();
       case 'math': return (125 - band * 2).clamp(50, 123).toInt();
+      case 'sudoku': return (680 - band * 8).clamp(330, 680).toInt();
       default: return (150 - band * 3).clamp(45, 147).toInt();
     }
   }
