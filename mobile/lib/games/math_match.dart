@@ -99,12 +99,14 @@ class MathMatchGame {
     }
 
     final options = <int>{answer};
-    var step = 1;
+    var delta = 1;
     while (options.length < 4) {
-      final delta = (_random.nextInt(4) + step);
-      final candidate = answer + (options.length.isEven ? -delta : delta);
-      if (candidate >= 0) options.add(candidate);
-      step++;
+      // Non-negative distractors, even when subtraction answers zero.
+      options.add(answer + delta);
+      if (options.length < 4 && answer >= delta) {
+        options.add(answer - delta);
+      }
+      delta++;
     }
     final shuffled = options.toList()..shuffle(_random);
     return MathQuestion(
