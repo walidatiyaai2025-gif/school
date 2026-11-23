@@ -33,6 +33,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('math-question')), findsOneWidget);
     expect(find.byKey(const Key('math-next')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('math-choice-0')), 180,
+      scrollable: find.byType(Scrollable).first);
     await tester.tap(find.byKey(const Key('math-choice-0')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('math-feedback')), findsOneWidget);

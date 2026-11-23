@@ -53,7 +53,7 @@ void main() {
     for (final level in ['primary', 'middle', 'secondary', 'university']) {
       for (var stage = 1; stage <= GameStages.count; stage++) {
         final words = WordHuntGame.wordsFor(level, stage: stage);
-        expect(words.length, 3);
+        expect(words.length, stage <= 3 ? 3 : stage < 12 ? 3 : stage < 80 ? 4 : 5);
         expect(words.every((w) => w.length <= WordHuntGame.size), isTrue);
         final game = WordHuntGame(level: level, stage: stage, seed: 40);
         for (final word in words) {
