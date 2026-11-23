@@ -19,7 +19,7 @@ void main() {
     return store;
   }
 
-  testWidgets('three 3D cards navigate to playable Math Match',
+  testWidgets('four 3D cards navigate to playable Math Match',
       (tester) async {
     final store = await storeForTest();
     await tester.pumpWidget(MaterialApp(
@@ -27,7 +27,7 @@ void main() {
     expect(find.byKey(const Key('xo-game-card')), findsOneWidget);
     expect(find.byKey(const Key('math-match-card')), findsOneWidget);
     expect(find.byKey(const Key('word-hunt-card')), findsOneWidget);
-    expect(find.byType(Game3DArt), findsNWidgets(3));
+    expect(find.byType(Game3DArt), findsNWidgets(4));
 
     await tester.ensureVisible(find.byKey(const Key('math-match-card')));
     await tester.tap(find.byKey(const Key('math-match-card')));
