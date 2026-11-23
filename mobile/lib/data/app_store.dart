@@ -18,6 +18,17 @@ class AppStore extends ChangeNotifier {
   int _xoAdRounds = 0;
   static const _stagesKey = 'game_unlocked_stages_v1';
   final Map<String, int> _gameStages = <String, int>{};
+  static const _hintsKey = 'word_hint_used_stages_v1';
+  final Set<String> _usedWordHints = <String>{};
+  bool hasUsedWordHint(int stage) =>
+      _usedWordHints.contains('words:${settings.level}:${GameStages.clamp(stage)}');
+  Future<bool> useWordHint(int stage) async {
+    final key = 'words:${settings.level}:${GameStages.clamp(stage)}';
+    if (!_usedWordHints.add(key)) return false;
+    await _prefs.setStringList(_hintsKey, _usedWordHints.toList());
+    notifyListeners();
+    return true;
+  }
 
   String _gameKey(String game) => '${settings.level}:$game';
 
@@ -90,6 +101,9 @@ class AppStore extends ChangeNotifier {
         }
       }
     } catch (_) { /* Damaged progress must not block offline game access. */ }
+    try {
+      store._usedWordHints.addAll(p.getStringList(_hintsKey) ?? const <String>[]);
+    } catch (_) { /* Corrupt hint metadata must not block play. */ }
     store.records.sort((a,b)=>b.createdAt.compareTo(a.createdAt));
     return store;
   }
@@ -162,6 +176,8 @@ class AppStore extends ChangeNotifier {
     await _prefs.remove(_pendingCaptureKey);
     await _prefs.remove(_xoAdRoundKey);
     await _prefs.remove(_stagesKey);
+    await _prefs.remove(_hintsKey);
+    _usedWordHints.clear();
     _gameStages.clear();
     _xoAdRounds = 0;
     records.clear();

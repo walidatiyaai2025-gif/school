@@ -27,7 +27,8 @@ void main() {
     expect(fresh.unlockedGameStage('math'), 2);
     await fresh.completeGameStage('math', 2);
     await fresh.completeGameStage('math', 3);
-    expect(fresh.unlockedGameStage('math'), GameStages.count);
+    expect(fresh.unlockedGameStage('math'), 4);
+    expect(GameStages.count, 1000);
     fresh.settings.level = 'middle';
     expect(fresh.unlockedGameStage('math'), 1);
   });
@@ -36,6 +37,8 @@ void main() {
     expect(GameStages.mathRounds(1), 5);
     expect(GameStages.mathRounds(2), 7);
     expect(GameStages.mathRounds(3), 9);
+    expect(GameStages.mathRounds(1000), lessThanOrEqualTo(12));
+    expect(GameStages.secondsFor('words', 1000), greaterThan(0));
     expect(GameStages.mathPassed(correct: 3, total: 5), isTrue);
     expect(GameStages.mathPassed(correct: 2, total: 5), isFalse);
     for (var stage = 1; stage <= GameStages.count; stage++) {

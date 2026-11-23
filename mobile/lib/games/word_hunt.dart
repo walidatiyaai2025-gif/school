@@ -34,33 +34,72 @@ class WordHuntGame {
   int get progress => _found.length;
 
   static List<String> wordsFor(String level, {int stage = 1}) {
-    final index = GameStages.clamp(stage) - 1;
-    switch (level) {
-      case 'middle':
-        return const [
-          ['PLANET', 'WATER', 'ATOM'],
-          ['GRAVITY', 'OXYGEN', 'TISSUE'],
-          ['CLIMATE', 'MAGNET', 'PROTON'],
-        ][index];
-      case 'secondary':
-        return const [
-          ['ENERGY', 'ORBIT', 'CELL'],
-          ['PHOTON', 'CARBON', 'GENOME'],
-          ['ISOTOPE', 'NUCLEUS', 'NEUTRON'],
-        ][index];
-      case 'university':
-        return const [
-          ['VECTOR', 'MATRIX', 'LOGIC'],
-          ['BINARY', 'SCALAR', 'KERNEL'],
-          ['NETWORK', 'QUANTUM', 'ALGEBRA'],
-        ][index];
-      default:
-        return const [
-          ['CAT', 'DOG', 'SUN'],
-          ['TREE', 'BOOK', 'MOON'],
-          ['PLANET', 'FLOWER', 'SCHOOL'],
-        ][index];
+    // Keep the first 3 existing puzzles. From level 4 onward produce
+    // deterministic, varied puzzles across 1000 levels, without downloads.
+    final n = GameStages.clamp(stage);
+    if (n <= 3) {
+      final index = n - 1;
+      switch (level) {
+        case 'middle':
+          return const [
+            ['PLANET', 'WATER', 'ATOM'],
+            ['GRAVITY', 'OXYGEN', 'TISSUE'],
+            ['CLIMATE', 'MAGNET', 'PROTON'],
+          ][index];
+        case 'secondary':
+          return const [
+            ['ENERGY', 'ORBIT', 'CELL'],
+            ['PHOTON', 'CARBON', 'GENOME'],
+            ['ISOTOPE', 'NUCLEUS', 'NEUTRON'],
+          ][index];
+        case 'university':
+          return const [
+            ['VECTOR', 'MATRIX', 'LOGIC'],
+            ['BINARY', 'SCALAR', 'KERNEL'],
+            ['NETWORK', 'QUANTUM', 'ALGEBRA'],
+          ][index];
+        default:
+          return const [
+            ['CAT', 'DOG', 'SUN'],
+            ['TREE', 'BOOK', 'MOON'],
+            ['PLANET', 'FLOWER', 'SCHOOL'],
+          ][index];
+      }
     }
+    final pool = switch (level) {
+      'middle' => const ['PLANET','ENERGY','WATER','OXYGEN','ATOM','MAGNET','PROTON',
+        'FORCE','MOTION','TISSUE','GRAVITY','LIGHT','CLIMATE','CELLS','ORBIT','SOLAR'],
+      'secondary' => const ['PHOTON','CARBON','GENOME','ENERGY','ATOMIC','NEUTRON',
+        'PROTON','MATRIX','NUCLEUS','ISOTOPE','VECTOR','PLASMA','ORBIT','MOTION','OPTICS'],
+      'university' => const ['VECTOR','MATRIX','LOGIC','BINARY','SCALAR','KERNEL',
+        'NETWORK','ALGEBRA','QUANTUM','ATOMIC','TENSOR','LINEAR','CRYPTO','SYNTAX'],
+      _ => const ['CAT','DOG','SUN','TREE','BOOK','MOON','SCHOOL','FLOWER',
+        'PLANET','WATER','APPLE','TRAIN','CLOUD','PENCIL','STAR','LIGHT','FRIEND'],
+    };
+    final count = n < 12 ? 3 : n < 80 ? 4 : 5;
+    final band = GameStages.difficultyBand(n);
+    final sorted = pool.toList()..sort((a,b) => band.isEven
+        ? b.length.compareTo(a.length) : a.length.compareTo(b.length));
+    final offset = (n * 7 + band) % sorted.length;
+    final picked = <String>{};
+    for (var i = 0; picked.length < count; i++) {
+      picked.add(sorted[(offset + i * 3) % sorted.length]);
+    }
+    return picked.toList(growable: false);
+  }
+
+  /// A single hint per level: show the first letter of the next hidden word.
+  /// The screen controls persistence and never deducts an unlocked level.
+  int? get hintCell {
+    final remaining = _targets.where((word) => !_found.contains(word));
+    if (remaining.isEmpty) return null;
+    final word = remaining.first;
+    final row = _targets.indexOf(word);
+    final actualRow = stage <= 3 ? row * 2 : row;
+    final letters = _letters.sublist(actualRow * size,
+      actualRow * size + size).join();
+    final column = letters.indexOf(word);
+    return column < 0 ? null : actualRow * size + column;
   }
 
   void reset() {
@@ -73,7 +112,7 @@ class WordHuntGame {
     _lastFound = null;
     _lastMiss = false;
     for (var w = 0; w < _targets.length; w++) {
-      final row = w * 2;
+      final row = stage <= 3 ? w * 2 : w;
       final word = _targets[w];
       final offset = _random.nextInt(size - word.length + 1);
       for (var c = 0; c < word.length; c++) {

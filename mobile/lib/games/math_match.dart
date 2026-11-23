@@ -74,8 +74,9 @@ class MathMatchGame {
   MathQuestion _generate() {
     final isPrimary = level == 'primary';
     final isYoung = isPrimary && _grade < 4;
-    final stageScale = GameStages.clamp(stage);
-    final max = (isYoung ? 7 : isPrimary ? 16 : level == 'middle' ? 27 : 48) * stageScale;
+    final stageScale = GameStages.difficultyBand(stage);
+    final max = ((isYoung ? 7 : isPrimary ? 16 : level == 'middle' ? 27 : 48) *
+        (1 + (stageScale - 1) ~/ 2)).clamp(8, 320).toInt();
     final operators = isYoung ? <String>['+', '−'] :
         isPrimary ? (stageScale == 1 ? <String>['+', '−']
             : <String>['+', '−', '×']) :
@@ -94,12 +95,12 @@ class MathMatchGame {
         }
         answer = left - right;
       case '×':
-        left = _random.nextInt(isPrimary ? 10 : 12) + 1;
-        right = _random.nextInt(isPrimary ? 10 : 12) + 1;
+        left = _random.nextInt((isPrimary ? 10 : 12) + stageScale ~/ 5) + 1;
+        right = _random.nextInt((isPrimary ? 10 : 12) + stageScale ~/ 5) + 1;
         answer = left * right;
       case '÷':
-        right = _random.nextInt(11) + 1;
-        answer = _random.nextInt(12) + 1;
+        right = _random.nextInt(11 + stageScale ~/ 5) + 1;
+        answer = _random.nextInt(12 + stageScale ~/ 5) + 1;
         left = right * answer;
       default:
         answer = left + right;
