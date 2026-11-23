@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/brand.dart';
 import '../games/game_stages.dart';
+import 'clean_3d_dialog.dart';
 
 /// Virtual stage navigation: never create 1000 widgets at once.
 class GameStageStrip extends StatelessWidget {
@@ -55,7 +56,7 @@ class GameStageStrip extends StatelessWidget {
 
   Future<void> _jumpToStage(BuildContext context) async {
     final controller = TextEditingController(text: current.toString());
-    final choice = await showDialog<int>(context: context,
+    final choice = await showClean3DDialog<int>(context: context,
       builder: (ctx) => AlertDialog(
         title: Text(english ? 'Jump to a level' : 'انتقل إلى مرحلة'),
         content: TextField(

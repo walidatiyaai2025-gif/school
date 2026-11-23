@@ -8,6 +8,7 @@ import '../services/pdf_service.dart';
 import '../services/notifications_service.dart';
 import '../services/sharing_service.dart';
 import '../widgets/brand_widgets.dart';
+import '../widgets/motion_fx.dart';
 import 'review_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -109,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
         IconButton(onPressed:widget.onGoFiles,icon:const Icon(Icons.folder_open_rounded,
           color:Brand.blue))]),
       const SizedBox(height:18),
+      MotionReveal(order: 0, child:
       Container(
         padding: const EdgeInsets.fromLTRB(18, 16, 9, 16),
         decoration: BoxDecoration(
@@ -147,14 +149,13 @@ class _HomeScreenState extends State<HomeScreen> {
             key: const Key('home-promo-image'),
             width: 127, height: 151, fit: BoxFit.contain),
         ]),
-      ),
+      )),
       const SizedBox(height: 20),
       Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Text(s.subject, style: const TextStyle(color: Brand.navy,
           fontWeight: FontWeight.w900, fontSize: 16)),
         const SizedBox(width: 8),
-        if (selectedSubject == null)
-          Expanded(child: Text(s.t(
+        Expanded(child: Text(s.t(
             'من فضلك اختر المادة لتستطيع تجهيز الواجب أو الملف',
             'Please select a subject to prepare your homework or file'),
             key: const Key('subject-required-warning'),
@@ -168,15 +169,15 @@ class _HomeScreenState extends State<HomeScreen> {
         onChanged:(value)=>setState(()=>selectedSubject=value)),
       const SizedBox(height:20),
       Row(children:[
-        Expanded(child:_LaunchCard(icon:Icons.camera_alt_rounded,
+        Expanded(child:MotionReveal(order:1,child:_LaunchCard(icon:Icons.camera_alt_rounded,
           label:s.camera,active:selectedSubject!=null&&!picking,
           gradient:const [Color(0xFF0966F5),Color(0xFF043FB8)],
-          onTap:()=>_pick(true))),
+          onTap:()=>_pick(true)))),
         const SizedBox(width:12),
-        Expanded(child:_LaunchCard(icon:Icons.photo_library_rounded,
+        Expanded(child:MotionReveal(order:2,child:_LaunchCard(icon:Icons.photo_library_rounded,
           label:s.gallery,active:selectedSubject!=null&&!picking,
           gradient:const [Color(0xFF6854F6),Color(0xFF4329BF)],
-          onTap:()=>_pick(false))),
+          onTap:()=>_pick(false)))),
       ]),
       if(picking)...[const SizedBox(height:18),const Center(child:CircularProgressIndicator())],
       const SizedBox(height:16),
@@ -231,8 +232,8 @@ class _LaunchCard extends StatelessWidget {
               boxShadow: const [BoxShadow(color: Color(0x330A39A3),
                 blurRadius: 10, offset: Offset(0, 6))]),
             child: Material(color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(22),
+              child: MotionPress(
+                radius: 22,
                 onTap: active ? onTap : null,
                 child: Column(mainAxisAlignment: MainAxisAlignment.center,
                   children: [

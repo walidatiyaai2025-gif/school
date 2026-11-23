@@ -4,6 +4,8 @@ import '../core/strings.dart';
 import '../data/app_store.dart';
 import '../games/tic_tac_toe.dart';
 import '../widgets/game_3d_art.dart';
+import '../widgets/motion_fx.dart';
+import '../widgets/clean_3d_dialog.dart';
 import 'tic_tac_toe_screen.dart';
 import 'math_match_screen.dart';
 import 'word_hunt_screen.dart';
@@ -26,7 +28,7 @@ class PlayScreen extends StatelessWidget {
 
   Future<void> _chooseOpponent(BuildContext context) async {
     final s = S(store.settings.english);
-    final mode = await showDialog<GameMode>(
+    final mode = await showClean3DDialog<GameMode>(
       context: context,
       builder: (d) => AlertDialog(
         title: Text(s.t('اختار طريقة اللعب', 'Choose how to play')),
@@ -71,39 +73,39 @@ class PlayScreen extends StatelessWidget {
                 style: const TextStyle(color: Brand.muted, height: 1.35)),
             ])),
           const SizedBox(width: 8),
-          const _SchoolArt(),
+          const MotionReveal(order: 0, child: _SchoolArt()),
         ]),
         const SizedBox(height: 22),
-        _GameCard(cardKey: const Key('xo-game-card'),
+        MotionReveal(order: 1, child: _GameCard(cardKey: const Key('xo-game-card'),
           kind: GameArtKind.xo, hero: true,
           title: 'XO • Tic Tac Toe',
           stageLabel: s.t('المرحلة ', 'Level ') +
-            store.unlockedGameStage('xo').toString() + ' / 3',
+            store.unlockedGameStage('xo').toString() + ' / 1000',
           description: s.t('تحدى صديقك أو العب ضد الكمبيوتر.',
             'Challenge a friend or the computer.'),
           button: s.t('ابدأ اللعب', 'Start playing'),
           colors: const [Color(0xFF16B4FF), Color(0xFF064BDA)],
-          onTap: () => _chooseOpponent(context)),
+          onTap: () => _chooseOpponent(context))),
         const SizedBox(height: 15),
-        _GameCard(cardKey: const Key('math-match-card'),
+        MotionReveal(order: 2, child: _GameCard(cardKey: const Key('math-match-card'),
           kind: GameArtKind.math, title: 'Math Match',
           stageLabel: s.t('المرحلة ', 'Level ') +
-            store.unlockedGameStage('math').toString() + ' / 3',
+            store.unlockedGameStage('math').toString() + ' / 1000',
           description: s.t('طابق الأرقام وحل ألغاز الحساب.',
             'Match numbers and solve quick math puzzles.'),
           button: s.t('العب الآن', 'Play now'),
           colors: const [Color(0xFFF4F0FF), Color(0xFFD0C7FF)],
-          onTap: () => _open(context, MathMatchScreen(store: store))),
+          onTap: () => _open(context, MathMatchScreen(store: store)))),
         const SizedBox(height: 15),
-        _GameCard(cardKey: const Key('word-hunt-card'),
+        MotionReveal(order: 3, child: _GameCard(cardKey: const Key('word-hunt-card'),
           kind: GameArtKind.words, title: 'Word Hunt',
           stageLabel: s.t('المرحلة ', 'Level ') +
-            store.unlockedGameStage('words').toString() + ' / 3',
+            store.unlockedGameStage('words').toString() + ' / 1000',
           description: s.t('اكتشف الكلمات المخفية وطوّر مفرداتك.',
             'Find hidden words and grow your vocabulary.'),
           button: s.t('العب الآن', 'Play now'),
           colors: const [Color(0xFFE8FAFF), Color(0xFFB0F0DD)],
-          onTap: () => _open(context, WordHuntScreen(store: store))),
+          onTap: () => _open(context, WordHuntScreen(store: store)))),
       ],
     );
   }
@@ -157,8 +159,8 @@ class _GameCard extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Color(0x330B4BA6),
           offset: Offset(0, 8), blurRadius: 17)]),
       child: Material(color: Colors.transparent,
-        child: InkWell(key: cardKey,
-          borderRadius: BorderRadius.circular(26), onTap: onTap,
+        child: MotionPress(key: cardKey,
+          radius: 26, onTap: onTap,
           child: ClipRRect(borderRadius: BorderRadius.circular(26),
             child: Stack(children: [
               Positioned(bottom: -70, right: -32,
