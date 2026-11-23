@@ -59,7 +59,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       setState(game.reset);
       return;
     }
+    // Remove the bottom banner before opening a full-screen placement.
+    // Avoid concurrent ad views and release the WebView before the transition.
     setState(() => _replayPending = true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     try {
       final shown = await _interstitial.showIfStillApproved(
           canShow: () => mounted &&
@@ -163,7 +167,8 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SchoolBanner(key: const Key('xo-footer-ad'), store: widget.store),
+            if (!_replayPending)
+              SchoolBanner(key: const Key('xo-footer-ad'), store: widget.store),
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -173,7 +178,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                   icon: const Icon(Icons.refresh_rounded),
                   label: Text(_replayPending
                       ? s.t('جاري فتح الإعلان...', 'Opening ad...')
-                      : s.t('العب من جديد', 'Play again')),
+                      : (game.finished && widget.store.xoAdBreakDue &&
+                              _interstitial.isReady)
+                          ? s.t('متابعة (إعلان ثم جولة جديدة)',
+                              'Continue (ad, then next round)')
+                          : s.t('العب من جديد', 'Play again')),
                 ),
               ),
             ),
