@@ -81,10 +81,18 @@ class PlayScreen extends StatelessWidget {
   @override Widget build(BuildContext context) =>
       AnimatedBuilder(animation: store, builder: (context, _) {
         final s = S(store.settings.english);
-        return ListView(
-          key: const Key('play-game-list'),
-          padding: const EdgeInsets.fromLTRB(15, 15, 15, 32),
-          children: [
+        return LayoutBuilder(
+          builder: (context, bounds) => Center(
+            child: FittedBox(
+              key: const Key('play-fit-canvas'),
+              fit: BoxFit.contain,
+              child: SizedBox(
+                width: 390,
+                height: 580,
+                child: Padding(
+                  key: const Key('play-game-list'),
+                  padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
+                  child: Column(children: [
             Row(children: [
               Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,15 +113,19 @@ class PlayScreen extends StatelessWidget {
             GameAchievementsPanel(
               store: store, english: store.settings.english),
             const SizedBox(height: 15),
-            GridView.count(
-              key: const Key('play-2x2-grid'),
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 11,
-              mainAxisSpacing: 11,
-              childAspectRatio: .77,
-              children: [
+            Expanded(child: LayoutBuilder(
+              builder: (context, space) {
+                final cellWidth = (space.maxWidth - 11) / 2;
+                final cellHeight = (space.maxHeight - 11) / 2;
+                return GridView.count(
+                  key: const Key('play-2x2-grid'),
+                  padding: EdgeInsets.zero,
+                  crossAxisCount: 2,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 11,
+                  mainAxisSpacing: 11,
+                  childAspectRatio: cellWidth / cellHeight,
+                  children: [
                 MotionReveal(order: 1, child: _GameCard(
                   cardKey: const Key('xo-game-card'),
                   kind: GameArtKind.xo,
@@ -162,9 +174,11 @@ class PlayScreen extends StatelessWidget {
                   colors: const [Color(0xFFFFF2D8), Color(0xFFFFCD89)],
                   onTap: () => _open(context, SudokuScreen(store: store)),
                 )),
-              ],
-            ),
-            const SizedBox(height: 15),
+                  ],
+                );
+              },
+            )),
+            const SizedBox(height: 9),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               const Icon(Icons.shield_moon_rounded,
                 size: 15, color: Brand.blue),
@@ -176,7 +190,11 @@ class PlayScreen extends StatelessWidget {
                 style: const TextStyle(
                   color: Brand.muted, fontSize: 11))),
             ]),
-          ],
+                  ]),
+                ),
+              ),
+            ),
+          ),
         );
       });
 }
@@ -232,19 +250,19 @@ class _GameCard extends StatelessWidget {
                 decoration: BoxDecoration(shape: BoxShape.circle,
                   color: Colors.white.withValues(alpha: .19)))),
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+              padding: const EdgeInsets.fromLTRB(7, 5, 7, 5),
               child: Column(children: [
                 Expanded(child: Center(
-                  child: Game3DArt(kind: kind, size: 100))),
+                  child: Game3DArt(kind: kind, size: 75))),
                 Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: ink, fontSize: 16,
+                  style: TextStyle(color: ink, fontSize: 15,
                     fontWeight: FontWeight.w900)),
                 const SizedBox(height: 3),
                 Text(subtitle, maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: ink.withValues(alpha: .8),
                     fontSize: 10.5, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
+                const SizedBox(height: 3),
                 Row(mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(3, (i) => Icon(
                     Icons.star_rounded, size: 17,
@@ -252,10 +270,10 @@ class _GameCard extends StatelessWidget {
                       ? const Color(0xFFFFBC2D)
                       : (dark ? const Color(0x88FFFFFF)
                               : const Color(0xFFBEC7D8))))),
-                const SizedBox(height: 5),
+                const SizedBox(height: 3),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 9, vertical: 4),
+                    horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: dark ? .22 : .62),
                     borderRadius: BorderRadius.circular(10)),
