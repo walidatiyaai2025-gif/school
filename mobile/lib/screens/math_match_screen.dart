@@ -5,6 +5,10 @@ import '../core/strings.dart';
 import '../data/app_store.dart';
 import '../games/math_match.dart';
 import '../games/game_stages.dart';
+import '../games/stage_clock.dart';
+import '../widgets/game_countdown.dart';
+import '../widgets/game_result_dialog.dart';
+import '../services/game_audio.dart';
 import '../widgets/game_stage_strip.dart';
 import '../widgets/game_3d_tile.dart';
 import '../services/ads_service.dart';
@@ -16,7 +20,61 @@ class MathMatchScreen extends StatefulWidget {
   @override State<MathMatchScreen> createState() => _MathMatchScreenState();
 }
 
-class _MathMatchScreenState extends State<MathMatchScreen> {
+class _MathMatchScreenState extends State<MathMatchScreen>
+    with WidgetsBindingObserver {
+  final StageClock _clock = StageClock();
+  bool _resultOpen = false;
+  bool _timedOut = false;
+  void _startClock() {
+    _clock.start(GameStages.secondsFor('math', _stage),
+      () => _finishStage(timedOut: true));
+  }
+
+  @override void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_resultOpen) {
+      _clock.resume();
+    } else {
+      _clock.pause();
+    }
+  }
+  @override void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _clock.dispose();
+    super.dispose();
+  }
+
+  Future<void> _finishStage({bool timedOut = false}) async {
+    if (_resultOpen || !mounted) return;
+    _resultOpen = true;
+    _timedOut = timedOut;
+    _clock.stop();
+    final passed = !timedOut && _passed;
+    if (passed) await widget.store.completeGameStage('math', _stage);
+    if (!mounted) return;
+    final action = await GameResultDialog.show(context,
+      game: 'Math Match',
+      outcome: timedOut ? GameOutcome.timeout :
+        passed ? GameOutcome.win : GameOutcome.loss,
+      english: widget.store.settings.english,
+      result: game.score.toString() + ' / ' + game.totalRounds.toString(),
+      stage: _stage, remaining: _clock.seconds.value,
+      stars: passed ? (game.score == game.totalRounds ? 3 : 2) : 1,
+      hasNext: passed && _stage < GameStages.count);
+    if (!mounted) return;
+    if (action == GameResultAction.list) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {
+      if (action == GameResultAction.next &&
+          passed && _stage < GameStages.count) _stage++;
+      game = _createGame(_stage);
+      _timedOut = false;
+      _resultOpen = false;
+    });
+    _startClock();
+  }
+
   late MathMatchGame game;
   int _stage = 1;
   MathMatchGame _createGame(int stage) => MathMatchGame(
@@ -30,34 +88,28 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
     super.initState();
     _stage = widget.store.unlockedGameStage('math');
     game = _createGame(_stage);
+    WidgetsBinding.instance.addObserver(this);
+    _startClock();
   }
   void _selectStage(int stage) {
-    if (stage > widget.store.unlockedGameStage('math')) return;
+    if (_resultOpen || stage > widget.store.unlockedGameStage('math')) return;
     setState(() {
       _stage = stage;
       game = _createGame(stage);
     });
+    _startClock();
   }
   bool get _passed => GameStages.mathPassed(
     correct: game.score, total: game.totalRounds);
   void _choose(int value) {
-    if (!game.choose(value)) return;
-    if (game.finished && _passed) {
-      unawaited(widget.store.completeGameStage('math', _stage));
-    }
+    if (_resultOpen || _timedOut || !game.choose(value)) return;
+    GameAudio.play(game.correct ? GameSound.correct : GameSound.incorrect);
     setState(() {});
+    if (game.finished) unawaited(_finishStage());
   }
   void _advance() {
-    setState(() {
-      if (!game.finished) {
-        game.next();
-      } else if (_passed && _stage < GameStages.count) {
-        _stage++;
-        game = _createGame(_stage);
-      } else {
-        game = _createGame(_stage);
-      }
-    });
+    if (_resultOpen || game.finished || _timedOut || !game.answered) return;
+    setState(game.next);
   }
 
   @override Widget build(BuildContext context) {
@@ -88,7 +140,15 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
               unlocked: widget.store.unlockedGameStage('math'),
               english: widget.store.settings.english,
               onSelect: _selectStage),
-            const SizedBox(height: 16),
+            const SizedBox(height: 13),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              GameCountdown(clock: _clock),
+              Text(s.t('السؤال ', 'Question ') + game.round.toString() +
+                  ' / ' + game.totalRounds.toString(),
+                style: const TextStyle(color: Brand.navy,
+                    fontWeight: FontWeight.w800)),
+            ]),
+            const SizedBox(height: 8),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text(s.t('السؤال ', 'Question ') + game.round.toString() +
                    ' / ' + game.totalRounds.toString(),
@@ -153,7 +213,8 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
                   color: correct ? const Color(0xFF92F2C7)
                       : wrong ? const Color(0xFFFFA1BC)
                       : const Color(0xFFC9DFFF),
-                  onTap: game.answered ? null : () => _choose(value),
+                  onTap: game.answered || _resultOpen || _timedOut
+                      ? null : () => _choose(value),
                   child: Text(value.toString(), style: const TextStyle(
                     fontSize: 27, fontWeight: FontWeight.w900,
                     color: Brand.navy,
@@ -170,7 +231,8 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
           SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
             child: FilledButton.icon(
               key: const Key('math-next'),
-              onPressed: !game.answered ? null : _advance,
+              onPressed: !game.answered || game.finished || _resultOpen
+                  ? null : _advance,
               icon: Icon(game.finished ? Icons.refresh : Icons.arrow_forward),
               label: Text(game.finished
                 ? (_passed && _stage < GameStages.count
