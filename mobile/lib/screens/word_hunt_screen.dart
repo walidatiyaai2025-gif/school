@@ -94,7 +94,7 @@ class _WordHuntScreenState extends State<WordHuntScreen> {
                   decoration: game.found.contains(word)
                     ? TextDecoration.lineThrough : null)),
                 backgroundColor: game.found.contains(word)
-                  ? const Color(0xFFDAF9E9) : const Color(0xFFE7EEFF)),
+                  ? const Color(0xFFDAF9E9) : const Color(0xFFE7EEFF),
               )]),
             const SizedBox(height: 14),
             if (game.finished || game.lastFound != null || game.lastMiss)
