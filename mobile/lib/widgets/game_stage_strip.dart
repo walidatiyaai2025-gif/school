@@ -55,32 +55,68 @@ class GameStageStrip extends StatelessWidget {
   }
 
   Future<void> _jumpToStage(BuildContext context) async {
-    final controller = TextEditingController(text: current.toString());
-    final choice = await showClean3DDialog<int>(context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(english ? 'Jump to a level' : 'انتقل إلى مرحلة'),
-        content: TextField(
-          key: const Key('game-stage-input'),
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            helperText: english
-                ? 'Unlocked: 1–$unlocked of 1000'
-                : 'المفتوح: 1–$unlocked من 1000'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx),
-            child: Text(english ? 'Cancel' : 'إلغاء')),
-          FilledButton(onPressed: () {
-            final value = int.tryParse(controller.text.trim());
-            if (value != null && value >= 1 && value <= unlocked) {
-              Navigator.pop(ctx, value);
-            }
-          }, child: Text(english ? 'Go' : 'اذهب')),
-        ],
-      ),
+    // The route can remain mounted after Navigator.pop resolves.
+    // Let the dialog State own its text controller until final disposal.
+    final choice = await showClean3DDialog<int>(
+      context: context,
+      builder: (_) => _StageJumpDialog(
+        current: current, unlocked: unlocked, english: english),
     );
-    controller.dispose();
-    if (choice != null) onSelect(choice);
+    if (!context.mounted || choice == null) return;
+    if (choice >= 1 && choice <= unlocked &&
+        choice <= GameStages.count) {
+      onSelect(choice);
+    }
   }
+}
+
+class _StageJumpDialog extends StatefulWidget {
+  const _StageJumpDialog({
+    required this.current, required this.unlocked, required this.english});
+  final int current, unlocked;
+  final bool english;
+
+  @override State<_StageJumpDialog> createState() => _StageJumpDialogState();
+}
+
+class _StageJumpDialogState extends State<_StageJumpDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.current.toString());
+
+  @override void dispose() {
+    // Disposed with the dialog route, not when Navigator.pop completes.
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final value = int.tryParse(_controller.text.trim());
+    if (value == null || value < 1 ||
+        value > widget.unlocked || value > GameStages.count) return;
+    Navigator.of(context).pop(value);
+  }
+
+  @override Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.english ? 'Jump to a level' : 'انتقل إلى مرحلة'),
+    content: TextField(
+      key: const Key('game-stage-input'),
+      controller: _controller,
+      keyboardType: TextInputType.number,
+      textInputAction: TextInputAction.done,
+      onSubmitted: (_) => _submit(),
+      decoration: InputDecoration(
+        helperText: widget.english
+            ? 'Unlocked: 1–' + widget.unlocked.toString() + ' of 1000'
+            : 'المفتوح: 1–' + widget.unlocked.toString() + ' من 1000'),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(widget.english ? 'Cancel' : 'إلغاء')),
+      FilledButton(
+        key: const Key('game-stage-submit'),
+        onPressed: _submit,
+        child: Text(widget.english ? 'Go' : 'اذهب')),
+    ],
+  );
 }
