@@ -53,13 +53,24 @@ class _TicTacToeScreenState extends State<TicTacToeScreen>
       ? (widget.english ? 'Round timed out' : 'انتهى وقت الجولة')
       : game.isDraw ? (widget.english ? 'Draw' : 'تعادل')
       : (widget.english ? 'Winner: ' : 'الفائز: ') + (game.winner ?? '');
+    final earned = _stageComplete &&
+        !timedOut && outcome == GameOutcome.win;
+    final stars = earned
+        ? (widget.mode == GameMode.computer ? 3 : 2)
+        : outcome == GameOutcome.win ? 1 : 0;
+    final award = earned
+        ? await widget.store.earnGameStars('xo', _stage, stars)
+        : null;
+    if (!mounted) return;
     final action = await GameResultDialog.show(context,
       game: 'XO', outcome: outcome, english: widget.english,
       result: result, stage: _stage,
-      stars: timedOut ? 0 : game.isDraw ? 2
-        : outcome == GameOutcome.win ? 3 : 1,
+      stars: stars,
       remaining: _clock.seconds.value,
-      hasNext: _stageComplete && _stage < GameStages.count);
+      hasNext: _stageComplete && _stage < GameStages.count,
+      pointsEarned: award?.earnedPoints ?? 0,
+      badgeEarned: award?.newBadges.isNotEmpty == true
+          ? award!.newBadges.first : null);
     if (!mounted) return;
     _resultOpen = false;
     if (action == GameResultAction.list) {
@@ -127,11 +138,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen>
     if (_resultOpen || !game.play(index)) return;
     GameAudio.play(GameSound.tap);
     if (game.finished) {
-      final earned = widget.mode == GameMode.friend || game.winner == 'X';
+      final earned = game.winner != null &&
+          (widget.mode == GameMode.friend || game.winner == 'X');
       if (earned) _matchesFinished++;
       if (_matchesFinished >= GameStages.xoRounds(_stage)) {
         _stageComplete = true;
-        unawaited(widget.store.completeGameStage('xo', _stage));
       }
       unawaited(widget.store.noteXoGameCompleted());
       if (widget.store.xoAdRounds >= XoAdFrequency.roundsPerBreak - 1) {

@@ -61,7 +61,13 @@ class _WordHuntScreenState extends State<WordHuntScreen>
     _resultOpen = true;
     _clock.stop();
     final won = !timedOut && game.finished;
-    if (won) await widget.store.completeGameStage('words', _stage);
+    final stars = won
+        ? (widget.store.hasUsedWordHint(_stage) || game.misses > 4
+            ? 1 : game.misses > 1 ? 2 : 3)
+        : 0;
+    final award = won
+        ? await widget.store.earnGameStars('words', _stage, stars)
+        : null;
     if (!mounted) return;
     final action = await GameResultDialog.show(context,
       game: 'Word Hunt',
@@ -73,12 +79,12 @@ class _WordHuntScreenState extends State<WordHuntScreen>
         game.score.toString() +
         (widget.store.settings.english ? ' points' : ' نقطة'),
       stage: _stage,
-      stars: won
-          ? (widget.store.hasUsedWordHint(_stage) || game.misses > 2
-              ? 2 : 3)
-          : game.progress > 0 ? 1 : 0,
+      stars: stars,
       remaining: _clock.seconds.value,
-      hasNext: won && _stage < GameStages.count);
+      hasNext: won && _stage < GameStages.count,
+      pointsEarned: award?.earnedPoints ?? 0,
+      badgeEarned: award?.newBadges.isNotEmpty == true
+          ? award!.newBadges.first : null);
     if (!mounted) return;
     if (action == GameResultAction.list) {
       Navigator.of(context).pop();

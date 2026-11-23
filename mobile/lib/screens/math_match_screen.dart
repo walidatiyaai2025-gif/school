@@ -49,7 +49,13 @@ class _MathMatchScreenState extends State<MathMatchScreen>
     _timedOut = timedOut;
     _clock.stop();
     final passed = !timedOut && _passed;
-    if (passed) await widget.store.completeGameStage('math', _stage);
+    final stars = passed
+        ? (game.score * 10 >= game.totalRounds * 9 ? 3 :
+            game.score * 10 >= game.totalRounds * 7 ? 2 : 1)
+        : 0;
+    final award = passed
+        ? await widget.store.earnGameStars('math', _stage, stars)
+        : null;
     if (!mounted) return;
     final action = await GameResultDialog.show(context,
       game: 'Math Match',
@@ -58,8 +64,11 @@ class _MathMatchScreenState extends State<MathMatchScreen>
       english: widget.store.settings.english,
       result: game.score.toString() + ' / ' + game.totalRounds.toString(),
       stage: _stage, remaining: _clock.seconds.value,
-      stars: passed ? (game.score == game.totalRounds ? 3 : 2) : 1,
-      hasNext: passed && _stage < GameStages.count);
+      stars: stars,
+      hasNext: passed && _stage < GameStages.count,
+      pointsEarned: award?.earnedPoints ?? 0,
+      badgeEarned: award?.newBadges.isNotEmpty == true
+          ? award!.newBadges.first : null);
     if (!mounted) return;
     if (action == GameResultAction.list) {
       Navigator.of(context).pop();
