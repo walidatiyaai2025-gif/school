@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:school_pdf/data/app_store.dart';
 import 'package:school_pdf/screens/play_screen.dart';
+import 'package:school_pdf/screens/math_match_screen.dart';
 import 'package:school_pdf/widgets/game_3d_art.dart';
 
 void main() {
@@ -33,9 +34,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('math-question')), findsOneWidget);
     expect(find.byKey(const Key('math-next')), findsOneWidget);
+    // Scroll the active Math page, never the offstage Play catalogue.
+    final mathScroller = find.descendant(
+      of: find.byType(MathMatchScreen),
+      matching: find.byType(Scrollable)).first;
     await tester.scrollUntilVisible(
-      find.byKey(const Key('math-choice-0')), 180,
-      scrollable: find.byType(Scrollable).first);
+      find.byKey(const Key('math-choice-0')), 240,
+      scrollable: mathScroller);
     await tester.tap(find.byKey(const Key('math-choice-0')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('math-feedback')), findsOneWidget);
