@@ -130,8 +130,6 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       ),
       body:SafeArea(bottom:false,child:IndexedStack(index:tab,children:screens)),
       bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[
-        if(!_overlayFlowOpen && (tab==0 || tab==1 || tab==2))
-          SchoolBanner(store:widget.store),
         NavigationBar(height:70,backgroundColor:Colors.white,
           indicatorColor:const Color(0xFFE5EFFF),
           selectedIndex:tab,onDestinationSelected:(index)=>setState(()=>tab=index),
@@ -145,6 +143,8 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
             NavigationDestination(icon:const Icon(Icons.settings_outlined),
               selectedIcon:const Icon(Icons.settings),label:s.settings),
           ]),
+        if(!_overlayFlowOpen && (tab==0 || tab==1 || tab==2))
+          SchoolBanner(store:widget.store),
       ]),
     );
   }
