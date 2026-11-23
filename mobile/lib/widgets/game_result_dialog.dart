@@ -10,18 +10,21 @@ class GameResultDialog extends StatefulWidget {
   const GameResultDialog({super.key, required this.game,
     required this.outcome, required this.english, required this.result,
     required this.stage, required this.stars, required this.remaining,
-    required this.hasNext});
+    required this.hasNext, this.pointsEarned = 0, this.badgeEarned});
   final String game, result;
   final GameOutcome outcome;
   final bool english;
   final int stage, stars, remaining;
   final bool hasNext;
+  final int pointsEarned;
+  final String? badgeEarned;
 
   static Future<GameResultAction> show(BuildContext context, {
     required String game, required GameOutcome outcome,
     required bool english, required String result,
     required int stage, required int stars,
     required int remaining, required bool hasNext,
+    int pointsEarned = 0, String? badgeEarned,
   }) async {
     GameAudio.play(switch(outcome) {
       GameOutcome.win => GameSound.win,
@@ -36,7 +39,8 @@ class GameResultDialog extends StatefulWidget {
       pageBuilder: (_, __, ___) => GameResultDialog(
         game: game, outcome: outcome, english: english, result: result,
         stage: stage, stars: stars.clamp(0,3).toInt(),
-        remaining: remaining, hasNext: hasNext),
+        remaining: remaining, hasNext: hasNext,
+        pointsEarned: pointsEarned, badgeEarned: badgeEarned),
       transitionBuilder: (dialogContext, animation, _, child) =>
         MediaQuery.disableAnimationsOf(dialogContext)
           ? child : FadeTransition(
@@ -179,6 +183,34 @@ class _GameResultDialogState extends State<GameResultDialog>
                       color: Brand.muted, fontSize: 12)),
                 ]),
               ),
+              if (widget.pointsEarned > 0) ...[
+                const SizedBox(height: 9),
+                Container(
+                  key: const Key('result-reward-points'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF1CA),
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: const [BoxShadow(
+                      color: Color(0x44C18A32), blurRadius: 8,
+                      offset: Offset(1, 3))]),
+                  child: Text(
+                    '+${widget.pointsEarned} XP  ⭐',
+                    style: const TextStyle(
+                      color: Color(0xFF7E540C),
+                      fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+              if (widget.badgeEarned != null) ...[
+                const SizedBox(height: 6),
+                Text((widget.english ? 'New badge unlocked! ' :
+                    'بادج جديد! ') + '🏅',
+                  key: const Key('result-new-badge'),
+                  style: const TextStyle(
+                    color: Brand.blue, fontWeight: FontWeight.w900)),
+              ],
               const SizedBox(height: 18),
               DecoratedBox(
                 decoration: BoxDecoration(
