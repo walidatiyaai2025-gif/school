@@ -12,8 +12,10 @@ class GameCountdown extends StatelessWidget {
           final warning = secs <= 15;
           final time = (secs ~/ 60).toString().padLeft(2, '0') + ':' +
               (secs % 60).toString().padLeft(2, '0');
-          return Container(
+          return AnimatedContainer(
             key: const Key('game-timer'),
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero : const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 11),
             decoration: BoxDecoration(
               color: warning ? const Color(0xFFFFE6E6)

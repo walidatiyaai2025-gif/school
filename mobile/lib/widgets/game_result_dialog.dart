@@ -37,12 +37,14 @@ class GameResultDialog extends StatefulWidget {
         game: game, outcome: outcome, english: english, result: result,
         stage: stage, stars: stars.clamp(0,3).toInt(),
         remaining: remaining, hasNext: hasNext),
-      transitionBuilder: (_, animation, __, child) => FadeTransition(
-        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
-        child: ScaleTransition(
-          scale: Tween<double>(begin: .86, end: 1.0).animate(
-            CurvedAnimation(parent: animation, curve: Curves.easeOutBack)),
-          child: child)),
+      transitionBuilder: (dialogContext, animation, _, child) =>
+        MediaQuery.disableAnimationsOf(dialogContext)
+          ? child : FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: ScaleTransition(
+              scale: Tween<double>(begin: .86, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutBack)),
+              child: child)),
     ) ?? GameResultAction.retry;
   }
 
@@ -97,15 +99,36 @@ class _GameResultDialogState extends State<GameResultDialog>
                 icon: const Icon(Icons.close_rounded),
                 onPressed: () => Navigator.pop(
                   context, GameResultAction.list))),
-              Container(
-                width: 77, height: 77,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: .2),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [BoxShadow(
-                    color: Color(0x330C43A0), blurRadius: 10,
-                    offset: Offset(2, 6))]),
-                child: Icon(icon, color: color, size: 46)),
+              AnimatedBuilder(
+                animation: _animation,
+                builder: (context, _) {
+                  final progress = Curves.easeOutBack.transform(
+                    (_animation.value / .7).clamp(0.0, 1.0));
+                  return Transform.translate(
+                    offset: Offset(0, reduced ? 0 : 12 * (1 - progress)),
+                    child: Transform.scale(
+                      scale: reduced ? 1 : .83 + .17 * progress,
+                      child: Container(
+                        width: 77, height: 77,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color.lerp(color, Colors.white, .65)!,
+                              color.withValues(alpha: .26),
+                            ]),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                          boxShadow: const [BoxShadow(
+                            color: Color(0x330C43A0),
+                            blurRadius: 12, offset: Offset(2, 7))]),
+                        child: Icon(icon, color: color, size: 46),
+                      ),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 9),
               Text(title, key: const Key('game-result-title'),
                 textAlign: TextAlign.center,
@@ -157,13 +180,19 @@ class _GameResultDialogState extends State<GameResultDialog>
                 ]),
               ),
               const SizedBox(height: 18),
-              SizedBox(width: double.infinity, child: FilledButton(
-                key: const Key('game-result-primary'),
-                onPressed: () => Navigator.pop(context,
-                  allowNext ? GameResultAction.next : GameResultAction.retry),
-                child: Text(allowNext
-                  ? (widget.english ? 'Next Stage' : 'المرحلة التالية')
-                  : (widget.english ? 'Play Again' : 'العب من جديد')))),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [BoxShadow(color: Color(0x550B5CEB),
+                    blurRadius: 11, offset: Offset(0, 5))]),
+                child: SizedBox(width: double.infinity, child: FilledButton(
+                  key: const Key('game-result-primary'),
+                  onPressed: () => Navigator.pop(context,
+                    allowNext ? GameResultAction.next : GameResultAction.retry),
+                  child: Text(allowNext
+                    ? (widget.english ? 'Next Stage' : 'المرحلة التالية')
+                    : (widget.english ? 'Play Again' : 'العب من جديد')))),
+              ),
               const SizedBox(height: 8),
               SizedBox(width: double.infinity, child: OutlinedButton(
                 key: const Key('game-result-list'),
