@@ -44,7 +44,17 @@ class _WordHuntScreenState extends State<WordHuntScreen> {
                  '/' + game.targets.length.toString(),
               style: const TextStyle(color: Brand.blue,
                 fontWeight: FontWeight.w800)),
-            const SizedBox(height: 12),
+            if (game.finished || game.lastFound != null || game.lastMiss)
+              Text(game.finished
+                ? s.t('شاطر! لقيت كل الكلمات 🎉',
+                    'Amazing! You found every word! 🎉')
+                : game.lastFound != null
+                  ? s.t('لقيت كلمة ', 'Found ') + game.lastFound!
+                  : s.t('جرب حرف البداية والنهاية لنفس الكلمة.',
+                      'Try the first and last letters of one word.'),
+                key: const Key('word-feedback'),
+                style: const TextStyle(color: Brand.navy,
+                  fontWeight: FontWeight.w800)),            const SizedBox(height: 12),
             Directionality(textDirection: TextDirection.ltr,
               child: Center(child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 365),
@@ -97,17 +107,7 @@ class _WordHuntScreenState extends State<WordHuntScreen> {
                   ? const Color(0xFFDAF9E9) : const Color(0xFFE7EEFF),
               )]),
             const SizedBox(height: 14),
-            if (game.finished || game.lastFound != null || game.lastMiss)
-              Text(game.finished
-                ? s.t('شاطر! لقيت كل الكلمات 🎉',
-                    'Amazing! You found every word! 🎉')
-                : game.lastFound != null
-                  ? s.t('لقيت كلمة ', 'Found ') + game.lastFound!
-                  : s.t('جرب حرف البداية والنهاية لنفس الكلمة.',
-                      'Try the first and last letters of one word.'),
-                key: const Key('word-feedback'),
-                style: const TextStyle(color: Brand.navy,
-                  fontWeight: FontWeight.w800)),
+
           ],
         )),
         bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [

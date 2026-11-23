@@ -68,7 +68,25 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
                 textDirection: TextDirection.ltr,
                 style: const TextStyle(color: Brand.navy,
                   fontSize: 34, fontWeight: FontWeight.w900))),
-            const SizedBox(height: 18),
+            if (game.answered) ...[
+              const SizedBox(height: 17),
+              Container(padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: game.correct ? const Color(0xFFDDF9E8) :
+                    const Color(0xFFFFF1DC),
+                  borderRadius: BorderRadius.circular(16)),
+                child: Text(game.finished
+                    ? s.t('انتهت الجولة! نتيجتك: ',
+                        'Round complete! Your score: ') +
+                      game.score.toString() + '/' + game.totalRounds.toString()
+                    : game.correct
+                        ? s.t('ممتاز! إجابة صحيحة.', 'Great! Correct answer.')
+                        : s.t('الإجابة الصحيحة: ', 'Correct answer: ') +
+                          game.question.answer.toString(),
+                  key: const Key('math-feedback'),
+                  style: const TextStyle(color: Brand.navy,
+                    fontWeight: FontWeight.w800))),
+            ],            const SizedBox(height: 18),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -104,25 +122,7 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
                 );
               },
             ),
-            if (game.answered) ...[
-              const SizedBox(height: 17),
-              Container(padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: game.correct ? const Color(0xFFDDF9E8) :
-                    const Color(0xFFFFF1DC),
-                  borderRadius: BorderRadius.circular(16)),
-                child: Text(game.finished
-                    ? s.t('انتهت الجولة! نتيجتك: ',
-                        'Round complete! Your score: ') +
-                      game.score.toString() + '/' + game.totalRounds.toString()
-                    : game.correct
-                        ? s.t('ممتاز! إجابة صحيحة.', 'Great! Correct answer.')
-                        : s.t('الإجابة الصحيحة: ', 'Correct answer: ') +
-                          game.question.answer.toString(),
-                  key: const Key('math-feedback'),
-                  style: const TextStyle(color: Brand.navy,
-                    fontWeight: FontWeight.w800))),
-            ],
+
           ],
         )),
         bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [

@@ -52,11 +52,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('word-cell-0')), findsOneWidget);
     expect(find.byKey(const Key('word-cell-48')), findsOneWidget);
-    expect(find.byKey(const Key('word-target-CAT')), findsOneWidget);
     await tester.tap(find.byKey(const Key('word-cell-0')));
     await tester.tap(find.byKey(const Key('word-cell-7')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('word-feedback')), findsOneWidget);
+    await tester.scrollUntilVisible(find.byKey(const Key('word-target-CAT')),
+      180, scrollable: find.byType(Scrollable).first);
+    expect(find.byKey(const Key('word-target-CAT')), findsOneWidget);
     await tester.tap(find.byKey(const Key('word-reset')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('word-feedback')), findsNothing);
