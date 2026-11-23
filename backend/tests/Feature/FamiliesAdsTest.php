@@ -86,4 +86,50 @@ class FamiliesAdsTest extends TestCase {
         $this->actingAs($viewer)->post('/admin/ads',$this->admobData())->assertForbidden();
         $this->getJson('/api/v1/config')->assertJsonPath('ads.enabled',false);
     }
+    public function test_game_interstitial_is_off_until_separately_approved(): void {
+        $this->actingAs($this->superAdmin())->post('/admin/ads/policy',$this->approvalData())
+            ->assertSessionHasNoErrors();
+        $this->post('/admin/ads',$this->admobData())->assertSessionHasNoErrors();
+        $this->getJson('/api/v1/config')->assertJsonPath('ads.providers.0.interstitial_enabled',false)
+            ->assertJsonPath('ads.providers.0.interstitial_unit_id',null);
+        $request=$this->admobData();
+        $request['interstitial_unit_id']='ca-app-pub-3218037275900725/1234567890';
+        $request['enable_interstitial']='1';
+        $this->post('/admin/ads',$request)->assertSessionHasErrors('interstitial_families_confirmed');
+        $this->getJson('/api/v1/config')->assertJsonPath('ads.providers.0.interstitial_enabled',false);
+        $request['interstitial_families_confirmed']='1';
+        $this->post('/admin/ads',$request)->assertSessionHasNoErrors();
+        $this->getJson('/api/v1/config')->assertJsonPath('ads.providers.0.interstitial_enabled',true)
+            ->assertJsonPath('ads.providers.0.interstitial_unit_id','ca-app-pub-3218037275900725/1234567890');
+    }
+    public function test_interstitial_cannot_reuse_banner_or_foreign_publisher(): void {
+        $this->actingAs($this->superAdmin())->post('/admin/ads/policy',$this->approvalData());
+        $request=$this->admobData();
+        $request['enable_interstitial']='1';
+        $request['interstitial_families_confirmed']='1';
+        $request['interstitial_unit_id']=$request['banner_unit_id'];
+        $this->post('/admin/ads',$request)->assertSessionHasErrors('interstitial_unit_id');
+        $request['interstitial_unit_id']='ca-app-pub-9999999999999999/11111';
+        $this->post('/admin/ads',$request)->assertSessionHasErrors('interstitial_unit_id');
+        $request['enable']='0';
+        $this->post('/admin/ads',$request)->assertSessionHasErrors('enable_interstitial');
+        $this->getJson('/api/v1/config')->assertJsonPath('ads.enabled',false);
+    }
+    public function test_emergency_stop_and_policy_revocation_remove_game_interstitial(): void {
+        $this->actingAs($this->superAdmin())->post('/admin/ads/policy',$this->approvalData());
+        $request=$this->admobData();
+        $request['enable_interstitial']='1';
+        $request['interstitial_families_confirmed']='1';
+        $request['interstitial_unit_id']='ca-app-pub-3218037275900725/1234567890';
+        $this->post('/admin/ads',$request)->assertSessionHasNoErrors();
+        config()->set('schoolpdf.ads_emergency_stop',true);
+        $this->getJson('/api/v1/config')->assertJsonPath('ads.enabled',false)
+            ->assertJsonCount(0,'ads.providers');
+        config()->set('schoolpdf.ads_emergency_stop',false);
+        $this->post('/admin/ads/policy',['enable'=>'0'])->assertSessionHasNoErrors();
+        $this->getJson('/api/v1/config')->assertJsonPath('ads.enabled',false)
+            ->assertJsonCount(0,'ads.providers');
+        $this->assertFalse((bool)AdSetting::first()->interstitial_enabled);
+    }
+
 }

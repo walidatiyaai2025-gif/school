@@ -9,7 +9,7 @@
 <div class="card">
   <h2>Families Advertising Readiness / مراجعة سياسة إعلانات الأطفال</h2>
   <p>الحالة الحالية: <strong>{{ $emergencyStop ? 'EMERGENCY STOP' : ($approval ? 'Approved by Super Admin' : 'Disabled — awaiting approval') }}</strong></p>
-  <p class="muted">Only Google AdMob self-certified SDK. For child/teen/unknown: CHILD treatment, no personalized ads, G-rated banners, no other mediation networks. Confirm real Google Play / AdMob controls before enabling. This admin approval is NOT proof of Play certification.</p>
+  <p class="muted">Only Google AdMob self-certified SDK. For child/teen/unknown: CHILD treatment, no personalized ads, G-rated inventory, no other mediation networks. Game interstitials require a separate, approved, age-safe unit and a dismissible creative. Confirm real Google Play / AdMob controls before enabling. This admin approval is NOT proof of Play certification.</p>
   <form action="{{ route('admin.ads.policy') }}" method="post">@csrf
     <label><input type="radio" name="enable" value="0" checked style="width:auto"> Disable all ads immediately / إيقاف كل الإعلانات</label>
     <label><input type="radio" name="enable" value="1" style="width:auto"> Enable after review / تفعيل بعد المراجعة</label>
@@ -34,6 +34,13 @@
 <label>المنصة / Platform</label><select name="platform"><option value="android">Android</option><option value="ios">iOS</option></select>
 <label>AdMob App ID</label><input name="app_id" autocomplete="off" placeholder="ca-app-pub-...~...">
 <label>Banner Unit ID</label><input name="banner_unit_id" autocomplete="off" placeholder="ca-app-pub-.../...">
+<label>Game Interstitial Ad Unit ID (different from Banner)</label>
+<input name="interstitial_unit_id" autocomplete="off" placeholder="ca-app-pub-.../...">
+<label><input type="checkbox" name="enable_interstitial" value="1" style="width:auto">
+Enable XO full-screen interstitial after six completed games, at the replay transition</label>
+<label><input type="checkbox" name="interstitial_families_confirmed" value="1" style="width:auto">
+I reviewed the Interstitial creative/close UX for children (clear dismissal within 5 seconds), Google Play Families compliance, G-rated non-personalized inventory, and AdMob app readiness.</label>
+<p class="muted">Banner and Interstitial use separate Google AdMob units. Games remain free if no fill/consent/network. In debug, use Google's test Interstitial ID; do not click real ads during testing. New backend migration is required before enabling this format.</p>
 <label>Notes</label><textarea name="notes"></textarea>
 <label><input type="checkbox" name="enable" value="1" style="width:auto"> Enable this AdMob banner only after the Families checklist is approved</label>
 <p><button>Save AdMob settings</button></p>
@@ -45,11 +52,12 @@
 <p>Google UMP forms and ad mediation sources are configured separately in AdMob Console.</p>
 </div></div>
 <div class="card"><h2>Configured Providers / الشبكات المحفوظة</h2>
-<table><tr><th>Provider</th><th>Platform</th><th>App ID</th><th>Banner</th><th>Status</th></tr>
+<table><tr><th>Provider</th><th>Platform</th><th>App ID</th><th>Banner</th><th>Interstitial</th><th>Status</th></tr>
 @forelse($rows as $r)
 <tr><td>{{ $r->provider }}</td><td>{{ $r->platform }}</td>
 <td>{{ $r->app_id }}</td><td>{{ $r->banner_unit_id }}</td>
+<td>{{ $r->interstitial_unit_id ?: '—' }} · {{ $r->interstitial_enabled && $r->enabled && $approval && !$emergencyStop ? 'Enabled' : 'OFF' }}</td>
 <td>{{ $r->enabled ? ($approval && !$emergencyStop ? 'Active' : 'Safety OFF') : 'Disabled' }}</td></tr>
-@empty<tr><td colspan="5">No configured providers yet.</td></tr>@endforelse</table>
+@empty<tr><td colspan="6">No configured providers yet.</td></tr>@endforelse</table>
 </div>
 </x-shell>
