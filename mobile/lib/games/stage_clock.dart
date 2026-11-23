@@ -24,6 +24,12 @@ class StageClock {
     });
   }
 
+  /// Small word-find bonus; timer remains finite and capped.
+  void addSeconds(int bonus) {
+    if (bonus <= 0 || seconds.value <= 0 || _done) return;
+    seconds.value = (seconds.value + bonus).clamp(1, 300).toInt();
+  }
+
   void pause() { _ticker?.cancel(); _ticker = null; }
   void resume() {
     if (seconds.value == 0 || _ticker != null || _expired == null) return;

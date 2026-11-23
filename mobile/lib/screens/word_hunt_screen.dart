@@ -68,10 +68,14 @@ class _WordHuntScreenState extends State<WordHuntScreen>
       english: widget.store.settings.english,
       result: game.progress.toString() + ' / ' +
         game.targets.length.toString() +
-        (widget.store.settings.english ? ' words' : ' كلمات'),
+        (widget.store.settings.english ? ' words • ' : ' كلمات • ') +
+        game.score.toString() +
+        (widget.store.settings.english ? ' points' : ' نقطة'),
       stage: _stage,
-      stars: won ? (widget.store.hasUsedWordHint(_stage) ? 2 : 3) :
-          game.progress > 0 ? 1 : 0,
+      stars: won
+          ? (widget.store.hasUsedWordHint(_stage) || game.misses > 2
+              ? 2 : 3)
+          : game.progress > 0 ? 1 : 0,
       remaining: _clock.seconds.value,
       hasNext: won && _stage < GameStages.count);
     if (!mounted) return;
@@ -115,6 +119,7 @@ class _WordHuntScreenState extends State<WordHuntScreen>
   void _chooseLetter(int index) {
     if (_resultOpen || !game.tap(index)) return;
     if (game.lastFound != null) {
+      _clock.addSeconds(2);
       GameAudio.play(GameSound.correct);
     } else if (game.lastMiss) {
       GameAudio.play(GameSound.incorrect);
@@ -171,8 +176,8 @@ class _WordHuntScreenState extends State<WordHuntScreen>
                               style: const TextStyle(
                                 fontSize: 20, color: Brand.navy,
                                 fontWeight: FontWeight.w900)),
-                            Text(s.t('اضغط أول وآخر حرف من الكلمة.',
-                              'Tap the first and last letter of a word.'),
+                            Text(s.t('ابحث أفقيًا ورأسيًا وقطريًا ↔ ↕ ⤢',
+                              'Search across, down & diagonally ↔ ↕ ⤢'),
                               maxLines: 1, overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: Brand.muted, fontSize: 11)),
@@ -206,41 +211,66 @@ class _WordHuntScreenState extends State<WordHuntScreen>
                         ],
                       )),
                       const SizedBox(height: 3),
-                      Row(children: [
-                        Text(s.t('الكلمات: ', 'Words: ') +
-                            game.progress.toString() + '/' +
-                            game.targets.length.toString(),
-                          style: const TextStyle(
-                            color: Brand.blue,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12)),
-                        const SizedBox(width: 10),
-                        Expanded(child: SizedBox(
-                          height: 22,
+                      SizedBox(height: 42, child: Column(children: [
+                        Row(children: [
+                          Text(s.t('الكلمات: ', 'Words: ') +
+                              game.progress.toString() + '/' +
+                              game.targets.length.toString(),
+                            style: const TextStyle(
+                              color: Brand.blue, fontWeight: FontWeight.w900,
+                              fontSize: 12)),
+                          const Spacer(),
+                          Text('🏆 ' + game.score.toString(),
+                            key: const Key('word-score'),
+                            style: const TextStyle(fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: Brand.navy)),
+                          if (game.combo > 1) ...[
+                            const SizedBox(width: 10),
+                            Text('🔥 ×' + game.combo.toString(),
+                              key: const Key('word-combo'),
+                              style: const TextStyle(fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFD46112))),
+                          ],
+                        ]),
+                        const SizedBox(height: 2),
+                        SizedBox(height: 20,
                           child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 180),
+                            duration: const Duration(milliseconds: 230),
+                            transitionBuilder: (child, animation) =>
+                              FadeTransition(opacity: animation,
+                                child: ScaleTransition(
+                                  scale: Tween<double>(begin: .92, end: 1)
+                                      .animate(animation), child: child)),
                             child: game.finished ||
                                 game.lastFound != null || game.lastMiss
                               ? Text(
                                   game.finished
-                                    ? s.t('أحسنت! اكتملت الكلمات 🎉',
-                                        'All words found! 🎉')
+                                    ? s.t('ممتاز! أنهيت التحدي 🎉',
+                                        'Challenge complete! 🎉')
                                     : game.lastFound != null
-                                      ? s.t('وجدت: ', 'Found: ') +
-                                          game.lastFound!
-                                      : s.t('حاول مرة أخرى', 'Try again'),
+                                      ? s.t('ممتاز! ', 'Found! ') +
+                                          game.lastFound! + '  +2s' +
+                                          (game.combo > 1
+                                            ? '  COMBO ×' + game.combo.toString()
+                                            : '')
+                                      : s.t('مش المسار الصحيح، جرّب تاني!',
+                                          'Not the path — try again!'),
                                   key: const Key('word-feedback'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Brand.navy,
+                                  style: TextStyle(color: game.lastMiss
+                                      ? const Color(0xFFBB4261)
+                                      : const Color(0xFF178B67),
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w800),
+                                    fontWeight: FontWeight.w900),
                                 )
                               : const SizedBox.shrink(
                                   key: Key('word-feedback-empty')),
                           ),
-                        )),
-                      ]),
+                        ),
+                      ])),
                       const SizedBox(height: 6),
                       Expanded(
                         child: Center(
@@ -248,7 +278,8 @@ class _WordHuntScreenState extends State<WordHuntScreen>
                             aspectRatio: 1,
                             child: Directionality(
                               textDirection: TextDirection.ltr,
-                              child: GridView.builder(
+                              child: Stack(fit: StackFit.expand, children: [
+                                GridView.builder(
                                 key: const Key('word-letter-grid'),
                                 physics: const NeverScrollableScrollPhysics(),
                                 padding: EdgeInsets.zero,
@@ -299,7 +330,25 @@ class _WordHuntScreenState extends State<WordHuntScreen>
                                     ),
                                   );
                                 },
-                              ),
+                                ),
+                                IgnorePointer(child: TweenAnimationBuilder<double>(
+                                  key: ValueKey('word-trail-' +
+                                    game.progress.toString()),
+                                  tween: Tween(begin: 0, end: 1),
+                                  duration: const Duration(milliseconds: 460),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, progress, _) => CustomPaint(
+                                    painter: _WordTrailPainter(
+                                      paths: [
+                                        for (final word in game.found)
+                                          game.wordPath(word),
+                                      ],
+                                      latest: game.lastFoundCells,
+                                      progress: progress,
+                                    ),
+                                  ),
+                                )),
+                              ]),
                             ),
                           ),
                         ),
@@ -379,4 +428,58 @@ class _WordHuntScreenState extends State<WordHuntScreen>
       ),
     );
   }
+}
+
+
+/// Soft connecting trails make vertical/diagonal discoveries visible while
+/// preserving legible letters and never intercepting touches.
+class _WordTrailPainter extends CustomPainter {
+  const _WordTrailPainter({required this.paths,
+    required this.latest, required this.progress});
+  final List<List<int>> paths;
+  final List<int> latest;
+  final double progress;
+
+  Offset _center(int index, Size size) {
+    const gaps = 3.0;
+    final cell = (size.width - 6 * gaps) / WordHuntGame.size;
+    final step = cell + gaps;
+    return Offset((index % WordHuntGame.size) * step + cell / 2,
+      (index ~/ WordHuntGame.size) * step + cell / 2);
+  }
+
+  @override void paint(Canvas canvas, Size size) {
+    for (final path in paths) {
+      if (path.length < 2) continue;
+      final isLatest = _same(path, latest);
+      final begin = _center(path.first, size);
+      final end = _center(path.last, size);
+      canvas.drawLine(begin, end, Paint()
+        ..color = isLatest ? const Color(0x6631D0A2)
+                          : const Color(0x3331D0A2)
+        ..strokeWidth = 7
+        ..strokeCap = StrokeCap.round);
+      if (isLatest) {
+        final tip = Offset.lerp(begin, end, progress)!;
+        canvas.drawLine(begin, tip, Paint()
+          ..color = const Color(0xAAFFD25D)
+          ..strokeWidth = 3.5
+          ..strokeCap = StrokeCap.round);
+        canvas.drawCircle(tip, 4.2, Paint()
+          ..color = const Color(0xD6FFD35B));
+      }
+    }
+  }
+
+  bool _same(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  @override bool shouldRepaint(covariant _WordTrailPainter old) =>
+      old.progress != progress || old.paths.length != paths.length ||
+      !_same(old.latest, latest);
 }
