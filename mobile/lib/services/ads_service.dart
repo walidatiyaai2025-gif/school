@@ -10,11 +10,12 @@ import '../data/app_store.dart';
 import 'families_ad_policy.dart';
 import 'remote_ads_config.dart';
 
-/// School PDF's only production ad placement: one clearly marked AdMob banner.
+/// School PDF's persistent banner placement, separate from game interstitials.
 ///
 /// Unknown/child/teen users receive CHILD age treatment before the SDK starts.
 /// All requests are non-personalized, G-rated. No AD_ID manifest permission,
-/// custom mediation adapters, interstitials or rewarded ads are used.
+/// custom mediation adapters or rewarded ads are used. Interstitials are
+/// separately approved and shown only between completed game rounds.
 /// Ads need a positive Admin-approved remote config and UMP eligibility. When
 /// the server, UMP, or SDK is unavailable, scanning works without ads.
 class SchoolBanner extends StatefulWidget {
@@ -122,51 +123,7 @@ class _SchoolBannerState extends State<SchoolBanner> with WidgetsBindingObserver
     if (_ad == null && !_requesting) _load();
   }
 
-  /// UMP must run at every ad-serving app launch. Child/teen/unknown users
-  /// are tagged under age of consent so they are never presented adult GDPR
-  /// consent forms. The Mobile Ads age treatment is separately configured.
-  Future<bool> _privacyEligible() async {
-    final completer = Completer<bool>();
-    try {
-      ConsentInformation.instance.requestConsentInfoUpdate(
-        ConsentRequestParameters(
-          tagForUnderAgeOfConsent:
-              FamiliesAdPolicy.requiresUnderAgeConsentTreatment(_age)),
-        () async {
-          if (FamiliesAdPolicy.requiresUnderAgeConsentTreatment(_age)) {
-            // Underage is not an exemption from UMP readiness checks. No
-            // ad requests unless UMP explicitly allows serving ads.
-            try {
-              final allowed = await ConsentInformation.instance.canRequestAds();
-              if (!completer.isCompleted) completer.complete(allowed);
-            } catch (_) {
-              if (!completer.isCompleted) completer.complete(false);
-            }
-            return;
-          }
-          ConsentForm.loadAndShowConsentFormIfRequired((error) async {
-            if (error != null) {
-              if (!completer.isCompleted) completer.complete(false);
-              return;
-            }
-            try {
-              final allowed = await ConsentInformation.instance.canRequestAds();
-              if (!completer.isCompleted) completer.complete(allowed);
-            } catch (_) {
-              if (!completer.isCompleted) completer.complete(false);
-            }
-          });
-        },
-        (_) {
-          if (!completer.isCompleted) completer.complete(false);
-        },
-      );
-      return await completer.future.timeout(const Duration(seconds: 20),
-          onTimeout: () => false);
-    } catch (_) {
-      return false;
-    }
-  }
+  Future<bool> _privacyEligible() => SchoolAdPrivacy.privacyEligible(_age);
 
   Future<void> _load() async {
     final generation = ++_generation;
@@ -263,4 +220,74 @@ class _SchoolBannerState extends State<SchoolBanner> with WidgetsBindingObserver
       ),
     );
   }
+}
+
+/// Shared UMP eligibility guard so banner and full-screen ads do not launch
+/// concurrent consent forms. Only one pending request is reused per age group.
+class SchoolAdPrivacy {
+  static String? _pendingAge;
+  static Future<bool>? _pending;
+
+  static Future<bool> privacyEligible(String age) {
+    if (_pending != null && _pendingAge == age) return _pending!;
+    final task = _requestConsent(age);
+    _pending = task;
+    _pendingAge = age;
+    task.then((_) {
+      if (identical(_pending, task)) {
+        _pending = null;
+        _pendingAge = null;
+      }
+    }, onError: (Object _) {
+      if (identical(_pending, task)) {
+        _pending = null;
+        _pendingAge = null;
+      }
+    });
+    return task;
+  }
+
+  static Future<bool> _requestConsent(String age) async {
+    final completer = Completer<bool>();
+    try {
+      ConsentInformation.instance.requestConsentInfoUpdate(
+        ConsentRequestParameters(
+          tagForUnderAgeOfConsent:
+              FamiliesAdPolicy.requiresUnderAgeConsentTreatment(age)),
+        () async {
+          if (FamiliesAdPolicy.requiresUnderAgeConsentTreatment(age)) {
+            // Underage is not an exemption from UMP readiness checks. No
+            // ad requests unless UMP explicitly allows serving ads.
+            try {
+              final allowed = await ConsentInformation.instance.canRequestAds();
+              if (!completer.isCompleted) completer.complete(allowed);
+            } catch (_) {
+              if (!completer.isCompleted) completer.complete(false);
+            }
+            return;
+          }
+          ConsentForm.loadAndShowConsentFormIfRequired((error) async {
+            if (error != null) {
+              if (!completer.isCompleted) completer.complete(false);
+              return;
+            }
+            try {
+              final allowed = await ConsentInformation.instance.canRequestAds();
+              if (!completer.isCompleted) completer.complete(allowed);
+            } catch (_) {
+              if (!completer.isCompleted) completer.complete(false);
+            }
+          });
+        },
+        (_) {
+          if (!completer.isCompleted) completer.complete(false);
+        },
+      );
+      return await completer.future.timeout(const Duration(seconds: 20),
+          onTimeout: () => false);
+    } catch (_) {
+      return false;
+    }
+  }
+
 }
