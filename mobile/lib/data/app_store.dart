@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'models.dart';
+import '../games/xo_ad_frequency.dart';
 
 class AppStore extends ChangeNotifier {
   AppStore._(this._prefs);
@@ -12,6 +13,22 @@ class AppStore extends ChangeNotifier {
   StudentSettings settings = StudentSettings();
   final List<PdfRecord> records = [];
   static const _pendingCaptureKey = 'pending_capture_subject_v1';
+  static const _xoAdRoundKey = 'xo_completed_since_interstitial_v1';
+  int _xoAdRounds = 0;
+
+  int get xoAdRounds => _xoAdRounds;
+  bool get xoAdBreakDue => XoAdFrequency.isBreakDue(_xoAdRounds);
+
+  Future<void> noteXoGameCompleted() async {
+    _xoAdRounds = XoAdFrequency.recordCompleted(_xoAdRounds);
+    await _prefs.setInt(_xoAdRoundKey, _xoAdRounds);
+  }
+
+  /// Reset the counter only after an interstitial has actually been shown.
+  Future<void> noteXoInterstitialShown() async {
+    _xoAdRounds = 0;
+    await _prefs.setInt(_xoAdRoundKey, 0);
+  }
 
   String? get pendingCaptureSubject => _prefs.getString(_pendingCaptureKey);
 
@@ -26,6 +43,10 @@ class AppStore extends ChangeNotifier {
   static Future<AppStore> load() async {
     final p = await SharedPreferences.getInstance();
     final store = AppStore._(p);
+    final savedRounds = p.getInt(_xoAdRoundKey) ?? 0;
+    store._xoAdRounds = savedRounds < 0 ? 0 :
+        (savedRounds > XoAdFrequency.roundsPerBreak
+            ? XoAdFrequency.roundsPerBreak : savedRounds);
     try {
       final raw = p.getString('settings_v1');
       if (raw != null) store.settings = StudentSettings.fromJson(jsonDecode(raw) as Map<String,dynamic>);
@@ -111,6 +132,8 @@ class AppStore extends ChangeNotifier {
     await _prefs.remove('files_v1');
     await _prefs.remove('settings_v1');
     await _prefs.remove(_pendingCaptureKey);
+    await _prefs.remove(_xoAdRoundKey);
+    _xoAdRounds = 0;
     records.clear();
     settings = StudentSettings();
     notifyListeners();

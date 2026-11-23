@@ -20,6 +20,24 @@ void main() {
     expect(RemoteAdsConfig.approvedBannerId(payload(), 'ios'), isNull);
   });
 
+  test('game interstitial requires explicit approval and a distinct AdMob unit', () {
+    const interstitial = 'ca-app-pub-3218037275900725/1234567890';
+    final data = payload();
+    final provider = ((data['ads'] as Map)['providers'] as List).first as Map;
+    expect(RemoteAdsConfig.approvedInterstitialId(data, 'android'), isNull);
+    provider['interstitial_enabled'] = true;
+    provider['interstitial_unit_id'] = interstitial;
+    expect(RemoteAdsConfig.approvedInterstitialId(data, 'android'), interstitial);
+    expect(RemoteAdsConfig.approvedInterstitialId(data, 'ios'), isNull);
+    provider['interstitial_unit_id'] = id;
+    expect(RemoteAdsConfig.approvedInterstitialId(data, 'android'), isNull);
+    provider['interstitial_unit_id'] = 'ca-app-pub-9999999999999999/1234567890';
+    expect(RemoteAdsConfig.approvedInterstitialId(data, 'android'), isNull);
+    provider['interstitial_unit_id'] = interstitial;
+    (data['ads'] as Map)['enabled'] = false;
+    expect(RemoteAdsConfig.approvedInterstitialId(data, 'android'), isNull);
+  });
+
   test('fails closed on missing, revoked or unsafe policy', () {
     expect(RemoteAdsConfig.approvedBannerId(null, 'android'), isNull);
     for (final field in ['enabled', 'families_safe', 'third_party_mediation']) {
