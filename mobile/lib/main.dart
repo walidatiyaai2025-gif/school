@@ -15,6 +15,7 @@ import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/play_screen.dart';
 import 'services/ads_service.dart';
+import 'widgets/footer_3d_icon.dart';
 import 'services/telemetry_service.dart';
 
 Future<void> main() async {
@@ -130,18 +131,18 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       ),
       body:SafeArea(bottom:false,child:IndexedStack(index:tab,children:screens)),
       bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[
-        NavigationBar(height:70,backgroundColor:Colors.white,
+        NavigationBar(height:76,backgroundColor:Colors.white,
           indicatorColor:const Color(0xFFE5EFFF),
           selectedIndex:tab,onDestinationSelected:(index)=>setState(()=>tab=index),
           destinations:[
-            NavigationDestination(icon:const Icon(Icons.home_outlined),
-              selectedIcon:const Icon(Icons.home_rounded),label:s.home),
-            NavigationDestination(icon:const Icon(Icons.folder_copy_outlined),
-              selectedIcon:const Icon(Icons.folder_copy),label:s.files),
-            NavigationDestination(icon:const Icon(Icons.sports_esports_outlined),
-              selectedIcon:const Icon(Icons.sports_esports_rounded),label:s.play),
-            NavigationDestination(icon:const Icon(Icons.settings_outlined),
-              selectedIcon:const Icon(Icons.settings),label:s.settings),
+            NavigationDestination(icon:const Footer3DIcon(icon:Icons.home_outlined),
+              selectedIcon:const Footer3DIcon(icon:Icons.home_rounded,selected:true),label:s.home),
+            NavigationDestination(icon:const Footer3DIcon(icon:Icons.folder_copy_outlined),
+              selectedIcon:const Footer3DIcon(icon:Icons.folder_copy,selected:true),label:s.files),
+            NavigationDestination(icon:const Footer3DIcon(icon:Icons.sports_esports_outlined),
+              selectedIcon:const Footer3DIcon(icon:Icons.sports_esports_rounded,selected:true),label:s.play),
+            NavigationDestination(icon:const Footer3DIcon(icon:Icons.settings_outlined),
+              selectedIcon:const Footer3DIcon(icon:Icons.settings,selected:true),label:s.settings),
           ]),
         if(!_overlayFlowOpen && (tab==0 || tab==1 || tab==2))
           SchoolBanner(store:widget.store),

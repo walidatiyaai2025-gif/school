@@ -109,23 +109,59 @@ class _HomeScreenState extends State<HomeScreen> {
         IconButton(onPressed:widget.onGoFiles,icon:const Icon(Icons.folder_open_rounded,
           color:Brand.blue))]),
       const SizedBox(height:18),
-      Container(padding:const EdgeInsets.all(22),
-        decoration:BoxDecoration(borderRadius:BorderRadius.circular(26),
-          gradient:const LinearGradient(begin:Alignment.topRight,end:Alignment.bottomLeft,
-            colors:[Color(0xFF095BE8),Color(0xFF072D88)])),
-        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text(s.t('أهلًا، ${u.name.split(' ').first} 👋','Hello, ${u.name.split(' ').first} 👋'),
-            style:const TextStyle(fontSize:25,fontWeight:FontWeight.w800,color:Colors.white)),
-          const SizedBox(height:7),
-          Text('${s.grade(u.level)} • ${u.schoolClass}',
-            style:const TextStyle(color:Color(0xFFD9E8FF),fontSize:13)),
-          const SizedBox(height:24),
-          Row(children:[const Icon(Icons.auto_awesome,color:Brand.aqua),const SizedBox(width:9),
-            Expanded(child:Text(s.t('حوّل صور واجبك إلى PDF واضح ومرتب.',
-              'Turn homework photos into a clean, organized PDF.'),
-              style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w700,height:1.5)))]),
-        ])),
-      const SizedBox(height:24),SectionHeader(s.subject),
+      Container(
+        padding: const EdgeInsets.fromLTRB(18, 16, 9, 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+            colors: [Color(0xFF0E70F0), Color(0xFF10338F)]),
+          boxShadow: const [BoxShadow(color: Color(0x55345AB6),
+            blurRadius: 16, offset: Offset(0, 8))]),
+        child: Row(children: [
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(s.t('أهلًا، ' + u.name.split(' ').first + ' 👋',
+                'Hello, ' + u.name.split(' ').first + ' 👋'),
+                maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 22,
+                  fontWeight: FontWeight.w900, color: Colors.white)),
+              const SizedBox(height: 6),
+              Text(s.grade(u.level) + ' • ' + u.schoolClass,
+                style: const TextStyle(color: Color(0xFFDCEAFF),
+                  fontSize: 12)),
+              const SizedBox(height: 15),
+              Text(s.t('واجبك جاهز في دقائق!',
+                'Homework ready in minutes!'),
+                style: const TextStyle(color: Colors.white,
+                  fontSize: 15, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 6),
+              Text(s.t('صوّر • حسّن • احفظ PDF',
+                'Capture • Enhance • Save PDF'),
+                style: const TextStyle(color: Color(0xFFE3F7FF),
+                  fontSize: 12, fontWeight: FontWeight.w700)),
+            ],
+          )),
+          Image.asset('assets/branding/home_promo.webp',
+            key: const Key('home-promo-image'),
+            width: 127, height: 151, fit: BoxFit.contain),
+        ]),
+      ),
+      const SizedBox(height: 20),
+      Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Text(s.subject, style: const TextStyle(color: Brand.navy,
+          fontWeight: FontWeight.w900, fontSize: 16)),
+        const SizedBox(width: 8),
+        if (selectedSubject == null)
+          Expanded(child: Text(s.t(
+            'من فضلك اختر المادة لتستطيع تجهيز الواجب أو الملف',
+            'Please select a subject to prepare your homework or file'),
+            key: const Key('subject-required-warning'),
+            style: const TextStyle(color: Color(0xFFCB2438),
+              fontSize: 12, fontWeight: FontWeight.w900))),
+      ]),
+      const SizedBox(height: 10),
       DropdownButtonFormField<String>(initialValue:subjects.contains(selectedSubject)?selectedSubject:null,
         isExpanded:true,hint:Text(s.t('اختر المادة أولًا','Choose a subject first')),
         items:subjects.map((x)=>DropdownMenuItem(value:x,child:Text(s.subjectName(x),overflow:TextOverflow.ellipsis))).toList(),
@@ -169,19 +205,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 class _LaunchCard extends StatelessWidget {
-  const _LaunchCard({required this.icon,required this.label,
-    required this.active,required this.gradient,required this.onTap});
-  final IconData icon;final String label;final bool active;
-  final List<Color> gradient;final VoidCallback onTap;
-  @override Widget build(BuildContext context)=>Opacity(opacity:active?1:.5,
-    child:Material(color:Colors.transparent,child:InkWell(onTap:active?onTap:null,
-      borderRadius:BorderRadius.circular(20),child:Ink(
-        height:155,decoration:BoxDecoration(borderRadius:BorderRadius.circular(20),
-          gradient:LinearGradient(colors:gradient)),
-        child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-          Icon(icon,size:47,color:Colors.white),const SizedBox(height:14),
-          Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Text(label,
-            textAlign:TextAlign.center,style:const TextStyle(color:Colors.white,
-              fontWeight:FontWeight.w800,fontSize:14))),
-        ])))));
+  const _LaunchCard({required this.icon, required this.label,
+    required this.active, required this.gradient, required this.onTap});
+  final IconData icon;
+  final String label;
+  final bool active;
+  final List<Color> gradient;
+  final VoidCallback onTap;
+
+  @override Widget build(BuildContext context) {
+    return Opacity(
+      opacity: active ? 1 : .55,
+      child: SizedBox(height: 162, child: Stack(children: [
+        Positioned.fill(top: 9, child: DecoratedBox(
+          decoration: BoxDecoration(color: gradient.last.withValues(alpha: .9),
+            borderRadius: BorderRadius.circular(22)))),
+        Positioned.fill(bottom: 7,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft, end: Alignment.bottomRight,
+                colors: gradient),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0x88FFFFFF), width: 1.2),
+              boxShadow: const [BoxShadow(color: Color(0x330A39A3),
+                blurRadius: 10, offset: Offset(0, 6))]),
+            child: Material(color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(22),
+                onTap: active ? onTap : null,
+                child: Column(mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(width: 67, height: 67,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [
+                          Color(0xCCFFFFFF), Color(0x22FFFFFF)]),
+                        borderRadius: BorderRadius.circular(19),
+                        border: Border.all(color: const Color(0x99FFFFFF)),
+                        boxShadow: const [BoxShadow(color: Color(0x44051C64),
+                          blurRadius: 7, offset: Offset(2, 5))]),
+                      child: Icon(icon, size: 38, color: Colors.white,
+                        shadows: const [Shadow(color: Color(0x88002980),
+                          blurRadius: 3, offset: Offset(2, 3))])),
+                    const SizedBox(height: 12),
+                    Text(label, textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white,
+                        fontSize: 13, fontWeight: FontWeight.w900)),
+                  ]),
+              )),
+          )),
+      ])),
+    );
+  }
 }

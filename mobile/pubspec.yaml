@@ -44,6 +44,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/icon.png
+    - assets/branding/home_promo.webp
 
 flutter_launcher_icons:
   android: true
