@@ -7,11 +7,13 @@ class GameAward {
     required this.bestStars,
     required this.newBadges,
     required this.stageUnlocked,
+    this.trophyUnlocked,
   });
   final int earnedPoints;
   final int bestStars;
   final List<String> newBadges;
   final bool stageUnlocked;
+  final int? trophyUnlocked;
 }
 
 class AchievementRules {

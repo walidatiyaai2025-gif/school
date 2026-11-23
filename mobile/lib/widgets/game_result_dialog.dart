@@ -10,7 +10,8 @@ class GameResultDialog extends StatefulWidget {
   const GameResultDialog({super.key, required this.game,
     required this.outcome, required this.english, required this.result,
     required this.stage, required this.stars, required this.remaining,
-    required this.hasNext, this.pointsEarned = 0, this.badgeEarned});
+    required this.hasNext, this.pointsEarned = 0, this.badgeEarned,
+    this.trophyUnlocked});
   final String game, result;
   final GameOutcome outcome;
   final bool english;
@@ -18,6 +19,7 @@ class GameResultDialog extends StatefulWidget {
   final bool hasNext;
   final int pointsEarned;
   final String? badgeEarned;
+  final int? trophyUnlocked;
 
   static Future<GameResultAction> show(BuildContext context, {
     required String game, required GameOutcome outcome,
@@ -25,6 +27,7 @@ class GameResultDialog extends StatefulWidget {
     required int stage, required int stars,
     required int remaining, required bool hasNext,
     int pointsEarned = 0, String? badgeEarned,
+    int? trophyUnlocked,
   }) async {
     GameAudio.play(switch(outcome) {
       GameOutcome.win => GameSound.win,
@@ -40,7 +43,8 @@ class GameResultDialog extends StatefulWidget {
         game: game, outcome: outcome, english: english, result: result,
         stage: stage, stars: stars.clamp(0,3).toInt(),
         remaining: remaining, hasNext: hasNext,
-        pointsEarned: pointsEarned, badgeEarned: badgeEarned),
+        pointsEarned: pointsEarned, badgeEarned: badgeEarned,
+        trophyUnlocked: trophyUnlocked),
       transitionBuilder: (dialogContext, animation, _, child) =>
         MediaQuery.disableAnimationsOf(dialogContext)
           ? child : FadeTransition(
@@ -202,6 +206,15 @@ class _GameResultDialogState extends State<GameResultDialog>
                       fontWeight: FontWeight.w900),
                   ),
                 ),
+              ],
+              if (widget.trophyUnlocked != null) ...[
+                const SizedBox(height: 6),
+                Text((widget.english ? 'Trophy unlocked: ' :
+                    'كأس جديد: ') + widget.trophyUnlocked.toString() + ' 🏆',
+                  key: const Key('result-new-trophy'),
+                  style: const TextStyle(
+                    color: Color(0xFFB87811),
+                    fontWeight: FontWeight.w900)),
               ],
               if (widget.badgeEarned != null) ...[
                 const SizedBox(height: 6),

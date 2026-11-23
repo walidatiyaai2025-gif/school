@@ -84,7 +84,8 @@ class _WordHuntScreenState extends State<WordHuntScreen>
       hasNext: won && _stage < GameStages.count,
       pointsEarned: award?.earnedPoints ?? 0,
       badgeEarned: award?.newBadges.isNotEmpty == true
-          ? award!.newBadges.first : null);
+          ? award!.newBadges.first : null,
+      trophyUnlocked: award?.trophyUnlocked);
     if (!mounted) return;
     if (action == GameResultAction.list) {
       Navigator.of(context).pop();

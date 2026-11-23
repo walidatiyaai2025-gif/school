@@ -44,6 +44,7 @@ class AppStore extends ChangeNotifier {
     final key = '${settings.level}:$game:$stage';
     final old = _bestStars[key] ?? 0;
     final previousBadges = gameBadgeIds.toSet();
+    final priorTrophies = gameTrophies;
     final improved = stars > old;
     final wasFrontier = stage == unlockedGameStage(game) &&
         unlockedGameStage(game) < GameStages.count;
@@ -65,6 +66,8 @@ class AppStore extends ChangeNotifier {
       newBadges: gameBadgeIds.where((id) => !previousBadges.contains(id))
           .toList(growable: false),
       stageUnlocked: wasFrontier,
+      trophyUnlocked: gameTrophies > priorTrophies
+          ? AchievementRules.trophyMilestones[gameTrophies - 1] : null,
     );
   }
 
@@ -167,6 +170,20 @@ class AppStore extends ChangeNotifier {
       store._rewardPoints = (p.getInt(_rewardTotalKey) ?? 0)
           .clamp(0, 1000000000).toInt();
     } catch (_) { /* Damaged rewards must not block the student. */ }
+    // Previous game levels earn a bronze recognition once at first upgrade.
+    if (p.getString(_bestStarsKey) == null && store._gameStages.isNotEmpty) {
+      for (final item in store._gameStages.entries) {
+        final pos = item.key.lastIndexOf(':');
+        if (pos <= 0 || !AchievementRules.games.contains(
+            item.key.substring(pos + 1))) continue;
+        for (var stage = 1; stage < item.value; stage++) {
+          store._bestStars['${item.key}:$stage'] = 1;
+          store._rewardPoints += AchievementRules.earnedPoints(0, 1);
+        }
+      }
+      await p.setString(_bestStarsKey, jsonEncode(store._bestStars));
+      await p.setInt(_rewardTotalKey, store._rewardPoints);
+    }
     try {
       store._usedWordHints.addAll(p.getStringList(_hintsKey) ?? const <String>[]);
     } catch (_) { /* Corrupt hint metadata must not block play. */ }

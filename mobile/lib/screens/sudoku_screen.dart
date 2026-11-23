@@ -122,6 +122,7 @@ class _SudokuScreenState extends State<SudokuScreen>
       pointsEarned: award?.earnedPoints ?? 0,
       badgeEarned: award?.newBadges.isNotEmpty == true
           ? award!.newBadges.first : null,
+      trophyUnlocked: award?.trophyUnlocked,
     );
     if (!mounted) return;
     if (action == GameResultAction.list) {

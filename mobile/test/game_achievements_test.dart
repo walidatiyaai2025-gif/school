@@ -42,12 +42,26 @@ void main() {
     expect(store.bestStarsFor('math', 1), 0);
   });
 
+  test('prior unlocked stages migrate to bronze rewards once', () async {
+    SharedPreferences.setMockInitialValues({});
+    final old = await AppStore.load();
+    await old.completeGameStage('words', 1);
+    await old.completeGameStage('words', 2);
+    final upgraded = await AppStore.load();
+    expect(upgraded.unlockedGameStage('words'), 3);
+    expect(upgraded.bestStarsFor('words', 1), 1);
+    expect(upgraded.bestStarsFor('words', 2), 1);
+    expect(upgraded.totalGamePoints, 120);
+    expect((await AppStore.load()).totalGamePoints, 120);
+  });
+
   test('badges and trophies require genuine unique stage clears', () async {
     SharedPreferences.setMockInitialValues({});
     final store = await AppStore.load();
     for (var stage = 1; stage <= 10; stage++) {
       final award = await store.earnGameStars('sudoku', stage, 3);
       expect(award.bestStars, 3);
+      if (stage == 10) expect(award.trophyUnlocked, 10);
     }
     expect(store.clearedGameStages, 10);
     expect(store.gameTrophies, 1);
