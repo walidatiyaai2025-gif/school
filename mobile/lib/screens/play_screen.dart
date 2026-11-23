@@ -77,6 +77,8 @@ class PlayScreen extends StatelessWidget {
         _GameCard(cardKey: const Key('xo-game-card'),
           kind: GameArtKind.xo, hero: true,
           title: 'XO • Tic Tac Toe',
+          stageLabel: s.t('المرحلة ', 'Level ') +
+            store.unlockedGameStage('xo').toString() + ' / 3',
           description: s.t('تحدى صديقك أو العب ضد الكمبيوتر.',
             'Challenge a friend or the computer.'),
           button: s.t('ابدأ اللعب', 'Start playing'),
@@ -85,6 +87,8 @@ class PlayScreen extends StatelessWidget {
         const SizedBox(height: 15),
         _GameCard(cardKey: const Key('math-match-card'),
           kind: GameArtKind.math, title: 'Math Match',
+          stageLabel: s.t('المرحلة ', 'Level ') +
+            store.unlockedGameStage('math').toString() + ' / 3',
           description: s.t('طابق الأرقام وحل ألغاز الحساب.',
             'Match numbers and solve quick math puzzles.'),
           button: s.t('العب الآن', 'Play now'),
@@ -93,6 +97,8 @@ class PlayScreen extends StatelessWidget {
         const SizedBox(height: 15),
         _GameCard(cardKey: const Key('word-hunt-card'),
           kind: GameArtKind.words, title: 'Word Hunt',
+          stageLabel: s.t('المرحلة ', 'Level ') +
+            store.unlockedGameStage('words').toString() + ' / 3',
           description: s.t('اكتشف الكلمات المخفية وطوّر مفرداتك.',
             'Find hidden words and grow your vocabulary.'),
           button: s.t('العب الآن', 'Play now'),
@@ -130,12 +136,12 @@ class _SchoolArt extends StatelessWidget {
 
 class _GameCard extends StatelessWidget {
   const _GameCard({required this.cardKey, required this.kind,
-    required this.title, required this.description, required this.button,
+    required this.title, required this.stageLabel, required this.description, required this.button,
     required this.colors, required this.onTap, this.hero = false});
 
   final Key cardKey;
   final GameArtKind kind;
-  final String title, description, button;
+  final String title, stageLabel, description, button;
   final List<Color> colors;
   final VoidCallback onTap;
   final bool hero;
@@ -172,6 +178,10 @@ class _GameCard extends StatelessWidget {
                       Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: ink,
                           fontSize: hero ? 20 : 18, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 3),
+                      Text(stageLabel, style: TextStyle(
+                        color: ink.withValues(alpha: .9),
+                        fontWeight: FontWeight.w800, fontSize: 11)),
                       const SizedBox(height: 7),
                       Text(description, maxLines: 3,
                         overflow: TextOverflow.ellipsis,
