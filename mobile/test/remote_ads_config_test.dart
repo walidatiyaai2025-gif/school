@@ -9,8 +9,11 @@ void main() {
       'families_safe': true,
       'max_content_rating': 'G',
       'third_party_mediation': false,
-      'providers': [
-        {'provider': 'admob', 'platform': 'android', 'banner_unit_id': id},
+      'providers': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'provider': 'admob', 'platform': 'android',
+          'banner_unit_id': id,
+        },
       ],
     },
   };
@@ -23,11 +26,7 @@ void main() {
   test('game interstitial requires explicit approval and a distinct AdMob unit', () {
     const interstitial = 'ca-app-pub-3218037275900725/1234567890';
     final data = payload();
-    final providers = ((data['ads'] as Map)['providers'] as List);
-    // Original literal infers Map<String, String>, so copy to a mixed-value map
-    // before adding the boolean format-approval flag.
-    final provider = Map<String, Object?>.from(providers.first as Map);
-    providers[0] = provider;
+    final provider = ((data['ads'] as Map)['providers'] as List).first as Map;
     expect(RemoteAdsConfig.approvedInterstitialId(data, 'android'), isNull);
     provider['interstitial_enabled'] = true;
     provider['interstitial_unit_id'] = interstitial;
