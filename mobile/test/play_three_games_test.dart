@@ -29,16 +29,14 @@ void main() {
     expect(find.byKey(const Key('word-hunt-card')), findsOneWidget);
     expect(find.byType(Game3DArt), findsNWidgets(4));
 
-    await tester.ensureVisible(find.byKey(const Key('math-match-card')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('math-match-card')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('math-question')), findsOneWidget);
     expect(find.byKey(const Key('math-next')), findsOneWidget);
-    // The footer takes space on small devices. Drag the active page so
-    // answer tiles are actually hit-testable, rather than only laid out.
-    await tester.drag(find.byType(ListView).last,
-      const Offset(0, -280));
-    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('math-fit-canvas')), findsOneWidget);
+    expect(find.byType(ListView), findsNothing);
+    expect(find.byKey(const Key('math-answers-grid')), findsOneWidget);
     await tester.tap(find.byKey(const Key('math-choice-0')));
     await tester.pumpAndSettle();
     final nextButton = tester.widget<FilledButton>(
@@ -55,11 +53,8 @@ void main() {
     final store = await storeForTest();
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: PlayScreen(store: store))));
-    final listScroll = tester.state<ScrollableState>(find.descendant(
-      of: find.byKey(const Key('play-game-list')),
-      matching: find.byType(Scrollable)).first);
-    listScroll.position.jumpTo(listScroll.position.maxScrollExtent);
-    await tester.pumpAndSettle();
+    expect(find.byType(ListView), findsNothing);
+    expect(find.byKey(const Key('play-fit-canvas')), findsOneWidget);
     await tester.tap(find.byKey(const Key('word-hunt-card')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('word-cell-0')), findsOneWidget);

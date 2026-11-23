@@ -27,6 +27,8 @@ void main() {
       theme: Brand.theme, home: Scaffold(body: PlayScreen(store: s))));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('play-2x2-grid')), findsOneWidget);
+    expect(find.byKey(const Key('play-fit-canvas')), findsOneWidget);
+    expect(find.byType(ListView), findsNothing);
     expect(find.byKey(const Key('xo-game-card')), findsOneWidget);
     expect(find.byKey(const Key('math-match-card')), findsOneWidget);
     expect(find.byKey(const Key('word-hunt-card')), findsOneWidget);
@@ -52,11 +54,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       theme: Brand.theme, home: Scaffold(body: PlayScreen(store: s))));
     await tester.pumpAndSettle();
-    final listScroll = tester.state<ScrollableState>(find.descendant(
-      of: find.byKey(const Key('play-game-list')),
-      matching: find.byType(Scrollable)).first);
-    listScroll.position.jumpTo(listScroll.position.maxScrollExtent);
-    await tester.pumpAndSettle();
+    expect(find.byType(ListView), findsNothing);
+    expect(find.byKey(const Key('play-fit-canvas')), findsOneWidget);
     await tester.tap(find.byKey(const Key('sudoku-game-card')));
     await tester.pumpAndSettle();
     expect(find.byType(SudokuScreen), findsOneWidget);
