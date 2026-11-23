@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:school_pdf/games/stage_clock.dart';
 import 'package:school_pdf/services/game_audio.dart';
 import 'package:school_pdf/widgets/game_result_dialog.dart';
+import 'package:school_pdf/widgets/motion_fx.dart';
+import 'package:school_pdf/widgets/clean_3d_dialog.dart';
+import 'package:school_pdf/core/brand.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +38,54 @@ void main() {
     }
     expect(GameAudio.makeWav(GameSound.win),
       isNot(GameAudio.makeWav(GameSound.lose)));
+  });
+
+  test('every audio cue is shorter than a quarter second, not music', () {
+    for (final sound in GameSound.values) {
+      final pcm = GameAudio.makeWav(sound);
+      expect(pcm.length, lessThan(44 + 22050 ~/ 2));
+      expect(pcm.length, greaterThan(44));
+    }
+  });
+
+  testWidgets('entry and touch animation settle without looping',
+      (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(MaterialApp(home: Scaffold(
+      body: MotionReveal(order: 3, child: MotionPress(
+        onTap: () => taps++,
+        child: const SizedBox(width: 150, height: 100,
+          child: Center(child: Text('Tap'))),
+      )),
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('Tap'), findsOneWidget);
+    await tester.tap(find.text('Tap'));
+    await tester.pumpAndSettle();
+    expect(taps, 1);
+  });
+
+  testWidgets('Clean 3D choice dialog has a dismissible shadowed surface',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(theme: Brand.theme,
+      home: Scaffold(body: Builder(builder: (ctx) => ElevatedButton(
+        onPressed: () => showClean3DDialog<bool>(
+          context: ctx, builder: (popupContext) => AlertDialog(
+            title: const Text('Opponent'),
+            content: const Text('Player or computer?'),
+            actions: [TextButton(
+              onPressed: () => Navigator.pop(popupContext, true),
+              child: const Text('Select'))])),
+        child: const Text('Open')),
+      ))));
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(Theme.of(tester.element(find.byType(AlertDialog)))
+      .dialogTheme.elevation, greaterThan(0));
+    await tester.tap(find.text('Select'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
   });
 
   testWidgets('Clean 3D popup displays result and next-stage action',

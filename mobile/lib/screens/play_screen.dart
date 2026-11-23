@@ -19,8 +19,28 @@ class PlayScreen extends StatelessWidget {
   Future<void> _open(BuildContext context, Widget page) async {
     onGameVisibilityChanged?.call(true);
     try {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => page));
+      final reduced = MediaQuery.disableAnimationsOf(context);
+      await Navigator.of(context).push(PageRouteBuilder<void>(
+        pageBuilder: (routeContext, animation, secondary) => page,
+        transitionDuration: reduced
+            ? Duration.zero : const Duration(milliseconds: 320),
+        reverseTransitionDuration: reduced
+            ? Duration.zero : const Duration(milliseconds: 240),
+        transitionsBuilder: (routeContext, animation, secondary, child) {
+          if (reduced) return child;
+          final eased = CurvedAnimation(
+            parent: animation, curve: Curves.easeOutCubic);
+          return FadeTransition(
+            opacity: eased,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, .07), end: Offset.zero,
+              ).animate(eased),
+              child: child,
+            ),
+          );
+        },
+      ));
     } finally {
       onGameVisibilityChanged?.call(false);
     }

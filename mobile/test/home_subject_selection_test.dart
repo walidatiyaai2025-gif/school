@@ -26,6 +26,9 @@ void main() {
         onGoFiles: () {},
       ),
     )));
+    expect(find.byKey(const Key('subject-required-warning')), findsOneWidget);
+    expect(find.byKey(const Key('home-promo-image')), findsOneWidget);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Choose a subject first'));
     await tester.pumpAndSettle();
     final math = find.text('Mathematics').last;
@@ -34,6 +37,8 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Mathematics'), findsOneWidget);
     expect(find.text('Take a photo'), findsOneWidget);
+    // Selecting a subject must never hide the red instructional message.
+    expect(find.byKey(const Key('subject-required-warning')), findsOneWidget);
   });
 
   test('unfinished capture retains selected subject across app store reload', () async {
