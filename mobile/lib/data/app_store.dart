@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'models.dart';
 import '../games/xo_ad_frequency.dart';
 import '../games/game_stages.dart';
+import '../games/achievement_rules.dart';
 
 class AppStore extends ChangeNotifier {
   AppStore._(this._prefs);
@@ -18,6 +19,55 @@ class AppStore extends ChangeNotifier {
   int _xoAdRounds = 0;
   static const _stagesKey = 'game_unlocked_stages_v1';
   final Map<String, int> _gameStages = <String, int>{};
+  static const _bestStarsKey = 'game_best_stars_v1';
+  static const _rewardTotalKey = 'game_reward_points_v1';
+  final Map<String, int> _bestStars = <String, int>{};
+  int _rewardPoints = 0;
+
+  Map<String, int> get bestGameStars => Map.unmodifiable(_bestStars);
+  int get totalGamePoints => _rewardPoints;
+  int get totalGameStars => _bestStars.values.fold<int>(0, (a, b) => a + b);
+  int get clearedGameStages => _bestStars.values.where((s) => s > 0).length;
+  int get gameTrophies => AchievementRules.trophyCount(_bestStars);
+  List<String> get gameBadgeIds => AchievementRules.badgesFor(_bestStars);
+  int bestStarsFor(String game, int stage) =>
+      _bestStars['${settings.level}:$game:${GameStages.clamp(stage)}'] ?? 0;
+
+  /// Replays may improve a personal best, but cannot farm points.
+  Future<GameAward> earnGameStars(String game, int stage, int stars) async {
+    final clampedStage = GameStages.clamp(stage);
+    if (!AchievementRules.games.contains(game) || clampedStage != stage ||
+        stars < 1 || stars > 3 || stage > unlockedGameStage(game)) {
+      return const GameAward(earnedPoints: 0, bestStars: 0,
+          newBadges: [], stageUnlocked: false);
+    }
+    final key = '${settings.level}:$game:$stage';
+    final old = _bestStars[key] ?? 0;
+    final previousBadges = gameBadgeIds.toSet();
+    final improved = stars > old;
+    final wasFrontier = stage == unlockedGameStage(game) &&
+        unlockedGameStage(game) < GameStages.count;
+    final points = AchievementRules.earnedPoints(old, stars);
+    if (improved) {
+      _bestStars[key] = stars;
+      _rewardPoints += points;
+    }
+    if (wasFrontier) _gameStages[_gameKey(game)] = stage + 1;
+    if (improved || wasFrontier) {
+      notifyListeners();
+      await _prefs.setString(_bestStarsKey, jsonEncode(_bestStars));
+      await _prefs.setInt(_rewardTotalKey, _rewardPoints);
+      await _prefs.setString(_stagesKey, jsonEncode(_gameStages));
+    }
+    return GameAward(
+      earnedPoints: points,
+      bestStars: _bestStars[key] ?? 0,
+      newBadges: gameBadgeIds.where((id) => !previousBadges.contains(id))
+          .toList(growable: false),
+      stageUnlocked: wasFrontier,
+    );
+  }
+
   static const _hintsKey = 'word_hint_used_stages_v1';
   final Set<String> _usedWordHints = <String>{};
   bool hasUsedWordHint(int stage) =>
@@ -102,6 +152,22 @@ class AppStore extends ChangeNotifier {
       }
     } catch (_) { /* Damaged progress must not block offline game access. */ }
     try {
+      final raw = p.getString(_bestStarsKey);
+      if (raw != null) {
+        final values = jsonDecode(raw);
+        if (values is Map) {
+          for (final entry in values.entries) {
+            if (entry.key is String && entry.value is int &&
+                (entry.value as int) >= 1 && (entry.value as int) <= 3) {
+              store._bestStars[entry.key as String] = entry.value as int;
+            }
+          }
+        }
+      }
+      store._rewardPoints = (p.getInt(_rewardTotalKey) ?? 0)
+          .clamp(0, 1000000000).toInt();
+    } catch (_) { /* Damaged rewards must not block the student. */ }
+    try {
       store._usedWordHints.addAll(p.getStringList(_hintsKey) ?? const <String>[]);
     } catch (_) { /* Corrupt hint metadata must not block play. */ }
     store.records.sort((a,b)=>b.createdAt.compareTo(a.createdAt));
@@ -176,9 +242,13 @@ class AppStore extends ChangeNotifier {
     await _prefs.remove(_pendingCaptureKey);
     await _prefs.remove(_xoAdRoundKey);
     await _prefs.remove(_stagesKey);
+    await _prefs.remove(_bestStarsKey);
+    await _prefs.remove(_rewardTotalKey);
     await _prefs.remove(_hintsKey);
     _usedWordHints.clear();
     _gameStages.clear();
+    _bestStars.clear();
+    _rewardPoints = 0;
     _xoAdRounds = 0;
     records.clear();
     settings = StudentSettings();
