@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/brand.dart';
 import '../core/strings.dart';
 import '../data/app_store.dart';
 import '../games/math_match.dart';
+import '../games/game_stages.dart';
+import '../widgets/game_stage_strip.dart';
+import '../widgets/game_3d_tile.dart';
 import '../services/ads_service.dart';
 import '../widgets/game_3d_art.dart';
 
@@ -13,9 +17,48 @@ class MathMatchScreen extends StatefulWidget {
 }
 
 class _MathMatchScreenState extends State<MathMatchScreen> {
-  late final MathMatchGame game = MathMatchGame(
+  late MathMatchGame game;
+  int _stage = 1;
+  MathMatchGame _createGame(int stage) => MathMatchGame(
     level: widget.store.settings.level,
-    schoolClass: widget.store.settings.schoolClass);
+    schoolClass: widget.store.settings.schoolClass,
+    stage: stage,
+    totalRounds: GameStages.mathRounds(stage),
+    seed: 2026 + stage,
+  );
+  @override void initState() {
+    super.initState();
+    _stage = widget.store.unlockedGameStage('math');
+    game = _createGame(_stage);
+  }
+  void _selectStage(int stage) {
+    if (stage > widget.store.unlockedGameStage('math')) return;
+    setState(() {
+      _stage = stage;
+      game = _createGame(stage);
+    });
+  }
+  bool get _passed => GameStages.mathPassed(
+    correct: game.score, total: game.totalRounds);
+  void _choose(int value) {
+    if (!game.choose(value)) return;
+    if (game.finished && _passed) {
+      unawaited(widget.store.completeGameStage('math', _stage));
+    }
+    setState(() {});
+  }
+  void _advance() {
+    setState(() {
+      if (!game.finished) {
+        game.next();
+      } else if (_passed && _stage < GameStages.count) {
+        _stage++;
+        game = _createGame(_stage);
+      } else {
+        game = _createGame(_stage);
+      }
+    });
+  }
 
   @override Widget build(BuildContext context) {
     final s = S(widget.store.settings.english);
@@ -40,6 +83,11 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
                     style: const TextStyle(color: Brand.muted)),
                 ])),
             ]),
+            const SizedBox(height: 10),
+            GameStageStrip(current: _stage,
+              unlocked: widget.store.unlockedGameStage('math'),
+              english: widget.store.settings.english,
+              onSelect: _selectStage),
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text(s.t('السؤال ', 'Question ') + game.round.toString() +
@@ -76,8 +124,9 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
                     const Color(0xFFFFF1DC),
                   borderRadius: BorderRadius.circular(16)),
                 child: Text(game.finished
-                    ? s.t('انتهت الجولة! نتيجتك: ',
-                        'Round complete! Your score: ') +
+                    ? (_passed
+                        ? s.t('تم اجتياز المرحلة! ⭐ النتيجة: ', 'Stage cleared! ⭐ Score: ')
+                        : s.t('حاول مرة أخرى. النتيجة: ', 'Try again. Score: ')) +
                       game.score.toString() + '/' + game.totalRounds.toString()
                     : game.correct
                         ? s.t('ممتاز! إجابة صحيحة.', 'Great! Correct answer.')
@@ -98,27 +147,19 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
                 final value = game.question.choices[index];
                 final correct = game.answered && value == game.question.answer;
                 final wrong = game.selected == value && !game.correct;
-                return Material(
-                  color: correct ? const Color(0xFFE2F9EB) :
-                    wrong ? const Color(0xFFFFE6EC) : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  child: InkWell(
-                    key: Key('math-choice-' + index.toString()),
-                    onTap: game.answered ? null :
-                      () => setState(() => game.choose(value)),
-                    borderRadius: BorderRadius.circular(18),
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(width: 2,
-                          color: correct ? Brand.green :
-                            wrong ? const Color(0xFFD85064) :
-                            const Color(0xFFE3EAF3))),
-                      child: Text(value.toString(), style: const TextStyle(
-                        fontSize: 26, fontWeight: FontWeight.w900,
-                        color: Brand.navy))),
-                  ),
+                return Game3DTile(
+                  key: Key('math-choice-' + index.toString()),
+                  radius: 19,
+                  color: correct ? const Color(0xFF92F2C7)
+                      : wrong ? const Color(0xFFFFA1BC)
+                      : const Color(0xFFC9DFFF),
+                  onTap: game.answered ? null : () => _choose(value),
+                  child: Text(value.toString(), style: const TextStyle(
+                    fontSize: 27, fontWeight: FontWeight.w900,
+                    color: Brand.navy,
+                    shadows: [Shadow(color: Color(0x99FFFFFF),
+                      offset: Offset(-1, -2), blurRadius: 2)],
+                  )),
                 );
               },
             ),
@@ -126,17 +167,17 @@ class _MathMatchScreenState extends State<MathMatchScreen> {
           ],
         )),
         bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
-          SchoolBanner(store: widget.store),
           SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
             child: FilledButton.icon(
               key: const Key('math-next'),
-              onPressed: !game.answered ? null : () => setState(() {
-                if (game.finished) { game.reset(); } else { game.next(); }
-              }),
+              onPressed: !game.answered ? null : _advance,
               icon: Icon(game.finished ? Icons.refresh : Icons.arrow_forward),
               label: Text(game.finished
-                ? s.t('العب من جديد', 'Play again')
+                ? (_passed && _stage < GameStages.count
+                  ? s.t('المرحلة التالية', 'Next stage')
+                  : s.t('العب من جديد', 'Play again'))
                 : s.t('السؤال التالي', 'Next question'))))),
+          SchoolBanner(store: widget.store),
         ]),
       ),
     );
