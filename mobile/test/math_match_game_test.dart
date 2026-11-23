@@ -27,6 +27,15 @@ void main() {
     }
   });
 
+  test('zero-result subtraction always builds four choices promptly', () {
+    for (var seed = 0; seed < 150; seed++) {
+      final game = MathMatchGame(level: 'primary',
+          schoolClass: 'Year 1', seed: seed);
+      expect(game.question.choices.length, 4);
+      expect(game.question.choices.toSet().length, 4);
+    }
+  });
+
   test('wrong answer is accepted once, but does not increase score', () {
     final game = MathMatchGame(level: 'primary', schoolClass: 'Year 2');
     final wrong = game.question.choices.firstWhere(
