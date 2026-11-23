@@ -57,7 +57,7 @@ void main() {
         expect(words.every((w) => w.length <= WordHuntGame.size), isTrue);
         final game = WordHuntGame(level: level, stage: stage, seed: 40);
         for (final word in words) {
-          expect(game.letters.join().contains(word), isTrue);
+          expect(game.wordPath(word).length, word.length);
         }
       }
       expect(WordHuntGame.wordsFor(level, stage: 1),

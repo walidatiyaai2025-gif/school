@@ -13,7 +13,7 @@ void main() {
       for (final level in ['primary','middle','secondary','university']) {
         final word = WordHuntGame(level: level, stage: stage, seed: stage);
         for (final target in word.targets) {
-          expect(word.letters.join().contains(target), isTrue,
+          expect(word.wordPath(target).length, target.length,
               reason: '$level $stage: $target');
           expect(target.length, lessThanOrEqualTo(7));
         }

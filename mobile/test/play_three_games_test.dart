@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:school_pdf/data/app_store.dart';
 import 'package:school_pdf/screens/play_screen.dart';
+import 'package:school_pdf/screens/word_hunt_screen.dart';
 import 'package:school_pdf/widgets/game_3d_art.dart';
 
 void main() {
@@ -63,8 +64,11 @@ void main() {
     await tester.tap(find.byKey(const Key('word-cell-7')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('word-feedback')), findsOneWidget);
-    await tester.scrollUntilVisible(find.byKey(const Key('word-target-CAT')),
-      180, scrollable: find.byType(Scrollable).first);
+    expect(find.byKey(const Key('word-fit-canvas')), findsOneWidget);
+    expect(find.descendant(
+      of: find.byType(WordHuntScreen),
+      matching: find.byType(ListView)), findsNothing);
+    expect(find.byKey(const Key('word-score')), findsOneWidget);
     expect(find.byKey(const Key('word-target-CAT')), findsOneWidget);
     await tester.tap(find.byKey(const Key('word-reset')));
     await tester.pumpAndSettle();
