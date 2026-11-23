@@ -196,7 +196,9 @@ class _SchoolBannerState extends State<SchoolBanner> with WidgetsBindingObserver
     if (!_eligible) return const SizedBox.shrink();
     // Reserve a stable slot so an arriving ad cannot move navigation buttons
     // under a child's finger; separate from content and clearly label it.
-    return Semantics(
+    return SafeArea(
+      top: false,
+      child: Semantics(
       label: 'Advertisement',
       child: Container(
         height: 84,
@@ -217,6 +219,7 @@ class _SchoolBannerState extends State<SchoolBanner> with WidgetsBindingObserver
           else
             const SizedBox(height: 50),
         ]),
+      ),
       ),
     );
   }
