@@ -15,7 +15,7 @@ class MotionReveal extends StatelessWidget {
     if (MediaQuery.disableAnimationsOf(context)) return child;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 380 + order.clamp(0, 7) * 90),
+      duration: Duration(milliseconds: 380 + order.clamp(0, 7).toInt() * 90),
       curve: Curves.easeOutCubic,
       child: child,
       builder: (context, value, child) => Opacity(

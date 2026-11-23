@@ -81,7 +81,7 @@ class GameAudio {
       final envelope = attack * release;
       final sample = math.sin(phase) * (1 - texture) + noise * texture;
       data.setInt16(44 + i * 2,
-          (sample * envelope * 8500).round().clamp(-32768, 32767),
+          (sample * envelope * 8500).round().clamp(-32768, 32767).toInt(),
           Endian.little);
     }
     return bytes;
