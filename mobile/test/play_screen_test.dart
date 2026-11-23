@@ -14,7 +14,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: Scaffold(
       body: PlayScreen(store: store),
     )));
-    expect(find.text('XO • Tic Tac Toe'), findsOneWidget);
+    expect(find.byKey(const Key('xo-game-card')), findsOneWidget);
+    expect(find.text('Tic Tac Toe'), findsOneWidget);
     await tester.tap(find.byKey(const Key('xo-game-card')));
     await tester.pumpAndSettle();
     expect(find.text('Play with a friend'), findsOneWidget);

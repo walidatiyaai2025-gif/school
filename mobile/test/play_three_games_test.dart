@@ -55,7 +55,11 @@ void main() {
     final store = await storeForTest();
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: PlayScreen(store: store))));
-    await tester.ensureVisible(find.byKey(const Key('word-hunt-card')));
+    final listScroll = tester.state<ScrollableState>(find.descendant(
+      of: find.byKey(const Key('play-game-list')),
+      matching: find.byType(Scrollable)).first);
+    listScroll.position.jumpTo(listScroll.position.maxScrollExtent);
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('word-hunt-card')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('word-cell-0')), findsOneWidget);

@@ -52,7 +52,11 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       theme: Brand.theme, home: Scaffold(body: PlayScreen(store: s))));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('sudoku-game-card')));
+    final listScroll = tester.state<ScrollableState>(find.descendant(
+      of: find.byKey(const Key('play-game-list')),
+      matching: find.byType(Scrollable)).first);
+    listScroll.position.jumpTo(listScroll.position.maxScrollExtent);
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('sudoku-game-card')));
     await tester.pumpAndSettle();
     expect(find.byType(SudokuScreen), findsOneWidget);
