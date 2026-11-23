@@ -198,116 +198,156 @@ class _TicTacToeScreenState extends State<TicTacToeScreen>
       child: Scaffold(
         appBar: AppBar(title: const Text('XO • Tic Tac Toe')),
         body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            children: [
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22)),
-                child: Column(children: [
-                  Text(widget.mode == GameMode.computer
-                      ? s.t('أنت X • الكمبيوتر O', 'You: X • Computer: O')
-                      : s.t('لاعب X • لاعب O', 'Player X • Player O'),
-                    style: const TextStyle(color: Brand.muted,
-                        fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 10),
-                  Text(status, key: const Key('xo-status'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Brand.navy, fontSize: 24,
-                        fontWeight: FontWeight.w900)),
-                ]),
-              ),
-              const SizedBox(height: 10),
-              Center(child: GameCountdown(clock: _clock)),
-              const SizedBox(height: 12),
-              GameStageStrip(current: _stage,
-                unlocked: widget.store.unlockedGameStage('xo'),
-                english: widget.english, onSelect: _selectStage),
-              const SizedBox(height: 12),
-              Text(_stageComplete
-                  ? s.t('أحسنت! المرحلة اكتملت ⭐', 'Stage cleared! ⭐')
-                  : s.t('جولات المرحلة: ', 'Stage rounds: ') +
-                      _matchesFinished.toString() + ' / ' +
-                      GameStages.xoRounds(_stage).toString(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Brand.navy,
-                  fontWeight: FontWeight.w800)),
-              const SizedBox(height: 14),
-              Center(child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 380),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: 9,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 9,
-                      mainAxisSpacing: 9),
-                    itemBuilder: (context, index) {
-                      final mark = game.cells[index];
-                      final color = mark == 'X'
-                          ? const Color(0xFF8AE7FF)
-                          : mark == 'O'
-                              ? const Color(0xFFFFA9D4)
-                              : const Color(0xFFDCEBFF);
-                      return Game3DTile(
-                        key: Key('xo-cell-' + index.toString()),
-                        label: 'Cell ' + (index + 1).toString() +
-                            (mark.isEmpty ? ' empty' : ' ' + mark),
-                        color: color,
-                        radius: 18,
-                        onTap: _resultOpen || game.finished || mark.isNotEmpty
-                            ? null : () => _move(index),
-                        child: Text(mark, style: TextStyle(
-                          fontSize: 55, fontWeight: FontWeight.w900,
-                          color: mark == 'X'
-                              ? const Color(0xFF006BCD)
-                              : const Color(0xFFC81D8B),
-                          shadows: const [
-                            Shadow(color: Color(0x77FFFFFF),
-                              blurRadius: 2, offset: Offset(-1, -2)),
-                            Shadow(color: Color(0x551B2C7F),
-                              blurRadius: 3, offset: Offset(2, 4)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            child: LayoutBuilder(
+              builder: (context, bounds) => Center(
+                child: FittedBox(
+                  key: const Key('xo-fit-canvas'),
+                  fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: 365,
+                    height: 560,
+                    child: Column(children: [
+                      Container(
+                        width: double.infinity,
+                        height: 83,
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(21),
+                          boxShadow: const [BoxShadow(
+                            color: Color(0x2C5984BF),
+                            blurRadius: 8, offset: Offset(0, 4))]),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(widget.mode == GameMode.computer
+                                ? s.t('أنت X • الكمبيوتر O',
+                                    'You: X • Computer: O')
+                                : s.t('لاعب X • لاعب O',
+                                    'Player X • Player O'),
+                              maxLines: 1,
+                              style: const TextStyle(
+                                color: Brand.muted,
+                                fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 5),
+                            Text(status,
+                              key: const Key('xo-status'),
+                              maxLines: 1,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Brand.navy, fontSize: 23,
+                                fontWeight: FontWeight.w900)),
                           ],
-                        )),
-                      );
-                    },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(child: GameCountdown(clock: _clock)),
+                      const SizedBox(height: 9),
+                      GameStageStrip(
+                        current: _stage,
+                        unlocked: widget.store.unlockedGameStage('xo'),
+                        english: widget.english,
+                        onSelect: _selectStage,
+                      ),
+                      const SizedBox(height: 9),
+                      Text(_stageComplete
+                          ? s.t('أحسنت! المرحلة اكتملت ⭐',
+                              'Stage cleared! ⭐')
+                          : s.t('جولات المرحلة: ', 'Stage rounds: ') +
+                              _matchesFinished.toString() + ' / ' +
+                              GameStages.xoRounds(_stage).toString(),
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Brand.navy, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 10),
+                      Expanded(child: Center(
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: GridView.builder(
+                            key: const Key('xo-board'),
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: 9,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8),
+                            itemBuilder: (context, index) {
+                              final mark = game.cells[index];
+                              final color = mark == 'X'
+                                  ? const Color(0xFF8AE7FF)
+                                  : mark == 'O'
+                                      ? const Color(0xFFFFA9D4)
+                                      : const Color(0xFFDCEBFF);
+                              return Game3DTile(
+                                key: Key('xo-cell-' + index.toString()),
+                                label: 'Cell ' + (index + 1).toString() +
+                                    (mark.isEmpty ? ' empty' : ' ' + mark),
+                                color: color,
+                                radius: 18,
+                                onTap: _resultOpen || game.finished ||
+                                        mark.isNotEmpty
+                                    ? null : () => _move(index),
+                                child: Text(mark,
+                                  style: TextStyle(
+                                    fontSize: 53,
+                                    fontWeight: FontWeight.w900,
+                                    color: mark == 'X'
+                                        ? const Color(0xFF006BCD)
+                                        : const Color(0xFFC81D8B),
+                                    shadows: const [
+                                      Shadow(color: Color(0x77FFFFFF),
+                                        blurRadius: 2,
+                                        offset: Offset(-1, -2)),
+                                      Shadow(color: Color(0x551B2C7F),
+                                        blurRadius: 3,
+                                        offset: Offset(2, 4)),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      )),
+                      const SizedBox(height: 8),
+                      Text(s.t('رتّب 3 علامات في صف أو عمود أو قطر لتفوز.',
+                          'Get three marks in a row, column or diagonal to win.'),
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Brand.muted, fontSize: 12)),
+                    ]),
                   ),
                 ),
-              )),
-              const SizedBox(height: 18),
-              Text(s.t('رتّب 3 علامات في صف أو عمود أو قطر لتفوز.',
-                  'Get three marks in a row, column or diagonal to win.'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Brand.muted)),
-            ],
+              ),
+            ),
           ),
         ),
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                child: FilledButton.icon(
-                  key: const Key('xo-reset'),
-                  onPressed: _replayPending || _resultOpen ? null : _playAgain,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text(_replayPending
-                      ? s.t('جاري فتح الإعلان...', 'Opening ad...')
-                      : (game.finished && widget.store.xoAdBreakDue &&
-                              _interstitial.isReady)
-                          ? s.t('متابعة (إعلان ثم جولة جديدة)',
-                              'Continue (ad, then next round)')
-                          : _stageComplete && _stage < GameStages.count
-                              ? s.t('المرحلة التالية', 'Next stage')
-                              : s.t('العب من جديد', 'Play again')),
-                ),
+            SafeArea(child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 7, 20, 9),
+              child: FilledButton.icon(
+                key: const Key('xo-reset'),
+                onPressed: _replayPending || _resultOpen
+                    ? null : _playAgain,
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(_replayPending
+                    ? s.t('جاري فتح الإعلان...', 'Opening ad...')
+                    : (game.finished && widget.store.xoAdBreakDue &&
+                            _interstitial.isReady)
+                        ? s.t('متابعة (إعلان ثم جولة جديدة)',
+                            'Continue (ad, then next round)')
+                        : _stageComplete && _stage < GameStages.count
+                            ? s.t('المرحلة التالية', 'Next stage')
+                            : s.t('العب من جديد', 'Play again')),
               ),
-            ),
+            )),
             if (!_replayPending)
               SchoolBanner(key: const Key('xo-footer-ad'), store: widget.store),
           ],
