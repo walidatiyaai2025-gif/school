@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:school_pdf/data/app_store.dart';
 import 'package:school_pdf/screens/play_screen.dart';
-import 'package:school_pdf/screens/math_match_screen.dart';
 import 'package:school_pdf/widgets/game_3d_art.dart';
 
 void main() {
