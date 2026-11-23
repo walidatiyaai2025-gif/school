@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../core/brand.dart';
 import '../core/strings.dart';
 import '../games/tic_tac_toe.dart';
+import '../games/xo_ad_frequency.dart';
+import '../services/game_interstitial_ads.dart';
 import '../data/app_store.dart';
 import '../services/ads_service.dart';
 
@@ -19,9 +23,58 @@ class TicTacToeScreen extends StatefulWidget {
 
 class _TicTacToeScreenState extends State<TicTacToeScreen> {
   late final TicTacToeGame game = TicTacToeGame(widget.mode);
+  late final GameInterstitialAds _interstitial =
+      GameInterstitialAds(ageGroup: widget.store.settings.ageGroup);
+  bool _replayPending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.store.xoAdRounds >= XoAdFrequency.roundsPerBreak - 1) {
+      unawaited(_interstitial.preload());
+    }
+  }
+
+  @override
+  void dispose() {
+    _interstitial.dispose();
+    super.dispose();
+  }
 
   void _move(int index) {
-    setState(() => game.play(index));
+    if (!game.play(index)) return;
+    setState(() {});
+    if (game.finished) {
+      unawaited(widget.store.noteXoGameCompleted());
+      if (widget.store.xoAdRounds >= XoAdFrequency.roundsPerBreak - 1) {
+        unawaited(_interstitial.preload());
+      }
+    }
+  }
+
+  Future<void> _playAgain() async {
+    if (_replayPending) return;
+    if (!game.finished || !widget.store.xoAdBreakDue ||
+        !_interstitial.isReady) {
+      setState(game.reset);
+      return;
+    }
+    setState(() => _replayPending = true);
+    try {
+      final shown = await _interstitial.showIfStillApproved(
+          canShow: () => mounted &&
+              (ModalRoute.of(context)?.isCurrent ?? false));
+      if (shown) await widget.store.noteXoInterstitialShown();
+    } catch (_) {
+      // No ad failures may block the next round.
+    } finally {
+      if (mounted) {
+        setState(() {
+          game.reset();
+          _replayPending = false;
+        });
+      }
+    }
   }
 
   @override
@@ -116,9 +169,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                 child: FilledButton.icon(
                   key: const Key('xo-reset'),
-                  onPressed: () => setState(game.reset),
+                  onPressed: _replayPending ? null : _playAgain,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: Text(s.t('العب من جديد', 'Play again')),
+                  label: Text(_replayPending
+                      ? s.t('جاري فتح الإعلان...', 'Opening ad...')
+                      : s.t('العب من جديد', 'Play again')),
                 ),
               ),
             ),
