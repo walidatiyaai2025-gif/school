@@ -19,7 +19,7 @@ class AppStore extends ChangeNotifier {
   static const _stagesKey = 'game_unlocked_stages_v1';
   final Map<String, int> _gameStages = <String, int>{};
 
-  String _gameKey(String game) => '${'${settings.level}'}:$game';
+  String _gameKey(String game) => '${settings.level}:$game';
 
   int unlockedGameStage(String game) =>
       GameStages.clamp(_gameStages[_gameKey(game)] ?? 1);
