@@ -24,7 +24,7 @@ class Game3DTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final hsl = HSLColor.fromColor(color);
     final shade = hsl.withLightness(
-      (hsl.lightness - .23).clamp(.17, .69)).toColor();
+      (hsl.lightness - .23).clamp(.17, .69).toDouble()).toColor();
     final raised = selected ? 2.0 : 5.0;
     final decoration = BoxDecoration(
       gradient: LinearGradient(
