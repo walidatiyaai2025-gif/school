@@ -158,8 +158,11 @@ class WordHuntGame {
       final board = List<String?>.filled(size * size, null);
       _placements.clear();
       var success = true;
-      for (var w = 0; w < _targets.length; w++) {
-        final word = _targets[w];
+      // Reserve long/less flexible targets first, reducing collision retries.
+      final order = _targets.toList()
+        ..sort((a, b) => b.length.compareTo(a.length));
+      for (var w = 0; w < order.length; w++) {
+        final word = order[w];
         // Levels 1–3 already mix horizontal/vertical/diagonal. Subsequent
         // stages introduce the other diagonal and reverse words gradually.
         final preferred = stage <= 3 ? w % 3 :
@@ -226,8 +229,32 @@ class WordHuntGame {
           board[index] ?? String.fromCharCode(65 + _random.nextInt(26)));
       return;
     }
-    // Never silently display a stage containing an unfindable word.
-    throw StateError('Unable to generate Word Hunt stage $stage');
+    // Guaranteed deterministic fallback: distinct horizontal rows or vertical
+    // columns can hold up to seven letters each with zero collisions. This
+    // prevents a rare crowded 5-word puzzle from ever crashing a stage.
+    // Alternating orientations and reversed runs still vary the challenge.
+    final board = List<String?>.filled(size * size, null);
+    _placements.clear();
+    final rowsOrColumns = List<int>.generate(size, (i) => i)
+      ..shuffle(_random);
+    final useColumns = stage.isEven;
+    for (var w = 0; w < _targets.length; w++) {
+      final word = _targets[w];
+      final lane = rowsOrColumns[w];
+      final start = _random.nextInt(size - word.length + 1);
+      final backward = stage > 15 && w.isOdd;
+      final path = <int>[];
+      for (var k = 0; k < word.length; k++) {
+        final position = start + (backward ? word.length - k - 1 : k);
+        final index = useColumns
+            ? position * size + lane : lane * size + position;
+        board[index] = word[k];
+        path.add(index);
+      }
+      _placements[word] = List<int>.unmodifiable(path);
+    }
+    _letters = List<String>.generate(size * size, (index) =>
+        board[index] ?? String.fromCharCode(65 + _random.nextInt(26)));
   }
 
   /// Return the complete straight path connecting two cells. Supports
