@@ -7,6 +7,10 @@ import '../core/strings.dart';
 import '../games/tic_tac_toe.dart';
 import '../games/xo_ad_frequency.dart';
 import '../games/game_stages.dart';
+import '../games/stage_clock.dart';
+import '../widgets/game_countdown.dart';
+import '../widgets/game_result_dialog.dart';
+import '../services/game_audio.dart';
 import '../widgets/game_3d_tile.dart';
 import '../widgets/game_stage_strip.dart';
 import '../services/game_interstitial_ads.dart';
@@ -24,19 +28,61 @@ class TicTacToeScreen extends StatefulWidget {
   State<TicTacToeScreen> createState() => _TicTacToeScreenState();
 }
 
-class _TicTacToeScreenState extends State<TicTacToeScreen> {
+class _TicTacToeScreenState extends State<TicTacToeScreen>
+    with WidgetsBindingObserver {
+  final StageClock _clock = StageClock();
+  bool _resultOpen = false;
+  void _startClock() {
+    _clock.start(GameStages.secondsFor('xo', _stage),
+      () => _showEnd(timedOut: true));
+  }
+  @override void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_resultOpen) {
+      _clock.resume();
+    } else { _clock.pause(); }
+  }
+  Future<void> _showEnd({bool timedOut = false}) async {
+    if (!mounted || _resultOpen) return;
+    _resultOpen = true;
+    _clock.stop();
+    final outcome = timedOut ? GameOutcome.timeout :
+      game.isDraw ? GameOutcome.draw :
+      widget.mode == GameMode.computer && game.winner == 'O'
+        ? GameOutcome.loss : GameOutcome.win;
+    final result = timedOut
+      ? (widget.english ? 'Round timed out' : 'انتهى وقت الجولة')
+      : game.isDraw ? (widget.english ? 'Draw' : 'تعادل')
+      : (widget.english ? 'Winner: ' : 'الفائز: ') + (game.winner ?? '');
+    final action = await GameResultDialog.show(context,
+      game: 'XO', outcome: outcome, english: widget.english,
+      result: result, stage: _stage,
+      stars: timedOut ? 0 : game.isDraw ? 2
+        : outcome == GameOutcome.win ? 3 : 1,
+      remaining: _clock.seconds.value,
+      hasNext: _stageComplete && _stage < GameStages.count);
+    if (!mounted) return;
+    _resultOpen = false;
+    if (action == GameResultAction.list) {
+      Navigator.of(context).pop();
+    } else {
+      await _playAgain();
+    }
+  }
+
   late TicTacToeGame game;
   int _stage = 1;
   int _matchesFinished = 0;
   bool _stageComplete = false;
   void _selectStage(int stage) {
-    if (_replayPending || stage > widget.store.unlockedGameStage('xo')) return;
+    if (_resultOpen || _replayPending ||
+        stage > widget.store.unlockedGameStage('xo')) return;
     setState(() {
       _stage = stage;
       _matchesFinished = 0;
       _stageComplete = false;
       game = TicTacToeGame(widget.mode, difficulty: _stage);
     });
+    _startClock();
   }
   void _startNewRound() {
     if (_stageComplete && _stage < GameStages.count) {
@@ -51,6 +97,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         _matchesFinished = 0;
       }
     }
+    _startClock();
   }
   late final GameInterstitialAds _interstitial =
       GameInterstitialAds(ageGroup: widget.store.settings.ageGroup);
@@ -61,6 +108,8 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     super.initState();
     _stage = widget.store.unlockedGameStage('xo');
     game = TicTacToeGame(widget.mode, difficulty: _stage);
+    WidgetsBinding.instance.addObserver(this);
+    _startClock();
     if (widget.store.xoAdRounds >= XoAdFrequency.roundsPerBreak - 1) {
       unawaited(_interstitial.preload());
     }
@@ -68,15 +117,18 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _clock.dispose();
     _interstitial.dispose();
     super.dispose();
   }
 
   void _move(int index) {
-    if (!game.play(index)) return;
-    setState(() {});
+    if (_resultOpen || !game.play(index)) return;
+    GameAudio.play(GameSound.tap);
     if (game.finished) {
-      _matchesFinished++;
+      final earned = widget.mode == GameMode.friend || game.winner == 'X';
+      if (earned) _matchesFinished++;
       if (_matchesFinished >= GameStages.xoRounds(_stage)) {
         _stageComplete = true;
         unawaited(widget.store.completeGameStage('xo', _stage));
@@ -86,6 +138,8 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         unawaited(_interstitial.preload());
       }
     }
+    setState(() {});
+    if (game.finished) unawaited(_showEnd());
   }
 
   Future<void> _playAgain() async {
@@ -153,7 +207,9 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                         fontWeight: FontWeight.w900)),
                 ]),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
+              Center(child: GameCountdown(clock: _clock)),
+              const SizedBox(height: 12),
               GameStageStrip(current: _stage,
                 unlocked: widget.store.unlockedGameStage('xo'),
                 english: widget.english, onSelect: _selectStage),
@@ -191,7 +247,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                             (mark.isEmpty ? ' empty' : ' ' + mark),
                         color: color,
                         radius: 18,
-                        onTap: game.finished || mark.isNotEmpty
+                        onTap: _resultOpen || game.finished || mark.isNotEmpty
                             ? null : () => _move(index),
                         child: Text(mark, style: TextStyle(
                           fontSize: 55, fontWeight: FontWeight.w900,
@@ -226,7 +282,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                 child: FilledButton.icon(
                   key: const Key('xo-reset'),
-                  onPressed: _replayPending ? null : _playAgain,
+                  onPressed: _replayPending || _resultOpen ? null : _playAgain,
                   icon: const Icon(Icons.refresh_rounded),
                   label: Text(_replayPending
                       ? s.t('جاري فتح الإعلان...', 'Opening ad...')
