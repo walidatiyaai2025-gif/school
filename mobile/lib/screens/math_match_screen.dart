@@ -120,7 +120,7 @@ class _MathMatchScreenState extends State<MathMatchScreen>
       child: Scaffold(
         appBar: AppBar(title: const Text('Math Match')),
         body: SafeArea(child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 160),
           children: [
             Row(children: [
               const Game3DArt(kind: GameArtKind.math, size: 84),

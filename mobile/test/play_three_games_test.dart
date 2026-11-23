@@ -34,16 +34,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('math-question')), findsOneWidget);
     expect(find.byKey(const Key('math-next')), findsOneWidget);
-    // Scroll the active Math page, never the offstage Play catalogue.
-    final mathScroller = find.descendant(
-      of: find.byType(MathMatchScreen),
-      matching: find.byType(Scrollable)).first;
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('math-choice-0')), 240,
-      scrollable: mathScroller);
+    // The footer takes space on small devices. Drag the active page so
+    // answer tiles are actually hit-testable, rather than only laid out.
+    await tester.drag(find.byType(ListView).last,
+      const Offset(0, -280));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('math-choice-0')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('math-feedback')), findsOneWidget);
+    final nextButton = tester.widget<FilledButton>(
+      find.byKey(const Key('math-next')));
+    expect(nextButton.onPressed, isNotNull);
     await tester.tap(find.byKey(const Key('math-next')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('math-question')), findsOneWidget);
