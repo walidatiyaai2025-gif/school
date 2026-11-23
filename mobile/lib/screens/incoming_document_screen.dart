@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../widgets/clean_3d_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:open_filex/open_filex.dart';
@@ -80,7 +81,7 @@ class _IncomingDocumentScreenState extends State<IncomingDocumentScreen> {
 
   Future<void> convertWithConsent() async {
     final english = widget.english;
-    final accepted = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+    final accepted = await showClean3DDialog<bool>(context: context, builder: (ctx) => AlertDialog(
       title: Text(english ? 'Upload this document?' : 'هل توافق على رفع هذا المستند؟'),
       content: Text(english
         ? 'Only this selected document will be sent over HTTPS for conversion. The server should delete temporary files after conversion. Do not upload confidential files. Continue?'

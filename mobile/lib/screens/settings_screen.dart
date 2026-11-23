@@ -1,3 +1,4 @@
+import '../widgets/clean_3d_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../core/brand.dart';
@@ -70,7 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // while Flutter's dialog exit animation still owns its TextField.
     var entered = '';
     final strings = S(widget.store.settings.english);
-    final selected = await showDialog<String>(
+    final selected = await showClean3DDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(strings.t('أضف مادة', 'Add subject')),
@@ -109,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
   Future<void> _deleteLocalProfileAndPdfs() async {
     final s = S(widget.store.settings.english);
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showClean3DDialog<bool>(
       context: context,
       builder: (dialog) => AlertDialog(
         title: Text(s.t('حذف بيانات هذا الجهاز نهائيًا', 'Delete data on this device?')),
@@ -141,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await widget.store.saveSettings();
       final serverDeleted = await TelemetryService.unregister();
       if (!serverDeleted && mounted) {
-        await showDialog<void>(
+        await showClean3DDialog<void>(
           context: context,
           builder: (dialog) => AlertDialog(
             title: Text(s.t('حذف سجل الخادم معلّق', 'Server deletion pending')),
