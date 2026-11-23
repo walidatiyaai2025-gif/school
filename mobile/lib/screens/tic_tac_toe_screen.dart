@@ -6,6 +6,9 @@ import '../core/brand.dart';
 import '../core/strings.dart';
 import '../games/tic_tac_toe.dart';
 import '../games/xo_ad_frequency.dart';
+import '../games/game_stages.dart';
+import '../widgets/game_3d_tile.dart';
+import '../widgets/game_stage_strip.dart';
 import '../services/game_interstitial_ads.dart';
 import '../data/app_store.dart';
 import '../services/ads_service.dart';
@@ -22,7 +25,33 @@ class TicTacToeScreen extends StatefulWidget {
 }
 
 class _TicTacToeScreenState extends State<TicTacToeScreen> {
-  late final TicTacToeGame game = TicTacToeGame(widget.mode);
+  late TicTacToeGame game;
+  int _stage = 1;
+  int _matchesFinished = 0;
+  bool _stageComplete = false;
+  void _selectStage(int stage) {
+    if (_replayPending || stage > widget.store.unlockedGameStage('xo')) return;
+    setState(() {
+      _stage = stage;
+      _matchesFinished = 0;
+      _stageComplete = false;
+      game = TicTacToeGame(widget.mode, difficulty: _stage);
+    });
+  }
+  void _startNewRound() {
+    if (_stageComplete && _stage < GameStages.count) {
+      _stage++;
+      _matchesFinished = 0;
+      _stageComplete = false;
+      game = TicTacToeGame(widget.mode, difficulty: _stage);
+    } else {
+      game.reset();
+      if (_stageComplete) {
+        _stageComplete = false;
+        _matchesFinished = 0;
+      }
+    }
+  }
   late final GameInterstitialAds _interstitial =
       GameInterstitialAds(ageGroup: widget.store.settings.ageGroup);
   bool _replayPending = false;
@@ -30,6 +59,8 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   @override
   void initState() {
     super.initState();
+    _stage = widget.store.unlockedGameStage('xo');
+    game = TicTacToeGame(widget.mode, difficulty: _stage);
     if (widget.store.xoAdRounds >= XoAdFrequency.roundsPerBreak - 1) {
       unawaited(_interstitial.preload());
     }
@@ -45,6 +76,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     if (!game.play(index)) return;
     setState(() {});
     if (game.finished) {
+      _matchesFinished++;
+      if (_matchesFinished >= GameStages.xoRounds(_stage)) {
+        _stageComplete = true;
+        unawaited(widget.store.completeGameStage('xo', _stage));
+      }
       unawaited(widget.store.noteXoGameCompleted());
       if (widget.store.xoAdRounds >= XoAdFrequency.roundsPerBreak - 1) {
         unawaited(_interstitial.preload());
@@ -56,7 +92,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     if (_replayPending) return;
     if (!game.finished || !widget.store.xoAdBreakDue ||
         !_interstitial.isReady) {
-      setState(game.reset);
+      setState(_startNewRound);
       return;
     }
     // Remove the bottom banner before opening a full-screen placement.
@@ -74,7 +110,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          game.reset();
+          _startNewRound();
           _replayPending = false;
         });
       }
@@ -117,7 +153,20 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                         fontWeight: FontWeight.w900)),
                 ]),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 14),
+              GameStageStrip(current: _stage,
+                unlocked: widget.store.unlockedGameStage('xo'),
+                english: widget.english, onSelect: _selectStage),
+              const SizedBox(height: 12),
+              Text(_stageComplete
+                  ? s.t('أحسنت! المرحلة اكتملت ⭐', 'Stage cleared! ⭐')
+                  : s.t('جولات المرحلة: ', 'Stage rounds: ') +
+                      _matchesFinished.toString() + ' / ' +
+                      GameStages.xoRounds(_stage).toString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Brand.navy,
+                  fontWeight: FontWeight.w800)),
+              const SizedBox(height: 14),
               Center(child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 380),
                 child: AspectRatio(
@@ -131,26 +180,31 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                       mainAxisSpacing: 9),
                     itemBuilder: (context, index) {
                       final mark = game.cells[index];
-                      return Semantics(
+                      final color = mark == 'X'
+                          ? const Color(0xFF8AE7FF)
+                          : mark == 'O'
+                              ? const Color(0xFFFFA9D4)
+                              : const Color(0xFFDCEBFF);
+                      return Game3DTile(
+                        key: Key('xo-cell-' + index.toString()),
                         label: 'Cell ' + (index + 1).toString() +
                             (mark.isEmpty ? ' empty' : ' ' + mark),
-                        button: true,
-                        child: Material(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          child: InkWell(
-                            key: Key('xo-cell-' + index.toString()),
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: game.finished || mark.isNotEmpty
-                                ? null : () => _move(index),
-                            child: Center(child: Text(mark,
-                              style: TextStyle(
-                                fontSize: 54,
-                                fontWeight: FontWeight.w900,
-                                color: mark == 'X'
-                                    ? Brand.blue : Brand.green))),
-                          ),
-                        ),
+                        color: color,
+                        radius: 18,
+                        onTap: game.finished || mark.isNotEmpty
+                            ? null : () => _move(index),
+                        child: Text(mark, style: TextStyle(
+                          fontSize: 55, fontWeight: FontWeight.w900,
+                          color: mark == 'X'
+                              ? const Color(0xFF006BCD)
+                              : const Color(0xFFC81D8B),
+                          shadows: const [
+                            Shadow(color: Color(0x77FFFFFF),
+                              blurRadius: 2, offset: Offset(-1, -2)),
+                            Shadow(color: Color(0x551B2C7F),
+                              blurRadius: 3, offset: Offset(2, 4)),
+                          ],
+                        )),
                       );
                     },
                   ),
@@ -167,8 +221,6 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!_replayPending)
-              SchoolBanner(key: const Key('xo-footer-ad'), store: widget.store),
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -182,10 +234,14 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                               _interstitial.isReady)
                           ? s.t('متابعة (إعلان ثم جولة جديدة)',
                               'Continue (ad, then next round)')
-                          : s.t('العب من جديد', 'Play again')),
+                          : _stageComplete && _stage < GameStages.count
+                              ? s.t('المرحلة التالية', 'Next stage')
+                              : s.t('العب من جديد', 'Play again')),
                 ),
               ),
             ),
+            if (!_replayPending)
+              SchoolBanner(key: const Key('xo-footer-ad'), store: widget.store),
           ],
         ),
       ),
