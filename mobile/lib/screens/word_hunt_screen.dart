@@ -26,6 +26,7 @@ class _WordHuntScreenState extends State<WordHuntScreen>
   Timer? _hintTimer;
   int? _hintCell;
   bool _resultOpen = false;
+  int _attempt = 0;
   void _startClock() {
     _clock.start(GameStages.secondsFor('words', _stage),
         () => _finish(timedOut: true));
@@ -84,7 +85,12 @@ class _WordHuntScreenState extends State<WordHuntScreen>
     } else {
       setState(() {
         if (action == GameResultAction.next &&
-            won && _stage < GameStages.count) _stage++;
+            won && _stage < GameStages.count) {
+          _stage++;
+          _attempt = 0;
+        } else {
+          _attempt++;
+        }
         _hintTimer?.cancel();
         _hintCell = null;
         game = _newGame(_stage);
@@ -105,11 +111,12 @@ class _WordHuntScreenState extends State<WordHuntScreen>
   }
   WordHuntGame _newGame(int stage) => WordHuntGame(
     level: widget.store.settings.level, stage: stage,
-    seed: 2026 + stage);
+    seed: 2026 + stage + _attempt * 4099);
   void _selectStage(int stage) {
     if (_resultOpen || stage > widget.store.unlockedGameStage('words')) return;
     setState(() {
       _stage = stage;
+      _attempt = 0;
       game = _newGame(_stage);
       _hintTimer?.cancel();
       _hintCell = null;
@@ -133,7 +140,12 @@ class _WordHuntScreenState extends State<WordHuntScreen>
     if (_resultOpen) return;
     _hintTimer?.cancel();
     setState(() {
-      if (game.finished && _stage < GameStages.count) _stage++;
+      if (game.finished && _stage < GameStages.count) {
+        _stage++;
+        _attempt = 0;
+      } else {
+        _attempt++;
+      }
       _hintCell = null;
       game = _newGame(_stage);
     });
