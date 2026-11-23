@@ -137,148 +137,245 @@ class _WordHuntScreenState extends State<WordHuntScreen>
 
   @override Widget build(BuildContext context) {
     final s = S(widget.store.settings.english);
+    final english = widget.store.settings.english;
     return Directionality(
-      textDirection: widget.store.settings.english
-        ? TextDirection.ltr : TextDirection.rtl,
+      textDirection: english ? TextDirection.ltr : TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(title: const Text('Word Hunt')),
-        body: SafeArea(child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 22),
-          children: [
-            Row(children: [
-              const Game3DArt(kind: GameArtKind.words, size: 82),
-              const SizedBox(width: 10),
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(s.t('صيد الكلمات', 'Word Hunt'),
-                    style: const TextStyle(fontSize: 22,
-                      color: Brand.navy, fontWeight: FontWeight.w900)),
-                  Text(s.t('اضغط أول حرف وآخر حرف للكلمة المخفية.',
-                      'Tap the first and last letters of a hidden word.'),
-                    style: const TextStyle(color: Brand.muted)),
-                ])),
-            ]),
-            const SizedBox(height: 10),
-            GameStageStrip(current: _stage,
-              unlocked: widget.store.unlockedGameStage('words'),
-              english: widget.store.settings.english,
-              onSelect: _selectStage),
-            const SizedBox(height: 12),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              GameCountdown(clock: _clock),
-              if (!widget.store.hasUsedWordHint(_stage) && !_resultOpen)
-                TextButton.icon(
-                  key: const Key('word-hint-button'),
-                  onPressed: _hint,
-                  icon: const Icon(Icons.lightbulb_rounded),
-                  label: Text(s.t('تلميح واحد', 'One hint')),
-                ),
-            ]),
-            const SizedBox(height: 8),
-            Text(s.t('الكلمات: ', 'Words: ') + game.progress.toString() +
-                 '/' + game.targets.length.toString(),
-              style: const TextStyle(color: Brand.blue,
-                fontWeight: FontWeight.w800)),
-            if (game.finished || game.lastFound != null || game.lastMiss)
-              Text(game.finished
-                ? s.t('شاطر! لقيت كل الكلمات 🎉',
-                    'Amazing! You found every word! 🎉')
-                : game.lastFound != null
-                  ? s.t('لقيت كلمة ', 'Found ') + game.lastFound!
-                  : s.t('جرب حرف البداية والنهاية لنفس الكلمة.',
-                      'Try the first and last letters of one word.'),
-                key: const Key('word-feedback'),
-                style: const TextStyle(color: Brand.navy,
-                  fontWeight: FontWeight.w800)),            const SizedBox(height: 12),
-            Directionality(textDirection: TextDirection.ltr,
-              child: Center(child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 365),
-                child: AspectRatio(aspectRatio: 1,
-                  child: GridView.builder(
-                    itemCount: game.letters.length,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: WordHuntGame.size,
-                      mainAxisSpacing: 4, crossAxisSpacing: 4),
-                    itemBuilder: (context, index) {
-                      final found = game.foundCells.contains(index);
-                      final active = game.start == index;
-                      return AnimatedScale(
-                        duration: const Duration(milliseconds: 370),
-                        curve: Curves.elasticOut,
-                        scale: _hintCell == index ? 1.12 : 1.0,
-                        child: Game3DTile(
-                        key: Key('word-cell-' + index.toString()),
-                        label: 'Letter ' + game.letters[index],
-                        radius: 9,
-                        selected: active,
-                        color: _hintCell == index
-                            ? const Color(0xFFFFD04D)
-                            : found ? const Color(0xFF5DE3C0)
-                            : active ? const Color(0xFFFFD46E)
-                            : const Color(0xFFC4DEFF),
-                        onTap: game.finished || _resultOpen ? null :
-                            () => _chooseLetter(index),
-                        child: Text(game.letters[index],
-                          style: TextStyle(fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: found ? const Color(0xFF055944)
-                                : Brand.navy,
-                            shadows: const [
-                              Shadow(color: Color(0x88FFFFFF),
-                                offset: Offset(-1, -1), blurRadius: 1),
-                            ],
-                          )),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ))),
-            const SizedBox(height: 17),
-            Text(s.t('الكلمات المطلوبة', 'Find these words'),
-              style: const TextStyle(color: Brand.navy,
-                fontWeight: FontWeight.w900)),
-            const SizedBox(height: 9),
-            Wrap(spacing: 8, runSpacing: 8,
-              children: [for (final word in game.targets)
-                SizedBox(width: 101, height: 48,
-                  child: Game3DTile(
-                    key: Key('word-target-' + word),
-                    radius: 12,
-                    color: game.found.contains(word)
-                        ? const Color(0xFF8CECC5)
-                        : const Color(0xFFC5D6FF),
-                    child: Row(mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min, children: [
-                        if (game.found.contains(word))
-                          const Icon(Icons.check_circle, size: 15,
-                            color: Color(0xFF087E57)),
-                        Flexible(child: Text(word, textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12,
-                            color: Brand.navy, fontWeight: FontWeight.w900,
-                            decoration: game.found.contains(word)
-                                ? TextDecoration.lineThrough : null))),
+        // A fitted fixed-aspect game canvas. The entire puzzle, goals, timer,
+        // stages and feedback remain on-screen in compact Android layouts;
+        // the only independent overlay is the optional external ad footer.
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: LayoutBuilder(builder: (context, constraints) =>
+              FittedBox(
+                key: const Key('word-fit-canvas'),
+                fit: BoxFit.contain,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: 360,
+                  height: 580,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: 58, child: Row(children: [
+                        const Game3DArt(kind: GameArtKind.words, size: 59),
+                        const SizedBox(width: 9),
+                        Expanded(child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(s.t('صيد الكلمات', 'Word Hunt'),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 20, color: Brand.navy,
+                                fontWeight: FontWeight.w900)),
+                            Text(s.t('اضغط أول وآخر حرف من الكلمة.',
+                              'Tap the first and last letter of a word.'),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Brand.muted, fontSize: 11)),
+                          ],
+                        )),
+                      ])),
+                      const SizedBox(height: 6),
+                      GameStageStrip(
+                        current: _stage,
+                        unlocked: widget.store.unlockedGameStage('words'),
+                        english: english,
+                        onSelect: _selectStage,
+                      ),
+                      const SizedBox(height: 5),
+                      SizedBox(height: 39, child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GameCountdown(clock: _clock),
+                          if (!widget.store.hasUsedWordHint(_stage) &&
+                              !_resultOpen)
+                            TextButton.icon(
+                              key: const Key('word-hint-button'),
+                              onPressed: _hint,
+                              icon: const Icon(Icons.lightbulb_rounded,
+                                size: 18),
+                              label: Text(s.t('تلميح واحد', 'One hint')),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 9)),
+                            ),
+                        ],
+                      )),
+                      const SizedBox(height: 3),
+                      Row(children: [
+                        Text(s.t('الكلمات: ', 'Words: ') +
+                            game.progress.toString() + '/' +
+                            game.targets.length.toString(),
+                          style: const TextStyle(
+                            color: Brand.blue,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12)),
+                        const SizedBox(width: 10),
+                        Expanded(child: SizedBox(
+                          height: 22,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            child: game.finished ||
+                                game.lastFound != null || game.lastMiss
+                              ? Text(
+                                  game.finished
+                                    ? s.t('أحسنت! اكتملت الكلمات 🎉',
+                                        'All words found! 🎉')
+                                    : game.lastFound != null
+                                      ? s.t('وجدت: ', 'Found: ') +
+                                          game.lastFound!
+                                      : s.t('حاول مرة أخرى', 'Try again'),
+                                  key: const Key('word-feedback'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Brand.navy,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800),
+                                )
+                              : const SizedBox.shrink(
+                                  key: Key('word-feedback-empty')),
+                          ),
+                        )),
                       ]),
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: Center(
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: GridView.builder(
+                                key: const Key('word-letter-grid'),
+                                physics: const NeverScrollableScrollPhysics(),
+                                padding: EdgeInsets.zero,
+                                itemCount: game.letters.length,
+                                gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: WordHuntGame.size,
+                                    mainAxisSpacing: 3,
+                                    crossAxisSpacing: 3,
+                                  ),
+                                itemBuilder: (context, index) {
+                                  final found =
+                                      game.foundCells.contains(index);
+                                  final active = game.start == index;
+                                  return AnimatedScale(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeOutBack,
+                                    scale: _hintCell == index ? 1.09 : 1,
+                                    child: Game3DTile(
+                                      key: Key('word-cell-$index'),
+                                      label: 'Letter ' + game.letters[index],
+                                      radius: 8,
+                                      selected: active,
+                                      color: _hintCell == index
+                                        ? const Color(0xFFFFD04D)
+                                        : found
+                                          ? const Color(0xFF5DE3C0)
+                                          : active
+                                            ? const Color(0xFFFFD46E)
+                                            : const Color(0xFFC4DEFF),
+                                      onTap: game.finished || _resultOpen
+                                        ? null : () => _chooseLetter(index),
+                                      child: Text(game.letters[index],
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w900,
+                                          color: found
+                                            ? const Color(0xFF055944)
+                                            : Brand.navy,
+                                          shadows: const [
+                                            Shadow(
+                                              color: Color(0x88FFFFFF),
+                                              offset: Offset(-1, -1),
+                                              blurRadius: 1),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(s.t('الكلمات المطلوبة', 'Find these words'),
+                        style: const TextStyle(
+                          color: Brand.navy, fontSize: 12,
+                          fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 5),
+                      // Fixed three-column layout. Even levels with five
+                      // targets use only two compact rows without scrolling.
+                      Wrap(
+                        spacing: 5,
+                        runSpacing: 5,
+                        children: [
+                          for (final word in game.targets)
+                            SizedBox(
+                              width: 116,
+                              height: 35,
+                              child: Game3DTile(
+                                key: Key('word-target-$word'),
+                                radius: 10,
+                                color: game.found.contains(word)
+                                  ? const Color(0xFF8CECC5)
+                                  : const Color(0xFFC5D6FF),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (game.found.contains(word))
+                                      const Icon(Icons.check_circle,
+                                        size: 13,
+                                        color: Color(0xFF087E57)),
+                                    Flexible(child: Text(word,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Brand.navy,
+                                        fontWeight: FontWeight.w900,
+                                        decoration: game.found.contains(word)
+                                          ? TextDecoration.lineThrough
+                                          : null))),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ]),
-
-            const SizedBox(height: 14),
-
+              ),
+            ),
+          ),
+        ),
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SafeArea(child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 7, 20, 10),
+              child: FilledButton.icon(
+                key: const Key('word-reset'),
+                onPressed: _resultOpen ? null : _replay,
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(game.finished && _stage < GameStages.count
+                  ? s.t('المرحلة التالية', 'Next stage')
+                  : s.t('لعبة جديدة', 'New puzzle')),
+              ),
+            )),
+            SchoolBanner(store: widget.store),
           ],
-        )),
-        bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
-          SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
-            child: FilledButton.icon(
-              key: const Key('word-reset'),
-              onPressed: _resultOpen ? null : _replay,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(game.finished && _stage < GameStages.count
-                ? s.t('المرحلة التالية', 'Next stage')
-                : s.t('لعبة جديدة', 'New puzzle'))))),
-          SchoolBanner(store: widget.store),
-        ]),
+        ),
       ),
     );
   }
