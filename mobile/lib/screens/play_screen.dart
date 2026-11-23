@@ -6,11 +6,13 @@ import '../games/tic_tac_toe.dart';
 import '../widgets/game_3d_art.dart';
 import '../widgets/motion_fx.dart';
 import '../widgets/clean_3d_dialog.dart';
+import '../widgets/game_achievements_panel.dart';
 import 'tic_tac_toe_screen.dart';
 import 'math_match_screen.dart';
 import 'word_hunt_screen.dart';
+import 'sudoku_screen.dart';
 
-/// Offline games with glossy, locally-rendered 3D cards.
+/// Four glossy games in a compact two-column grid, with one unified cabinet.
 class PlayScreen extends StatelessWidget {
   const PlayScreen({super.key, required this.store, this.onGameVisibilityChanged});
   final AppStore store;
@@ -21,12 +23,12 @@ class PlayScreen extends StatelessWidget {
     try {
       final reduced = MediaQuery.disableAnimationsOf(context);
       await Navigator.of(context).push(PageRouteBuilder<void>(
-        pageBuilder: (routeContext, animation, secondary) => page,
+        pageBuilder: (_, __, ___) => page,
         transitionDuration: reduced
             ? Duration.zero : const Duration(milliseconds: 320),
         reverseTransitionDuration: reduced
             ? Duration.zero : const Duration(milliseconds: 240),
-        transitionsBuilder: (routeContext, animation, secondary, child) {
+        transitionsBuilder: (_, animation, __, child) {
           if (reduced) return child;
           final eased = CurvedAnimation(
             parent: animation, curve: Curves.easeOutCubic);
@@ -34,8 +36,7 @@ class PlayScreen extends StatelessWidget {
             opacity: eased,
             child: SlideTransition(
               position: Tween<Offset>(
-                begin: const Offset(0, .07), end: Offset.zero,
-              ).animate(eased),
+                begin: const Offset(0, .07), end: Offset.zero).animate(eased),
               child: child,
             ),
           );
@@ -56,17 +57,20 @@ class PlayScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.people_alt_outlined, color: Brand.blue),
             title: Text(s.t('مع صديق', 'Play with a friend')),
-            subtitle: Text(s.t('لاعبان على نفس الجهاز', 'Two players on one device')),
+            subtitle: Text(s.t('لاعبان على نفس الجهاز',
+                'Two players on one device')),
             onTap: () => Navigator.of(d).pop(GameMode.friend)),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.smart_toy_outlined, color: Brand.blue),
             title: Text(s.t('ضد الكمبيوتر', 'Play against computer')),
-            subtitle: Text(s.t('أنت X والكمبيوتر O', 'You are X; computer is O')),
+            subtitle: Text(s.t('أنت X والكمبيوتر O',
+                'You are X; computer is O')),
             onTap: () => Navigator.of(d).pop(GameMode.computer)),
         ]),
-        actions: [TextButton(onPressed: () => Navigator.of(d).pop(),
-            child: Text(s.cancel))],
+        actions: [TextButton(
+          onPressed: () => Navigator.of(d).pop(),
+          child: Text(s.cancel))],
       ),
     );
     if (mode == null || !context.mounted) return;
@@ -74,168 +78,197 @@ class PlayScreen extends StatelessWidget {
       mode: mode, english: store.settings.english, store: store));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final s = S(store.settings.english);
-    return ListView(
-      key: const Key('play-game-list'),
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
-      children: [
-        Row(children: [
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(s.t('العب واتعلم', 'Play & Learn'),
-                style: const TextStyle(color: Brand.navy, fontSize: 28,
-                  fontWeight: FontWeight.w900)),
-              const SizedBox(height: 7),
-              Text(s.t('3 ألعاب تعليمية مجانية وممتعة، بدون إنترنت.',
-                'Three free educational games, even offline.'),
-                style: const TextStyle(color: Brand.muted, height: 1.35)),
-            ])),
-          const SizedBox(width: 8),
-          const MotionReveal(order: 0, child: _SchoolArt()),
-        ]),
-        const SizedBox(height: 22),
-        MotionReveal(order: 1, child: _GameCard(cardKey: const Key('xo-game-card'),
-          kind: GameArtKind.xo, hero: true,
-          title: 'XO • Tic Tac Toe',
-          stageLabel: s.t('المرحلة ', 'Level ') +
-            store.unlockedGameStage('xo').toString() + ' / 1000',
-          description: s.t('تحدى صديقك أو العب ضد الكمبيوتر.',
-            'Challenge a friend or the computer.'),
-          button: s.t('ابدأ اللعب', 'Start playing'),
-          colors: const [Color(0xFF16B4FF), Color(0xFF064BDA)],
-          onTap: () => _chooseOpponent(context))),
-        const SizedBox(height: 15),
-        MotionReveal(order: 2, child: _GameCard(cardKey: const Key('math-match-card'),
-          kind: GameArtKind.math, title: 'Math Match',
-          stageLabel: s.t('المرحلة ', 'Level ') +
-            store.unlockedGameStage('math').toString() + ' / 1000',
-          description: s.t('طابق الأرقام وحل ألغاز الحساب.',
-            'Match numbers and solve quick math puzzles.'),
-          button: s.t('العب الآن', 'Play now'),
-          colors: const [Color(0xFFF4F0FF), Color(0xFFD0C7FF)],
-          onTap: () => _open(context, MathMatchScreen(store: store)))),
-        const SizedBox(height: 15),
-        MotionReveal(order: 3, child: _GameCard(cardKey: const Key('word-hunt-card'),
-          kind: GameArtKind.words, title: 'Word Hunt',
-          stageLabel: s.t('المرحلة ', 'Level ') +
-            store.unlockedGameStage('words').toString() + ' / 1000',
-          description: s.t('اكتشف الكلمات المخفية وطوّر مفرداتك.',
-            'Find hidden words and grow your vocabulary.'),
-          button: s.t('العب الآن', 'Play now'),
-          colors: const [Color(0xFFE8FAFF), Color(0xFFB0F0DD)],
-          onTap: () => _open(context, WordHuntScreen(store: store)))),
-      ],
-    );
-  }
+  @override Widget build(BuildContext context) =>
+      AnimatedBuilder(animation: store, builder: (context, _) {
+        final s = S(store.settings.english);
+        return ListView(
+          key: const Key('play-game-list'),
+          padding: const EdgeInsets.fromLTRB(15, 15, 15, 32),
+          children: [
+            Row(children: [
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(s.t('العب واتعلم', 'Play & Learn'),
+                    style: const TextStyle(color: Brand.navy,
+                      fontSize: 26, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 4),
+                  Text(s.t('٤ تحديات مجانية • ألف مرحلة في كل لعبة',
+                      '4 free challenges • 1,000 levels each'),
+                    style: const TextStyle(
+                      color: Brand.muted, fontSize: 12)),
+                ],
+              )),
+              const MotionReveal(order: 0, child: _SchoolArt()),
+            ]),
+            const SizedBox(height: 11),
+            GameAchievementsPanel(
+              store: store, english: store.settings.english),
+            const SizedBox(height: 15),
+            GridView.count(
+              key: const Key('play-2x2-grid'),
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 11,
+              mainAxisSpacing: 11,
+              childAspectRatio: .77,
+              children: [
+                MotionReveal(order: 1, child: _GameCard(
+                  cardKey: const Key('xo-game-card'),
+                  kind: GameArtKind.xo,
+                  title: 'XO',
+                  subtitle: s.t('تحدي الذكاء', 'Tic Tac Toe'),
+                  stage: store.unlockedGameStage('xo'),
+                  bestStars: store.bestStarsFor('xo',
+                    store.unlockedGameStage('xo') == 1 ? 1 :
+                      store.unlockedGameStage('xo') - 1),
+                  colors: const [Color(0xFF35C8FF), Color(0xFF0C62DC)],
+                  dark: true, onTap: () => _chooseOpponent(context),
+                )),
+                MotionReveal(order: 2, child: _GameCard(
+                  cardKey: const Key('math-match-card'),
+                  kind: GameArtKind.math,
+                  title: 'Math Match',
+                  subtitle: s.t('ألغاز الحساب', 'Math puzzles'),
+                  stage: store.unlockedGameStage('math'),
+                  bestStars: store.bestStarsFor('math',
+                    store.unlockedGameStage('math') == 1 ? 1 :
+                      store.unlockedGameStage('math') - 1),
+                  colors: const [Color(0xFFEBE8FF), Color(0xFFB6ABF4)],
+                  onTap: () => _open(context, MathMatchScreen(store: store)),
+                )),
+                MotionReveal(order: 3, child: _GameCard(
+                  cardKey: const Key('word-hunt-card'),
+                  kind: GameArtKind.words,
+                  title: 'Word Hunt',
+                  subtitle: s.t('صيد الكلمات', 'Find words'),
+                  stage: store.unlockedGameStage('words'),
+                  bestStars: store.bestStarsFor('words',
+                    store.unlockedGameStage('words') == 1 ? 1 :
+                      store.unlockedGameStage('words') - 1),
+                  colors: const [Color(0xFFE0FFFA), Color(0xFF9CE7CF)],
+                  onTap: () => _open(context, WordHuntScreen(store: store)),
+                )),
+                MotionReveal(order: 4, child: _GameCard(
+                  cardKey: const Key('sudoku-game-card'),
+                  kind: GameArtKind.sudoku,
+                  title: 'Sudoku',
+                  subtitle: s.t('مغامرة الأرقام', 'Number quest'),
+                  stage: store.unlockedGameStage('sudoku'),
+                  bestStars: store.bestStarsFor('sudoku',
+                    store.unlockedGameStage('sudoku') == 1 ? 1 :
+                      store.unlockedGameStage('sudoku') - 1),
+                  colors: const [Color(0xFFFFF2D8), Color(0xFFFFCD89)],
+                  onTap: () => _open(context, SudokuScreen(store: store)),
+                )),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Icon(Icons.shield_moon_rounded,
+                size: 15, color: Brand.blue),
+              const SizedBox(width: 5),
+              Flexible(child: Text(s.t(
+                'الألعاب مجانية، ومكافآتك حسب أفضل إنجاز',
+                'Always free • Rewards based on your best result'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Brand.muted, fontSize: 11))),
+            ]),
+          ],
+        );
+      });
 }
 
 class _SchoolArt extends StatelessWidget {
   const _SchoolArt();
   @override Widget build(BuildContext context) => SizedBox(
-    width: 78, height: 82,
-    child: Stack(children: [
-      Positioned(bottom: 4, left: 10, right: 7,
-        child: Container(height: 16, decoration: BoxDecoration(
-          color: const Color(0xFF9B7EE9), borderRadius: BorderRadius.circular(5)))),
-      Positioned(bottom: 18, left: 2, right: 11,
-        child: Container(height: 16, decoration: BoxDecoration(
-          color: const Color(0xFF65B8FF), borderRadius: BorderRadius.circular(5)))),
-      Positioned(top: 2, left: 4,
-        child: Container(width: 68, height: 51,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [
-              Color(0xFF43CFFF), Color(0xFF1851DC)]),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: const [BoxShadow(color: Color(0x440B56C4),
-              blurRadius: 10, offset: Offset(0, 7))]),
-          child: const Icon(Icons.school_rounded,
-            color: Colors.white, size: 38))),
-    ]),
+    width: 61, height: 61,
+    child: Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF48D0FF), Color(0xFF0A58DB)]),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [BoxShadow(
+          color: Color(0x55084FB9), blurRadius: 9, offset: Offset(2, 6))]),
+      child: const Icon(Icons.school_rounded,
+        color: Colors.white, size: 35),
+    ),
   );
 }
 
 class _GameCard extends StatelessWidget {
-  const _GameCard({required this.cardKey, required this.kind,
-    required this.title, required this.stageLabel, required this.description, required this.button,
-    required this.colors, required this.onTap, this.hero = false});
-
+  const _GameCard({
+    required this.cardKey, required this.kind, required this.title,
+    required this.subtitle, required this.stage, required this.bestStars,
+    required this.colors, required this.onTap, this.dark = false});
   final Key cardKey;
   final GameArtKind kind;
-  final String title, stageLabel, description, button;
+  final String title, subtitle;
+  final int stage, bestStars;
   final List<Color> colors;
   final VoidCallback onTap;
-  final bool hero;
+  final bool dark;
 
   @override Widget build(BuildContext context) {
-    final ink = hero ? Colors.white : Brand.navy;
+    final ink = dark ? Colors.white : Brand.navy;
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topLeft,
-          end: Alignment.bottomRight, colors: colors),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xAAFFFFFF), width: 1.5),
-        boxShadow: const [BoxShadow(color: Color(0x330B4BA6),
-          offset: Offset(0, 8), blurRadius: 17)]),
-      child: Material(color: Colors.transparent,
-        child: MotionPress(key: cardKey,
-          radius: 26, onTap: onTap,
-          child: ClipRRect(borderRadius: BorderRadius.circular(26),
-            child: Stack(children: [
-              Positioned(bottom: -70, right: -32,
-                child: Container(width: 162, height: 130,
-                  decoration: BoxDecoration(shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: hero ? .12 : .26)))),
-              Positioned(bottom: -77, left: -37,
-                child: Container(width: 145, height: 115,
-                  decoration: BoxDecoration(shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: hero ? .17 : .3)))),
-              Padding(padding: EdgeInsets.fromLTRB(17, hero ? 21 : 14, 8,
-                  hero ? 21 : 14),
-                child: Row(children: [
-                  Expanded(child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: ink,
-                          fontSize: hero ? 20 : 18, fontWeight: FontWeight.w900)),
-                      const SizedBox(height: 3),
-                      Text(stageLabel, style: TextStyle(
-                        color: ink.withValues(alpha: .9),
-                        fontWeight: FontWeight.w800, fontSize: 11)),
-                      const SizedBox(height: 7),
-                      Text(description, maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: ink.withValues(alpha: .86),
-                          fontSize: 12, height: 1.4)),
-                      const SizedBox(height: 14),
-                      DecoratedBox(decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [
-                          Colors.white, Color(0xFFE4EDFF)]),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [BoxShadow(color: Color(0x400B3D8A),
-                          blurRadius: 8, offset: Offset(0, 3))]),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 8),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            const Icon(Icons.play_arrow_rounded,
-                              color: Brand.blue, size: 19),
-                            const SizedBox(width: 2),
-                            Flexible(child: Text(button,
-                              style: const TextStyle(color: Brand.blue,
-                                fontSize: 12, fontWeight: FontWeight.w800))),
-                          ]),
-                        )),
-                    ],
-                  )),
-                  const SizedBox(width: 2),
-                  Game3DArt(kind: kind, size: hero ? 120 : 107),
-                ]),
-              ),
-            ]),
-          ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: colors),
+        borderRadius: BorderRadius.circular(23),
+        border: Border.all(color: const Color(0xAAFFFFFF), width: 1.3),
+        boxShadow: const [BoxShadow(
+          color: Color(0x330B4BA6), offset: Offset(0, 7), blurRadius: 13)]),
+      child: MotionPress(
+        key: cardKey, radius: 23, onTap: onTap,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(23),
+          child: Stack(children: [
+            Positioned(bottom: -26, right: -30,
+              child: Container(width: 110, height: 90,
+                decoration: BoxDecoration(shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: .19)))),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+              child: Column(children: [
+                Expanded(child: Center(
+                  child: Game3DArt(kind: kind, size: 100))),
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: ink, fontSize: 16,
+                    fontWeight: FontWeight.w900)),
+                const SizedBox(height: 3),
+                Text(subtitle, maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: ink.withValues(alpha: .8),
+                    fontSize: 10.5, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                Row(mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(3, (i) => Icon(
+                    Icons.star_rounded, size: 17,
+                    color: i < bestStars
+                      ? const Color(0xFFFFBC2D)
+                      : (dark ? const Color(0x88FFFFFF)
+                              : const Color(0xFFBEC7D8))))),
+                const SizedBox(height: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: dark ? .22 : .62),
+                    borderRadius: BorderRadius.circular(10)),
+                  child: Text(
+                    (Directionality.of(context) == TextDirection.rtl
+                      ? 'المرحلة ' : 'Level ') + stage.toString() + '/1000',
+                    maxLines: 1,
+                    style: TextStyle(color: ink,
+                      fontSize: 10, fontWeight: FontWeight.w900)),
+                ),
+              ]),
+            ),
+          ]),
         ),
       ),
     );

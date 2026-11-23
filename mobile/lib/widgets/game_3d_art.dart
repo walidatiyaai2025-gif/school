@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 /// Flutter-rendered pseudo-3D game art: gradients, extruded tiles, reflections
 /// and soft shadows. No network imagery or extra native dependencies.
-enum GameArtKind { xo, math, words }
+enum GameArtKind { xo, math, words, sudoku }
 
 class Game3DArt extends StatelessWidget {
   const Game3DArt({super.key, required this.kind, this.size = 116});
@@ -43,9 +43,12 @@ class Game3DArt extends StatelessWidget {
                     size: 95,
                     colors: kind == GameArtKind.math
                         ? const [Color(0xFF82ADFF), Color(0xFF1655D7)]
-                        : const [Color(0xFF30CBFF), Color(0xFF0757E9)],
+                        : kind == GameArtKind.sudoku
+                          ? const [Color(0xFFFFDB81), Color(0xFFF59D4D)]
+                          : const [Color(0xFF30CBFF), Color(0xFF0757E9)],
                     child: kind == GameArtKind.xo ? _XoPieces()
                         : kind == GameArtKind.math ? _MathPieces()
+                        : kind == GameArtKind.sudoku ? _SudokuPieces()
                         : _WordPieces(),
                   ),
                 ),
@@ -194,6 +197,34 @@ class _MiniTile extends StatelessWidget {
         height: 1.1, fontWeight: FontWeight.w900, color: Colors.white,
         shadows: const [Shadow(color: Color(0x660A276F),
           blurRadius: 2, offset: Offset(1, 2))])),
+    );
+  }
+}
+
+
+/// A golden 3D Sudoku face, legible in a compact two-column game card.
+class _SudokuPieces extends StatelessWidget {
+  @override Widget build(BuildContext context) {
+    const digits = ['1', '4', '7', '6', '9', '2', '3', '5', '8'];
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(3),
+      itemCount: digits.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3, mainAxisSpacing: 3, crossAxisSpacing: 3),
+      itemBuilder: (context, index) => Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F8FF),
+          borderRadius: BorderRadius.circular(5),
+          boxShadow: const [BoxShadow(
+            color: Color(0x77456DAD), offset: Offset(1, 2),
+            blurRadius: 2)]),
+        child: Text(digits[index], style: TextStyle(
+          fontSize: 18, fontWeight: FontWeight.w900,
+          color: index.isEven
+              ? const Color(0xFF1958C4) : const Color(0xFFF1A235))),
+      ),
     );
   }
 }
