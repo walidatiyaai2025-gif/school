@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/brand.dart';
 import '../core/strings.dart';
 import '../data/app_store.dart';
 import '../games/word_hunt.dart';
+import '../games/game_stages.dart';
+import '../widgets/game_stage_strip.dart';
+import '../widgets/game_3d_tile.dart';
 import '../services/ads_service.dart';
 import '../widgets/game_3d_art.dart';
 
@@ -13,8 +17,36 @@ class WordHuntScreen extends StatefulWidget {
 }
 
 class _WordHuntScreenState extends State<WordHuntScreen> {
-  late final WordHuntGame game =
-      WordHuntGame(level: widget.store.settings.level);
+  late WordHuntGame game;
+  int _stage = 1;
+  @override void initState() {
+    super.initState();
+    _stage = widget.store.unlockedGameStage('words');
+    game = _newGame(_stage);
+  }
+  WordHuntGame _newGame(int stage) => WordHuntGame(
+    level: widget.store.settings.level, stage: stage,
+    seed: 2026 + stage);
+  void _selectStage(int stage) {
+    if (stage > widget.store.unlockedGameStage('words')) return;
+    setState(() {
+      _stage = stage;
+      game = _newGame(_stage);
+    });
+  }
+  void _chooseLetter(int index) {
+    if (!game.tap(index)) return;
+    if (game.finished) {
+      unawaited(widget.store.completeGameStage('words', _stage));
+    }
+    setState(() {});
+  }
+  void _replay() {
+    setState(() {
+      if (game.finished && _stage < GameStages.count) _stage++;
+      game = _newGame(_stage);
+    });
+  }
 
   @override Widget build(BuildContext context) {
     final s = S(widget.store.settings.english);
@@ -39,7 +71,12 @@ class _WordHuntScreenState extends State<WordHuntScreen> {
                     style: const TextStyle(color: Brand.muted)),
                 ])),
             ]),
-            const SizedBox(height: 17),
+            const SizedBox(height: 10),
+            GameStageStrip(current: _stage,
+              unlocked: widget.store.unlockedGameStage('words'),
+              english: widget.store.settings.english,
+              onSelect: _selectStage),
+            const SizedBox(height: 14),
             Text(s.t('الكلمات: ', 'Words: ') + game.progress.toString() +
                  '/' + game.targets.length.toString(),
               style: const TextStyle(color: Brand.blue,
@@ -68,21 +105,26 @@ class _WordHuntScreenState extends State<WordHuntScreen> {
                     itemBuilder: (context, index) {
                       final found = game.foundCells.contains(index);
                       final active = game.start == index;
-                      return Material(
-                        color: found ? const Color(0xFF50D9AC) :
-                          active ? const Color(0xFFFFD578) : Colors.white,
-                        elevation: active ? 3 : 1,
-                        borderRadius: BorderRadius.circular(8),
-                        child: InkWell(
-                          key: Key('word-cell-' + index.toString()),
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: game.finished ? null :
-                            () => setState(() => game.tap(index)),
-                          child: Center(child: Text(game.letters[index],
-                            style: TextStyle(fontSize: 19,
-                              color: found ? const Color(0xFF065C43) : Brand.navy,
-                              fontWeight: FontWeight.w900))),
-                        ),
+                      return Game3DTile(
+                        key: Key('word-cell-' + index.toString()),
+                        label: 'Letter ' + game.letters[index],
+                        radius: 9,
+                        selected: active,
+                        color: found ? const Color(0xFF5DE3C0)
+                            : active ? const Color(0xFFFFD46E)
+                            : const Color(0xFFC4DEFF),
+                        onTap: game.finished ? null :
+                            () => _chooseLetter(index),
+                        child: Text(game.letters[index],
+                          style: TextStyle(fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: found ? const Color(0xFF055944)
+                                : Brand.navy,
+                            shadows: const [
+                              Shadow(color: Color(0x88FFFFFF),
+                                offset: Offset(-1, -1), blurRadius: 1),
+                            ],
+                          )),
                       );
                     },
                   ),
@@ -94,30 +136,43 @@ class _WordHuntScreenState extends State<WordHuntScreen> {
                 fontWeight: FontWeight.w900)),
             const SizedBox(height: 9),
             Wrap(spacing: 8, runSpacing: 8,
-              children: [for (final word in game.targets) Chip(
-                key: Key('word-target-' + word),
-                avatar: game.found.contains(word)
-                  ? const Icon(Icons.check_circle, size: 17,
-                      color: Color(0xFF098A61)) : null,
-                label: Text(word, style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  decoration: game.found.contains(word)
-                    ? TextDecoration.lineThrough : null)),
-                backgroundColor: game.found.contains(word)
-                  ? const Color(0xFFDAF9E9) : const Color(0xFFE7EEFF),
-              )]),
+              children: [for (final word in game.targets)
+                SizedBox(width: 101, height: 48,
+                  child: Game3DTile(
+                    key: Key('word-target-' + word),
+                    radius: 12,
+                    color: game.found.contains(word)
+                        ? const Color(0xFF8CECC5)
+                        : const Color(0xFFC5D6FF),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min, children: [
+                        if (game.found.contains(word))
+                          const Icon(Icons.check_circle, size: 15,
+                            color: Color(0xFF087E57)),
+                        Flexible(child: Text(word, textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12,
+                            color: Brand.navy, fontWeight: FontWeight.w900,
+                            decoration: game.found.contains(word)
+                                ? TextDecoration.lineThrough : null))),
+                      ]),
+                  ),
+                ),
+              ]),
+
             const SizedBox(height: 14),
 
           ],
         )),
         bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
-          SchoolBanner(store: widget.store),
           SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
             child: FilledButton.icon(
               key: const Key('word-reset'),
-              onPressed: () => setState(game.reset),
+              onPressed: _replay,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(s.t('لعبة جديدة', 'New puzzle'))))),
+              label: Text(game.finished && _stage < GameStages.count
+                ? s.t('المرحلة التالية', 'Next stage')
+                : s.t('لعبة جديدة', 'New puzzle'))))),
+          SchoolBanner(store: widget.store),
         ]),
       ),
     );
