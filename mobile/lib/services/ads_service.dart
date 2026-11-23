@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../data/app_store.dart';
 import 'families_ad_policy.dart';
+import 'remote_ads_config.dart';
 
 /// School PDF's only production ad placement: one clearly marked AdMob banner.
 ///
@@ -21,7 +23,9 @@ class SchoolBanner extends StatefulWidget {
   @override State<SchoolBanner> createState() => _SchoolBannerState();
 }
 
-class _SchoolBannerState extends State<SchoolBanner> {
+class _SchoolBannerState extends State<SchoolBanner> with WidgetsBindingObserver {
+  Timer? _refreshTimer;
+  bool _refreshing = false;
   BannerAd? _ad;
   bool _loaded = false;
   bool _requesting = false;
@@ -36,7 +40,7 @@ class _SchoolBannerState extends State<SchoolBanner> {
   static const testAds =
       bool.fromEnvironment('SCHOOLPDF_TEST_ADS', defaultValue: false);
   static const productionAds =
-      bool.fromEnvironment('SCHOOLPDF_PRODUCTION_ADS', defaultValue: false);
+      bool.fromEnvironment('SCHOOLPDF_PRODUCTION_ADS', defaultValue: true);
   static const androidId = String.fromEnvironment('ADMOB_ANDROID_BANNER_ID');
   static const iosId = String.fromEnvironment('ADMOB_IOS_BANNER_ID');
 
@@ -50,44 +54,49 @@ class _SchoolBannerState extends State<SchoolBanner> {
   void initState() {
     super.initState();
     widget.store.addListener(_sync);
+    WidgetsBinding.instance.addObserver(this);
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) => _loadRemote());
     _loadRemote();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _loadRemote();
+  }
+
   Future<void> _loadRemote() async {
+    if (_refreshing) return;
     if (!productionAds || testAds) {
       _sync();
       return;
     }
+    _refreshing = true;
+    var enabled = false;
+    var bannerId = '';
     final uri = Uri.tryParse('$remoteApi/v1/config');
-    if (uri == null || uri.scheme != 'https') return;
-    final client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 5);
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
     try {
+      if (uri == null || uri.scheme != 'https') return;
       final req = await client.getUrl(uri).timeout(const Duration(seconds: 6));
       final response = await req.close().timeout(const Duration(seconds: 8));
       if (response.statusCode != 200) return;
       final data = jsonDecode(await utf8.decoder.bind(response).join());
-      if (data is! Map || data['ads'] is! Map) return;
-      final ads = data['ads'] as Map;
-      if (ads['enabled'] != true || ads['providers'] is! List) return;
-      for (final entry in ads['providers'] as List) {
-        if (entry is! Map || entry['provider'] != 'admob' ||
-            entry['platform'] != (Platform.isAndroid ? 'android' : 'ios')) {
-          continue;
-        }
-        final id = entry['banner_unit_id'];
-        if (id is String &&
-            RegExp(r'^ca-app-pub-[0-9]+/[0-9]+$').hasMatch(id)) {
-          _remoteBannerId = id;
-          _remoteEnabled = true;
-          if (mounted) _sync();
-          return;
-        }
+      final approvedId = RemoteAdsConfig.approvedBannerId(
+          data, Platform.isAndroid ? 'android' : 'ios');
+      if (approvedId != null) {
+        bannerId = approvedId;
+        enabled = true;
       }
     } catch (_) {
-      // Never block document work or bypass a negative approval on failure.
+      // Fail closed if the backend is unreachable.
     } finally {
       client.close(force: true);
+      _refreshing = false;
+      if (mounted) {
+        _remoteBannerId = bannerId;
+        _remoteEnabled = enabled;
+        _sync();
+      }
     }
   }
 
@@ -181,7 +190,7 @@ class _SchoolBannerState extends State<SchoolBanner> {
       if (!mounted || generation != _generation || !_eligible) return;
       final ad = BannerAd(
         size: AdSize.banner,
-        adUnitId: testAds
+        adUnitId: (testAds || kDebugMode)
             ? (Platform.isAndroid
                 ? 'ca-app-pub-3940256099942544/6300978111'
                 : 'ca-app-pub-3940256099942544/2934735716')
@@ -219,6 +228,8 @@ class _SchoolBannerState extends State<SchoolBanner> {
   void dispose() {
     ++_generation;
     widget.store.removeListener(_sync);
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshTimer?.cancel();
     _ad?.dispose();
     super.dispose();
   }
@@ -235,7 +246,7 @@ class _SchoolBannerState extends State<SchoolBanner> {
         color: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Column(children: [
-          const Text('Advertisement • إعلان',
+          Text((kDebugMode || testAds) ? 'Test ad • إعلان تجريبي' : 'Advertisement • إعلان',
               style: TextStyle(fontSize: 10, color: Colors.black54)),
           const SizedBox(height: 3),
           const Divider(height: 1),

@@ -13,6 +13,7 @@ import 'services/pdf_service.dart';
 import 'screens/onboarding.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/play_screen.dart';
 import 'services/ads_service.dart';
 import 'services/telemetry_service.dart';
 
@@ -111,6 +112,7 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       HomeScreen(store:widget.store,scanner:ScanEngine(),notifications:widget.notifications,
         onGoFiles:()=>setState(()=>tab=1)),
       HistoryScreen(store:widget.store),
+      PlayScreen(store:widget.store),
       SettingsScreen(store:widget.store,notifications:widget.notifications),
     ];
     return Scaffold(
@@ -130,6 +132,8 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
               selectedIcon:const Icon(Icons.home_rounded),label:s.home),
             NavigationDestination(icon:const Icon(Icons.folder_copy_outlined),
               selectedIcon:const Icon(Icons.folder_copy),label:s.files),
+            NavigationDestination(icon:const Icon(Icons.sports_esports_outlined),
+              selectedIcon:const Icon(Icons.sports_esports_rounded),label:s.play),
             NavigationDestination(icon:const Icon(Icons.settings_outlined),
               selectedIcon:const Icon(Icons.settings),label:s.settings),
           ]),
