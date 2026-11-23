@@ -7,9 +7,11 @@ import 'clean_3d_dialog.dart';
 /// Progress cabinet: real offline achievements, never paid tokens.
 class GameAchievementsPanel extends StatelessWidget {
   const GameAchievementsPanel({
-    super.key, required this.store, required this.english});
+    super.key, required this.store, required this.english,
+    this.compact = false});
   final AppStore store;
   final bool english;
+  final bool compact;
 
   static const badgeTitles = <String, (String, String)>{
     'first-win': ('أول انتصار', 'First Victory'),
@@ -91,6 +93,56 @@ class GameAchievementsPanel extends StatelessWidget {
 
   @override Widget build(BuildContext context) {
     final badges = store.gameBadgeIds;
+    if (compact) {
+      return Container(
+        key: const Key('play-progress-summary'),
+        padding: const EdgeInsets.fromLTRB(8, 3, 8, 7),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1447AB), Color(0xFF063078)]),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xAAFFFFFF)),
+          boxShadow: const [BoxShadow(color: Color(0x44375C9E),
+            blurRadius: 8, offset: Offset(0, 4))]),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Row(children: [
+            const Icon(Icons.auto_awesome_rounded,
+              size: 17, color: Color(0xFFFFE593)),
+            const SizedBox(width: 4),
+            Expanded(child: Text(tr('جوائزك', 'Your rewards'),
+              maxLines: 1,
+              style: const TextStyle(color: Colors.white,
+                fontSize: 13, fontWeight: FontWeight.w900))),
+            TextButton.icon(
+              key: const Key('play-achievements-button'),
+              onPressed: () => _showCabinet(context),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 34),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 7)),
+              icon: const Icon(Icons.workspace_premium_rounded, size: 17),
+              label: Text(tr('الجوائز', 'Awards'),
+                style: const TextStyle(fontSize: 12)),
+            ),
+          ]),
+          const SizedBox(height: 3),
+          Row(children: [
+            _stat('⭐', store.totalGameStars.toString(),
+                tr('نجوم', 'Stars')),
+            const SizedBox(width: 5),
+            _stat('✨', store.totalGamePoints.toString(),
+                tr('نقاط', 'Points')),
+            const SizedBox(width: 5),
+            _stat('🏆', store.gameTrophies.toString(),
+                tr('كؤوس', 'Trophies')),
+            const SizedBox(width: 5),
+            _stat('🏅', badges.length.toString(),
+                tr('بادجز', 'Badges')),
+          ]),
+        ]),
+      );
+    }
     return Container(
       key: const Key('play-progress-summary'),
       padding: const EdgeInsets.all(13),

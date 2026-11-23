@@ -170,19 +170,29 @@ class _MathMatchScreenState extends State<MathMatchScreen>
                           onSelect: _selectStage,
                         ),
                         const SizedBox(height: 9),
-                        Row(mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween, children: [
+                        Row(children: [
                           GameCountdown(clock: _clock),
-                          Text(
-                            s.t('السؤال ', 'Question ') +
-                                game.round.toString() + ' / ' +
-                                game.totalRounds.toString(),
-                            style: const TextStyle(
-                              color: Brand.navy, fontWeight: FontWeight.w800)),
-                          Text(s.t('النقاط: ', 'Score: ') +
-                              game.score.toString(),
-                            style: const TextStyle(
-                              color: Brand.blue, fontWeight: FontWeight.w800)),
+                          const SizedBox(width: 7),
+                          Expanded(child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: Row(mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(s.t('السؤال ', 'Question ') +
+                                    game.round.toString() + ' / ' +
+                                    game.totalRounds.toString(),
+                                  style: const TextStyle(
+                                    color: Brand.navy,
+                                    fontWeight: FontWeight.w800)),
+                                const SizedBox(width: 12),
+                                Text(s.t('النقاط: ', 'Score: ') +
+                                    game.score.toString(),
+                                  style: const TextStyle(
+                                    color: Brand.blue,
+                                    fontWeight: FontWeight.w800)),
+                              ],
+                            ),
+                          )),
                         ]),
                         const SizedBox(height: 8),
                         LinearProgressIndicator(

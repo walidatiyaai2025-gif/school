@@ -88,7 +88,7 @@ class PlayScreen extends StatelessWidget {
               fit: BoxFit.contain,
               child: SizedBox(
                 width: 390,
-                height: 580,
+                height: 650,
                 child: Padding(
                   key: const Key('play-game-list'),
                   padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
@@ -111,7 +111,8 @@ class PlayScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 11),
             GameAchievementsPanel(
-              store: store, english: store.settings.english),
+              store: store, english: store.settings.english,
+              compact: true),
             const SizedBox(height: 15),
             Expanded(child: LayoutBuilder(
               builder: (context, space) {
