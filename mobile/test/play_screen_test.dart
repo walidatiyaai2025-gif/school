@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:school_pdf/data/app_store.dart';
 import 'package:school_pdf/screens/play_screen.dart';
+import 'package:school_pdf/services/ads_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,8 @@ void main() {
     await tester.tap(find.text('Play with a friend'));
     await tester.pumpAndSettle();
     expect(find.text('Player X'), findsOneWidget);
+    expect(find.byKey(const Key('xo-footer-ad')), findsOneWidget);
+    expect(find.byType(SchoolBanner), findsOneWidget);
     await tester.tap(find.byKey(const Key('xo-cell-0')));
     await tester.pumpAndSettle();
     expect(find.text('Player O'), findsOneWidget);

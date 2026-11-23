@@ -12,48 +12,95 @@ import 'review_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key,required this.store,required this.scanner,
-    required this.notifications,required this.onGoFiles});
+    required this.notifications,required this.onGoFiles,
+    this.onCaptureFlowChanged});
   final AppStore store;final ScanEngine scanner;
   final NotificationService notifications;final VoidCallback onGoFiles;
+  final ValueChanged<bool>? onCaptureFlowChanged;
   @override State<HomeScreen> createState()=>_HomeScreenState();
 }
 class _HomeScreenState extends State<HomeScreen> {
   String? selectedSubject;bool picking=false;
   final picker=ImagePicker();
   @override void initState(){super.initState();_recoverPicker();}
-  Future<void> _recoverPicker()async{
-    // Android can kill Activity while picker is open. Recover its returned images.
+  Future<void> _recoverPicker() async {
+    // Android may reclaim this process while the external picker is open.
+    // The chosen subject is persisted so recovered images remain usable.
     try {
-      final lost=await picker.retrieveLostData();
-      if(lost.files?.isNotEmpty==true && mounted){
-        final subject=selectedSubject;
-        if(subject==null){
-          feedback(context,S(widget.store.settings.english).t('تم استرجاع صور؛ اختر المادة ثم أعد تحديدها','Photos were recovered; select a subject and choose them again.'));
-        } else {_openReview(lost.files!,subject);}
+      final lost = await picker.retrieveLostData();
+      if (!mounted) return;
+      if (lost.files?.isNotEmpty == true) {
+        final subject = selectedSubject ?? widget.store.pendingCaptureSubject;
+        if (subject == null || subject.isEmpty) {
+          feedback(context, S(widget.store.settings.english).t(
+            'تم استرجاع صور؛ اختر المادة ثم أعد تحديدها',
+            'Photos were recovered; select a subject and choose them again.'));
+        } else {
+          setState(() => selectedSubject = subject);
+          widget.onCaptureFlowChanged?.call(true);
+          try {
+            await _openReview(lost.files!, subject);
+          } finally {
+            widget.onCaptureFlowChanged?.call(false);
+          }
+        }
       }
-    } catch (_) {}
+    } catch (_) {
+      // A failed restore must not block creating a new PDF.
+    } finally {
+      await widget.store.clearPendingCaptureSubject();
+    }
   }
+
   Future<void> _pick(bool camera) async {
-    final subject=selectedSubject;
-    if(subject==null)return;
-    setState(()=>picking=true);
+    final subject = selectedSubject;
+    if (subject == null || picking) return;
+    setState(() => picking = true);
+    widget.onCaptureFlowChanged?.call(true);
     try {
-      final XFile? shot=camera?await picker.pickImage(source:ImageSource.camera,
-        imageQuality:94,maxWidth:3200):null;
-      final List<XFile> photos=camera?(shot==null?<XFile>[]:[shot])
-        :await picker.pickMultiImage(imageQuality:94,maxWidth:3200);
-      if(photos.isNotEmpty && mounted)_openReview(photos,subject);
-    } catch (_) {if(mounted)feedback(context,S(widget.store.settings.english).t('تعذر الوصول للصور أو الكاميرا. راجع الأذونات وحاول مجددًا.','Could not access photos or camera. Check permissions and try again.'));}
-    finally {if(mounted)setState(()=>picking=false);}
+      await widget.store.rememberCaptureSubject(subject);
+      // Dispose banner platform views before launching the external camera.
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      final List<XFile> photos;
+      if (camera) {
+        final shot = await picker.pickImage(
+          source: ImageSource.camera, imageQuality: 88, maxWidth: 2400);
+        photos = shot == null ? <XFile>[] : <XFile>[shot];
+      } else {
+        photos = await picker.pickMultiImage(
+          imageQuality: 88, maxWidth: 2400);
+      }
+      if (photos.isNotEmpty && mounted) await _openReview(photos, subject);
+    } catch (_) {
+      if (mounted) {
+        feedback(context, S(widget.store.settings.english).t(
+          'تعذر الوصول للصور أو الكاميرا. راجع الأذونات وحاول مجددًا.',
+          'Could not access photos or camera. Check permissions and try again.'));
+      }
+    } finally {
+      await widget.store.clearPendingCaptureSubject();
+      if (mounted) setState(() => picking = false);
+      widget.onCaptureFlowChanged?.call(false);
+    }
   }
-  void _openReview(List<XFile> files,String subject){
-    Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReviewScreen(
-      store:widget.store,scanner:widget.scanner,notifications:widget.notifications,
-      subject:subject,images:files.map((x)=>ScanPage(x.path)).toList())));
+
+  Future<void> _openReview(List<XFile> files, String subject) async {
+    if (!mounted) return;
+    await Navigator.push<void>(context, MaterialPageRoute<void>(
+      builder: (_) => ReviewScreen(
+        store: widget.store, scanner: widget.scanner,
+        notifications: widget.notifications,
+        subject: subject,
+        images: files.map((x) => ScanPage(x.path)).toList())));
   }
+
   @override Widget build(BuildContext context){
     final s=S(widget.store.settings.english), u=widget.store.settings;
-    final subjects=[...(schoolSubjects[u.level]??const <String>[]),...u.customSubjects];
+    final subjects=<String>{
+      ...(schoolSubjects[u.level]??const <String>[]),
+      ...u.customSubjects,
+    }.toList();
     final latest=widget.store.records.isEmpty?null:widget.store.records.first;
     return ListView(padding:const EdgeInsets.fromLTRB(20,16,20,24),children:[
       Row(children:[const Logo(size:46),const SizedBox(width:10),

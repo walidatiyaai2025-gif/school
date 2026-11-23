@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import '../core/brand.dart';
 import '../core/strings.dart';
 import '../games/tic_tac_toe.dart';
+import '../data/app_store.dart';
+import '../services/ads_service.dart';
 
 class TicTacToeScreen extends StatefulWidget {
-  const TicTacToeScreen({super.key, required this.mode, required this.english});
+  const TicTacToeScreen({super.key, required this.mode,
+    required this.english, required this.store});
   final GameMode mode;
   final bool english;
+  final AppStore store;
 
   @override
   State<TicTacToeScreen> createState() => _TicTacToeScreenState();
@@ -103,16 +107,22 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
             ],
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: FilledButton.icon(
-              key: const Key('xo-reset'),
-              onPressed: () => setState(game.reset),
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(s.t('العب من جديد', 'Play again')),
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SchoolBanner(key: const Key('xo-footer-ad'), store: widget.store),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: FilledButton.icon(
+                  key: const Key('xo-reset'),
+                  onPressed: () => setState(game.reset),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(s.t('العب من جديد', 'Play again')),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

@@ -11,6 +11,17 @@ class AppStore extends ChangeNotifier {
   final SharedPreferences _prefs;
   StudentSettings settings = StudentSettings();
   final List<PdfRecord> records = [];
+  static const _pendingCaptureKey = 'pending_capture_subject_v1';
+
+  String? get pendingCaptureSubject => _prefs.getString(_pendingCaptureKey);
+
+  Future<void> rememberCaptureSubject(String subject) async {
+    await _prefs.setString(_pendingCaptureKey, subject);
+  }
+
+  Future<void> clearPendingCaptureSubject() async {
+    await _prefs.remove(_pendingCaptureKey);
+  }
 
   static Future<AppStore> load() async {
     final p = await SharedPreferences.getInstance();
@@ -99,6 +110,7 @@ class AppStore extends ChangeNotifier {
     }
     await _prefs.remove('files_v1');
     await _prefs.remove('settings_v1');
+    await _prefs.remove(_pendingCaptureKey);
     records.clear();
     settings = StudentSettings();
     notifyListeners();

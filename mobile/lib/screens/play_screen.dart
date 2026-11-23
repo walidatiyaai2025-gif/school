@@ -8,8 +8,10 @@ import 'tic_tac_toe_screen.dart';
 
 /// Free, offline game catalogue. New games can be added here later.
 class PlayScreen extends StatelessWidget {
-  const PlayScreen({super.key, required this.store});
+  const PlayScreen({super.key, required this.store,
+    this.onGameVisibilityChanged});
   final AppStore store;
+  final ValueChanged<bool>? onGameVisibilityChanged;
 
   Future<void> _chooseOpponent(BuildContext context) async {
     final s = S(store.settings.english);
@@ -41,9 +43,15 @@ class PlayScreen extends StatelessWidget {
       ),
     );
     if (mode == null || !context.mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => TicTacToeScreen(mode: mode, english: store.settings.english),
-    ));
+    onGameVisibilityChanged?.call(true);
+    try {
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => TicTacToeScreen(
+          mode: mode, english: store.settings.english, store: store),
+      ));
+    } finally {
+      onGameVisibilityChanged?.call(false);
+    }
   }
 
   @override

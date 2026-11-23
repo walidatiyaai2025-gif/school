@@ -35,6 +35,7 @@ class SchoolPdfApp extends StatefulWidget {
 }
 class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver {
   int tab=0;
+  bool _overlayFlowOpen = false;
   StreamSubscription<String>? incomingSubscription;
   String? pendingIncoming;
   void openIncoming(String path) {
@@ -110,9 +111,15 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
   Widget _main(S s){
     final screens=<Widget>[
       HomeScreen(store:widget.store,scanner:ScanEngine(),notifications:widget.notifications,
-        onGoFiles:()=>setState(()=>tab=1)),
+        onGoFiles:()=>setState(()=>tab=1),
+        onCaptureFlowChanged:(active) {
+          if (mounted) setState(() => _overlayFlowOpen = active);
+        }),
       HistoryScreen(store:widget.store),
-      PlayScreen(store:widget.store),
+      PlayScreen(store:widget.store,
+        onGameVisibilityChanged:(active) {
+          if (mounted) setState(() => _overlayFlowOpen = active);
+        }),
       SettingsScreen(store:widget.store,notifications:widget.notifications),
     ];
     return Scaffold(
@@ -123,7 +130,8 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       ),
       body:SafeArea(bottom:false,child:IndexedStack(index:tab,children:screens)),
       bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[
-        if(tab==0 || tab==1 || tab==2)SchoolBanner(store:widget.store),
+        if(!_overlayFlowOpen && (tab==0 || tab==1 || tab==2))
+          SchoolBanner(store:widget.store),
         NavigationBar(height:70,backgroundColor:Colors.white,
           indicatorColor:const Color(0xFFE5EFFF),
           selectedIndex:tab,onDestinationSelected:(index)=>setState(()=>tab=index),
