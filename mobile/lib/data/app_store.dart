@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'models.dart';
 import '../games/xo_ad_frequency.dart';
+import '../games/game_stages.dart';
 
 class AppStore extends ChangeNotifier {
   AppStore._(this._prefs);
@@ -15,6 +16,22 @@ class AppStore extends ChangeNotifier {
   static const _pendingCaptureKey = 'pending_capture_subject_v1';
   static const _xoAdRoundKey = 'xo_completed_since_interstitial_v1';
   int _xoAdRounds = 0;
+  static const _stagesKey = 'game_unlocked_stages_v1';
+  final Map<String, int> _gameStages = <String, int>{};
+
+  String _gameKey(String game) => '${'${settings.level}'}:$game';
+
+  int unlockedGameStage(String game) =>
+      GameStages.clamp(_gameStages[_gameKey(game)] ?? 1);
+
+  /// Persist only forward progress, scoped by school level and minigame.
+  Future<void> completeGameStage(String game, int stage) async {
+    final current = unlockedGameStage(game);
+    if (stage != current || current >= GameStages.count) return;
+    _gameStages[_gameKey(game)] = current + 1;
+    await _prefs.setString(_stagesKey, jsonEncode(_gameStages));
+    notifyListeners();
+  }
 
   int get xoAdRounds => _xoAdRounds;
   bool get xoAdBreakDue => XoAdFrequency.isBreakDue(_xoAdRounds);
@@ -62,6 +79,17 @@ class AppStore extends ChangeNotifier {
         }
       }
     } catch (_) { /* preserve documents on disk even if metadata is broken */ }
+    try {
+      final raw = p.getString(_stagesKey);
+      if (raw != null) {
+        final json = jsonDecode(raw) as Map<String, dynamic>;
+        for (final entry in json.entries) {
+          if (entry.value is int) {
+            store._gameStages[entry.key] = GameStages.clamp(entry.value as int);
+          }
+        }
+      }
+    } catch (_) { /* Damaged progress must not block offline game access. */ }
     store.records.sort((a,b)=>b.createdAt.compareTo(a.createdAt));
     return store;
   }
@@ -133,6 +161,8 @@ class AppStore extends ChangeNotifier {
     await _prefs.remove('settings_v1');
     await _prefs.remove(_pendingCaptureKey);
     await _prefs.remove(_xoAdRoundKey);
+    await _prefs.remove(_stagesKey);
+    _gameStages.clear();
     _xoAdRounds = 0;
     records.clear();
     settings = StudentSettings();

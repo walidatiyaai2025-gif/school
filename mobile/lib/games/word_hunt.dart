@@ -1,14 +1,17 @@
 import 'dart:math';
 
+import 'game_stages.dart';
+
 /// An offline word search: tap the first and last letter in the same row.
 /// Puzzles are deliberately short for touch screens and younger students.
 class WordHuntGame {
-  WordHuntGame({required this.level, int seed = 2026})
+  WordHuntGame({required this.level, this.stage = 1, int seed = 2026})
       : _random = Random(seed) {
     reset();
   }
 
   final String level;
+  final int stage;
   final Random _random;
   static const int size = 7;
 
@@ -30,17 +33,38 @@ class WordHuntGame {
   bool get finished => _found.length == _targets.length;
   int get progress => _found.length;
 
-  static List<String> wordsFor(String level) {
+  static List<String> wordsFor(String level, {int stage = 1}) {
+    final index = GameStages.clamp(stage) - 1;
     switch (level) {
-      case 'middle': return const ['PLANET', 'WATER', 'ATOM'];
-      case 'secondary': return const ['ENERGY', 'ORBIT', 'CELL'];
-      case 'university': return const ['VECTOR', 'MATRIX', 'LOGIC'];
-      default: return const ['CAT', 'DOG', 'SUN'];
+      case 'middle':
+        return const [
+          ['PLANET', 'WATER', 'ATOM'],
+          ['GRAVITY', 'OXYGEN', 'TISSUE'],
+          ['CLIMATE', 'MAGNET', 'PROTON'],
+        ][index];
+      case 'secondary':
+        return const [
+          ['ENERGY', 'ORBIT', 'CELL'],
+          ['PHOTON', 'CARBON', 'GENOME'],
+          ['ISOTOPE', 'NUCLEUS', 'NEUTRON'],
+        ][index];
+      case 'university':
+        return const [
+          ['VECTOR', 'MATRIX', 'LOGIC'],
+          ['BINARY', 'SCALAR', 'KERNEL'],
+          ['NETWORK', 'QUANTUM', 'ALGEBRA'],
+        ][index];
+      default:
+        return const [
+          ['CAT', 'DOG', 'SUN'],
+          ['TREE', 'BOOK', 'MOON'],
+          ['PLANET', 'FLOWER', 'SCHOOL'],
+        ][index];
     }
   }
 
   void reset() {
-    _targets = wordsFor(level);
+    _targets = wordsFor(level, stage: stage);
     _letters = List.generate(size * size,
         (_) => String.fromCharCode(65 + _random.nextInt(26)));
     _found.clear();

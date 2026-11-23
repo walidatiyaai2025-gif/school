@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'game_stages.dart';
+
 /// Offline arithmetic puzzles, scaled to the student's school stage.
 class MathQuestion {
   const MathQuestion({
@@ -17,6 +19,7 @@ class MathMatchGame {
     required this.level,
     this.schoolClass = '',
     this.totalRounds = 8,
+    this.stage = 1,
     int seed = 2026,
   }) : assert(totalRounds > 0), _random = Random(seed) {
     _question = _generate();
@@ -24,6 +27,7 @@ class MathMatchGame {
 
   final String level;
   final String schoolClass;
+  final int stage;
   final int totalRounds;
   final Random _random;
   late MathQuestion _question;
@@ -70,10 +74,13 @@ class MathMatchGame {
   MathQuestion _generate() {
     final isPrimary = level == 'primary';
     final isYoung = isPrimary && _grade < 4;
-    final max = isYoung ? 12 : isPrimary ? 30 : level == 'middle' ? 45 : 90;
+    final stageScale = GameStages.clamp(stage);
+    final max = (isYoung ? 7 : isPrimary ? 16 : level == 'middle' ? 27 : 48) * stageScale;
     final operators = isYoung ? <String>['+', '−'] :
-        isPrimary ? <String>['+', '−', '×'] :
-        <String>['+', '−', '×', '÷'];
+        isPrimary ? (stageScale == 1 ? <String>['+', '−']
+            : <String>['+', '−', '×']) :
+        stageScale == 1 ? <String>['+', '−', '×'] :
+            <String>['+', '−', '×', '÷'];
     final operator = operators[_random.nextInt(operators.length)];
     var left = _random.nextInt(max) + 1;
     var right = _random.nextInt(max) + 1;

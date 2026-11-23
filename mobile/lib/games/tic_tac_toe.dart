@@ -2,9 +2,11 @@
 enum GameMode { friend, computer }
 
 class TicTacToeGame {
-  TicTacToeGame(this.mode);
+  TicTacToeGame(this.mode, {this.difficulty = 3});
 
   final GameMode mode;
+  /// 1 = beginner, 2 = tactical, 3 = optimal. The old default stays optimal.
+  final int difficulty;
   final List<String> _cells = List<String>.filled(9, '');
   String _turn = 'X';
   String? _winner;
@@ -33,7 +35,7 @@ class TicTacToeGame {
     }
     _place(index, _turn);
     if (mode == GameMode.computer && !finished) {
-      _place(_bestComputerMove(), 'O');
+      _place(_computerMove(), 'O');
     }
     return true;
   }
@@ -59,6 +61,26 @@ class TicTacToeGame {
       line.every((index) => _cells[index] == mark));
 
   static const _moveOrder = <int>[4, 0, 2, 6, 8, 1, 3, 5, 7];
+
+  int _computerMove() {
+    if (difficulty <= 1) {
+      return _cells.indexOf('');
+    }
+    if (difficulty == 2) {
+      // Take a win, block a threat, then favor the center and corners.
+      for (final mark in ['O', 'X']) {
+        for (final i in _moveOrder) {
+          if (_cells[i].isNotEmpty) continue;
+          _cells[i] = mark;
+          final winning = _wins(mark);
+          _cells[i] = '';
+          if (winning) return i;
+        }
+      }
+      return _moveOrder.firstWhere((i) => _cells[i].isEmpty);
+    }
+    return _bestComputerMove();
+  }
 
   int _bestComputerMove() {
     var bestMove = -1;
