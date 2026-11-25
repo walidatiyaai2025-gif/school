@@ -71,11 +71,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          flutter build apk --release --no-pub \
+          # Gradle Plugin Portal occasionally fails to resolve the upstream Kotlin DSL
+          # marker even though it is published. Fail after bounded attempts.
+          for attempt in 1 2 3; do
+            if flutter build apk --release --no-pub \
             --build-name=1.1.5 --build-number=6 \
             --dart-define=SCHOOLPDF_PRODUCTION_ADS=true \
             --dart-define=SCHOOLPDF_TEST_ADS=false \
-            --dart-define=ADMOB_ANDROID_BANNER_ID=ca-app-pub-3218037275900725/8379591348
+            --dart-define=ADMOB_ANDROID_BANNER_ID=ca-app-pub-3218037275900725/8379591348; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Android Release build failed after 3 attempts."
+              exit 1
+            fi
+            echo "::warning::Transient Gradle dependency failure; retrying attempt $((attempt + 1))"
+            sleep "$((attempt * 12))"
+          done
           test -s build/app/outputs/flutter-apk/app-release.apk
           echo "Release APK is a disposable QA build, not a Google Play upload artifact."
       - name: Package installable QA release APK with checksum and provenance
@@ -109,10 +121,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          flutter build apk --release --no-pub \
+          # Gradle Plugin Portal occasionally fails to resolve the upstream Kotlin DSL
+          # marker even though it is published. Fail after bounded attempts.
+          for attempt in 1 2 3; do
+            if flutter build apk --release --no-pub \
             --build-name=1.1.5 --build-number=6 \
             --dart-define=SCHOOLPDF_PRODUCTION_ADS=false \
-            --dart-define=SCHOOLPDF_TEST_ADS=false
+            --dart-define=SCHOOLPDF_TEST_ADS=false; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Android Release build failed after 3 attempts."
+              exit 1
+            fi
+            echo "::warning::Transient Gradle dependency failure; retrying attempt $((attempt + 1))"
+            sleep "$((attempt * 12))"
+          done
           cp build/app/outputs/flutter-apk/app-release.apk dist/SchoolPDF-v1.1.5-build6-NoAds-QA-Release.apk
           (cd dist && sha256sum SchoolPDF-v1.1.5-build6-NoAds-QA-Release.apk > SchoolPDF-v1.1.5-build6-NoAds-QA-Release.apk.sha256)
           python3 - <<'PY'
@@ -135,6 +159,15 @@ jobs:
       - name: Restore Play-like APK as the emulator test subject
         working-directory: mobile
         run: cp dist/SchoolPDF-v1.1.5-build6-PlayLike-QA-Release.apk build/app/outputs/flutter-apk/app-release.apk
+      - name: Enable hardware virtualization on GitHub-hosted Linux
+        shell: bash
+        run: |
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+            echo 'KVM enabled for Android emulator.'
+          else
+            echo "::warning::/dev/kvm missing; emulator boot may fail for infrastructure reasons."
+          fi
       - name: Emulator cold-launch and restart safety checks
         uses: reactivecircus/android-emulator-runner@v2
         with:
