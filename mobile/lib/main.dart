@@ -21,7 +21,13 @@ import 'services/telemetry_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store=await AppStore.load();
-  await TelemetryService.purgePending();
+  // Optional privacy cleanup must not prevent the offline app from launching.
+  // A failed deletion stays queued and is retried on a later launch.
+  try {
+    await TelemetryService.purgePending();
+  } catch (error) {
+    debugPrint('Deferred optional privacy cleanup: ${error.runtimeType}');
+  }
   final notifications=NotificationService();
   try { await notifications.initialize(); await notifications.refreshPermissionStatus(); }
   catch (_) { /* Offline scanning must work even when notification init fails. */ }
