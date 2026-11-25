@@ -88,6 +88,19 @@ if settings_gradle.exists():
 build=root/'android/app/build.gradle.kts'
 if build.exists():
     s=build.read_text()
+    # Flutter generates the native Android tree in GitHub Actions. Install the
+    # checked-in R8 keep rules into that ephemeral tree on every build.
+    proguard_source=root/'tool/android_release_proguard_rules.pro'
+    if not proguard_source.is_file():
+        raise SystemExit('Missing required Room/WorkManager R8 constructor keep rules')
+    shutil.copy2(proguard_source,root/'android/app/proguard-rules.pro')
+    if 'proguardFiles("proguard-rules.pro")' not in s:
+        release_block=re.search(r'(?m)^([ \\t]*)release[ \\t]*\\{',s)
+        if release_block is None:
+            raise SystemExit('Release block missing: cannot install R8 rules')
+        indentation=release_block.group(1)
+        insertion='\\n'+indentation+'    proguardFiles("proguard-rules.pro")'
+        s=s[:release_block.end()]+insertion+s[release_block.end():]
     if 'id("com.google.gms.google-services")' not in s:
         s=re.sub(r'(plugins\s*\{)',
                  r'\1\n    id("com.google.gms.google-services")',s,count=1)
