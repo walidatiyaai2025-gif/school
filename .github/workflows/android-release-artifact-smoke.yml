@@ -39,7 +39,9 @@ jobs:
           else
             echo '::warning::KVM missing; emulator may not boot'
           fi
-      - name: Exact user APK launch / re-launch and Android crash evidence
+      - name: Confirm PRE-FIX APKs reproduce the expected crash (negative control)
+        id: reproduce_old_crash
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -49,6 +51,23 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash mobile/tool/ci_release_startup.sh
+      - name: Require pre-fix Room/WorkManager crash for the negative control
+        if: always()
+        shell: bash
+        env:
+          NEGATIVE_TEST_OUTCOME: ${{ steps.reproduce_old_crash.outcome }}
+        run: |
+          set -euo pipefail
+          test "$NEGATIVE_TEST_OUTCOME" = failure || {
+            echo "::error::Pre-fix APK unexpectedly launched; negative regression no longer reproduces."
+            exit 1
+          }
+          ls -l schoolpdf-release-*.log
+          if ! grep -Fq 'Failed to create an instance of androidx.work.impl.WorkDatabase' schoolpdf-release-*.log; then
+            echo "::error::Old Release failed for a different reason; Room negative baseline unverified."
+            exit 1
+          fi
+          echo 'Expected old Room WorkDatabase startup crash reproduced; negative control PASS.'
       - name: Upload Android fatal startup logs even when app exits
         if: always()
         uses: actions/upload-artifact@v4
