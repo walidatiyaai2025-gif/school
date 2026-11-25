@@ -83,8 +83,8 @@ def run_real_update_smoke(app: Path, env: dict, php: str) -> None:
         script = (
             'require $argv[1]."/vendor/autoload.php";'
             '$app=require $argv[1]."/bootstrap/app.php";'
-            r'$app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap();'
-            '$m=$app->make(App\\Services\\SystemUpdateManager::class);'
+            r'$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();'
+            '$m=$app->make(App\Services\SystemUpdateManager::class);'
             '$s=$m->stage($argv[2]);$r=$m->install($s["id"]);'
             'if (($r["version"]??"")!==getenv("SCHOOLPDF_EXPECTED_PRIOR_VERSION")) exit(11);'
             'echo "ACTUAL_PRIOR_UPGRADE_OK";'
