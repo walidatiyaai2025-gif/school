@@ -38,7 +38,7 @@ jobs:
           python3 tool/patch_platforms.py
           flutter pub get
           keytool -genkeypair -noprompt -storetype PKCS12 -keyalg RSA -keysize 2048 \
-            -validity 1 -keystore "$RUNNER_TEMP/disposable-emulator-release.jks" \
+            -validity 3650 -keystore "$RUNNER_TEMP/disposable-emulator-release.jks" \
             -storepass ci-emulator-only -keypass ci-emulator-only \
             -alias disposable -dname "CN=Disposable School PDF Emulator CI"
           echo "SCHOOLPDF_UPLOAD_KEYSTORE_FILE=$RUNNER_TEMP/disposable-emulator-release.jks" >> "$GITHUB_ENV"
@@ -57,6 +57,37 @@ jobs:
             --dart-define=ADMOB_ANDROID_BANNER_ID=ca-app-pub-3218037275900725/8379591348
           test -s build/app/outputs/flutter-apk/app-release.apk
           echo "Release APK is a disposable QA build, not a Google Play upload artifact."
+      - name: Package installable QA release APK with checksum and provenance
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/SchoolPDF-v1.1.5-build5-QA-Release.apk
+          (cd dist && sha256sum SchoolPDF-v1.1.5-build5-QA-Release.apk > SchoolPDF-v1.1.5-build5-QA-Release.apk.sha256)
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          data = {
+              "version_name": "1.1.5",
+              "version_code": 5,
+              "git_sha": os.environ.get("GITHUB_SHA"),
+              "android_application_id": "com.fiftysols.schoolpdf",
+              "build_type": "release",
+              "signing": "DISPOSABLE_CI_QA_KEY_NOT_GOOGLE_PLAY",
+              "production_ads_config": True,
+              "intended_use": "manual_install_and_crash_regression_testing_only",
+              "warning": "Cannot update an installed Play-signed School PDF because QA signature differs. Back up local user documents before uninstalling."
+          }
+          Path("dist/BUILD_INFO.json").write_text(json.dumps(data, indent=2) + "\\n")
+          PY
+      - name: Upload School PDF 1.1.5 QA release APK for device testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-v1.1.5-build5-QA-Release-APK-TEST-ONLY
+          path: mobile/dist/
+          if-no-files-found: error
+          retention-days: 21
       - name: Emulator cold-launch and restart safety checks
         uses: reactivecircus/android-emulator-runner@v2
         with:
