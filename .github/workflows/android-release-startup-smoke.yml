@@ -45,15 +45,16 @@ jobs:
           echo 'SCHOOLPDF_UPLOAD_STORE_PASSWORD=ci-emulator-only' >> "$GITHUB_ENV"
           echo 'SCHOOLPDF_UPLOAD_KEY_ALIAS=disposable' >> "$GITHUB_ENV"
           echo 'SCHOOLPDF_UPLOAD_KEY_PASSWORD=ci-emulator-only' >> "$GITHUB_ENV"
-      - name: Compile installable release APK with production ads disabled
+      - name: Compile release APK with the same ad configuration as Google Play AAB
         working-directory: mobile
         shell: bash
         run: |
           set -euo pipefail
           flutter build apk --release --no-pub \
             --build-name=1.1.5 --build-number=5 \
-            --dart-define=SCHOOLPDF_PRODUCTION_ADS=false \
-            --dart-define=SCHOOLPDF_TEST_ADS=false
+            --dart-define=SCHOOLPDF_PRODUCTION_ADS=true \
+            --dart-define=SCHOOLPDF_TEST_ADS=false \
+            --dart-define=ADMOB_ANDROID_BANNER_ID=ca-app-pub-3218037275900725/8379591348
           test -s build/app/outputs/flutter-apk/app-release.apk
           echo "Release APK is a disposable QA build, not a Google Play upload artifact."
       - name: Emulator cold-launch and restart safety checks
