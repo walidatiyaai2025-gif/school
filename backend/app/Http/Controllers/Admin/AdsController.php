@@ -37,7 +37,7 @@ class AdsController {
                 'approved_at'=>$enabled?now():null,
                 'approved_by'=>$enabled?auth()->id():null,
             ]);
-            if(!$enabled) AdSetting::where('enabled',true)->update(['enabled'=>false]);
+            if(!$enabled) AdSetting::where('enabled',true)->update(['enabled'=>false,'interstitial_enabled'=>false]);
         });
         return back()->with('ok',$enabled
             ?'Families advertising approval saved. Enable the AdMob banner below to serve ads.'
@@ -51,28 +51,42 @@ class AdsController {
             'enable'=>'nullable|boolean',
             'app_id'=>'nullable|string|max:255',
             'banner_unit_id'=>'nullable|string|max:255',
+            'interstitial_unit_id'=>'nullable|string|max:255',
+            'enable_interstitial'=>'nullable|boolean',
+            'interstitial_families_confirmed'=>'required_if:enable_interstitial,1|accepted_if:enable_interstitial,1',
             'notes'=>'nullable|string|max:2000',
         ]);
         $want=$request->boolean('enable');
+        $wantInterstitial=$request->boolean('enable_interstitial');
         $allowed=$data['provider']==='admob' && AdApproval::isApproved()
             && !config('schoolpdf.ads_emergency_stop');
         if($want && !$allowed) {
             return back()->withErrors(['enable'=>'Families approval required. Only verified AdMob is allowed.']);
         }
+        if($wantInterstitial && (!$want || !$allowed)) {
+            return back()->withErrors(['enable_interstitial'=>'Interstitial ads require an enabled, Families-approved AdMob provider.']);
+        }
         $appId=trim($data['app_id']??'');
         $bannerId=trim($data['banner_unit_id']??'');
+        $interstitialId=trim($data['interstitial_unit_id']??'');
         if($want && (!preg_match('/^ca-app-pub-(\d+)~\d+$/',$appId,$app)
                 || !preg_match('/^ca-app-pub-(\d+)\/\d+$/',$bannerId,$unit)
                 || $app[1]!==$unit[1])) {
             return back()->withErrors(['banner_unit_id'=>'App ID and Banner Unit must be valid AdMob IDs from the same publisher.']);
         }
+        if ($wantInterstitial && (!preg_match('/^ca-app-pub-(\d+)\/\d+$/',$interstitialId,$interstitial)
+            || $interstitial[1]!==$app[1] || $interstitialId===$bannerId)) {
+            return back()->withErrors(['interstitial_unit_id'=>'Use a dedicated AdMob Interstitial Unit ID from the same publisher, different from the Banner Unit.']);
+        }
         AdSetting::updateOrCreate(
             ['provider'=>$data['provider'],'platform'=>$data['platform']],
             ['app_id'=>$appId?:null,'banner_unit_id'=>$bannerId?:null,
+             'interstitial_unit_id'=>$interstitialId?:null,
+             'interstitial_enabled'=>$wantInterstitial && $want && $allowed,
              'notes'=>$data['notes']??null,'enabled'=>$want && $allowed]
         );
         return back()->with('ok',$want
-            ?'AdMob banner enabled for the selected platform. Child-safe treatment remains mandatory in the app.'
+            ?'AdMob enabled for the selected platform. Game interstitials are independently gated; child-safe treatment is mandatory.'
             :'Settings saved. This provider is disabled.');
     }
 

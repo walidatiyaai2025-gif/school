@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../widgets/clean_3d_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
@@ -113,7 +114,7 @@ class _FileCard extends StatelessWidget {
 Future<void> _renameDialog(BuildContext context,AppStore store,PdfRecord r) async {
   var name=r.filename.replaceAll(RegExp(r'\.pdf$',caseSensitive:false),'');
   final s=S(store.settings.english);
-  final result=await showDialog<String>(context:context,builder:(_)=>AlertDialog(
+  final result=await showClean3DDialog<String>(context:context,builder:(_)=>AlertDialog(
     title:Text(s.t('إعادة تسمية الملف','Rename PDF')),
     content:TextFormField(initialValue:name,autofocus:true,
       onChanged:(v)=>name=v),
@@ -125,7 +126,7 @@ Future<void> _renameDialog(BuildContext context,AppStore store,PdfRecord r) asyn
 }
 Future<void> _deleteDialog(BuildContext context,AppStore store,PdfRecord r) async {
   final s=S(store.settings.english);
-  final yes=await showDialog<bool>(context:context,builder:(_)=>AlertDialog(
+  final yes=await showClean3DDialog<bool>(context:context,builder:(_)=>AlertDialog(
     title:Text(s.t('حذف الملف نهائيًا؟','Delete this PDF?')),
     content:Text(s.t('سيُحذف الملف المحفوظ داخل التطبيق، ولا يمكن التراجع.',
       'The app copy will be permanently deleted.')),

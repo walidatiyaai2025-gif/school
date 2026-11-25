@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'services/incoming_documents.dart';
+import 'screens/incoming_document_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/history_screen.dart';
 import 'widgets/language_toggle.dart';
@@ -10,13 +13,21 @@ import 'services/pdf_service.dart';
 import 'screens/onboarding.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/play_screen.dart';
 import 'services/ads_service.dart';
+import 'widgets/footer_3d_icon.dart';
 import 'services/telemetry_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store=await AppStore.load();
-  await TelemetryService.purgePending();
+  // Optional privacy cleanup must not prevent the offline app from launching.
+  // A failed deletion stays queued and is retried on a later launch.
+  try {
+    await TelemetryService.purgePending();
+  } catch (error) {
+    debugPrint('Deferred optional privacy cleanup: ${error.runtimeType}');
+  }
   final notifications=NotificationService();
   try { await notifications.initialize(); await notifications.refreshPermissionStatus(); }
   catch (_) { /* Offline scanning must work even when notification init fails. */ }
@@ -31,10 +42,26 @@ class SchoolPdfApp extends StatefulWidget {
 }
 class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver {
   int tab=0;
+  bool _overlayFlowOpen = false;
+  StreamSubscription<String>? incomingSubscription;
+  String? pendingIncoming;
+  void openIncoming(String path) {
+    if (!mounted) return;
+    if (!widget.store.settings.ready) { pendingIncoming = path; return; }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) navKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => IncomingDocumentScreen(
+          path: path, english: widget.store.settings.english)));
+    });
+  }
   final navKey=GlobalKey<NavigatorState>();
   @override void initState(){
     super.initState();WidgetsBinding.instance.addObserver(this);
     widget.store.addListener(_updated);
+    incomingSubscription = IncomingDocuments.events.stream.listen(openIncoming);
+    IncomingDocuments.initialize().then((path) {
+      if (path != null) openIncoming(path);
+    }).catchError((Object _) {});
     widget.notifications.onTokenRefresh=(_) {TelemetryService.sync(widget.store,widget.notifications);};
     WidgetsBinding.instance.addPostFrameCallback((_) {
       TelemetryService.sync(widget.store, widget.notifications);
@@ -54,7 +81,15 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       }
     };
   }
-  void _updated(){if(mounted)setState((){});}
+  void _updated(){
+    if (!mounted) return;
+    setState(() {});
+    if (widget.store.settings.ready && pendingIncoming != null) {
+      final path = pendingIncoming!;
+      pendingIncoming = null;
+      openIncoming(path);
+    }
+  }
   @override void didChangeAppLifecycleState(AppLifecycleState state){
     if(state==AppLifecycleState.resumed){
       widget.notifications.refreshPermissionStatus().then((_) {
@@ -63,7 +98,7 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       }).catchError((Object _){});
     }
   }
-  @override void dispose(){widget.store.removeListener(_updated);
+  @override void dispose(){incomingSubscription?.cancel();widget.store.removeListener(_updated);
     WidgetsBinding.instance.removeObserver(this);super.dispose();}
   @override Widget build(BuildContext context){
     final store=widget.store, s=S(store.settings.english);
@@ -83,8 +118,15 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
   Widget _main(S s){
     final screens=<Widget>[
       HomeScreen(store:widget.store,scanner:ScanEngine(),notifications:widget.notifications,
-        onGoFiles:()=>setState(()=>tab=1)),
+        onGoFiles:()=>setState(()=>tab=1),
+        onCaptureFlowChanged:(active) {
+          if (mounted) setState(() => _overlayFlowOpen = active);
+        }),
       HistoryScreen(store:widget.store),
+      PlayScreen(store:widget.store,
+        onGameVisibilityChanged:(active) {
+          if (mounted) setState(() => _overlayFlowOpen = active);
+        }),
       SettingsScreen(store:widget.store,notifications:widget.notifications),
     ];
     return Scaffold(
@@ -95,18 +137,21 @@ class _SchoolPdfAppState extends State<SchoolPdfApp> with WidgetsBindingObserver
       ),
       body:SafeArea(bottom:false,child:IndexedStack(index:tab,children:screens)),
       bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[
-        if(tab==0 || tab==1)SchoolBanner(store:widget.store),
-        NavigationBar(height:70,backgroundColor:Colors.white,
+        NavigationBar(height:76,backgroundColor:Colors.white,
           indicatorColor:const Color(0xFFE5EFFF),
           selectedIndex:tab,onDestinationSelected:(index)=>setState(()=>tab=index),
           destinations:[
-            NavigationDestination(icon:const Icon(Icons.home_outlined),
-              selectedIcon:const Icon(Icons.home_rounded),label:s.home),
-            NavigationDestination(icon:const Icon(Icons.folder_copy_outlined),
-              selectedIcon:const Icon(Icons.folder_copy),label:s.files),
-            NavigationDestination(icon:const Icon(Icons.settings_outlined),
-              selectedIcon:const Icon(Icons.settings),label:s.settings),
+            NavigationDestination(icon:const Footer3DIcon(icon:Icons.home_outlined),
+              selectedIcon:const Footer3DIcon(icon:Icons.home_rounded,selected:true),label:s.home),
+            NavigationDestination(icon:const Footer3DIcon(icon:Icons.folder_copy_outlined),
+              selectedIcon:const Footer3DIcon(icon:Icons.folder_copy,selected:true),label:s.files),
+            NavigationDestination(icon:const Footer3DIcon(icon:Icons.sports_esports_outlined),
+              selectedIcon:const Footer3DIcon(icon:Icons.sports_esports_rounded,selected:true),label:s.play),
+            NavigationDestination(icon:const Footer3DIcon(icon:Icons.settings_outlined),
+              selectedIcon:const Footer3DIcon(icon:Icons.settings,selected:true),label:s.settings),
           ]),
+        if(!_overlayFlowOpen && (tab==0 || tab==1 || tab==2))
+          SchoolBanner(store:widget.store),
       ]),
     );
   }

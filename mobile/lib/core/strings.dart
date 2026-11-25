@@ -6,6 +6,7 @@ class S {
   String get app => 'School PDF';
   String get home => t('الرئيسية','Home');
   String get files => t('ملفاتي','My Files');
+  String get play => t('العب','Play');
   String get settings => t('الإعدادات','Settings');
   String get name => t('اسم الطالب','Student name');
   String get level => t('المرحلة الدراسية','Education level');

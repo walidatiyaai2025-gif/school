@@ -6,14 +6,21 @@ use App\Models\AdSetting;
 
 class ConfigController {
     public function __invoke() {
-        // Only approved/active AdMob banners. Server emergency stop overrides
+        // Only approved/active AdMob placements. Server emergency stop overrides
         // all dashboard settings. Before migration or on DB failure, fail OFF.
         $enabled=AdApproval::isApproved()
             && !config('schoolpdf.ads_emergency_stop');
         $providers=$enabled
             ? AdSetting::where('provider','admob')->where('enabled',true)
                 ->whereIn('platform',['android','ios'])
-                ->get(['provider','platform','banner_unit_id'])
+                ->get(['provider','platform','banner_unit_id','interstitial_unit_id','interstitial_enabled'])
+                ->map(fn($row)=>[
+                    'provider'=>$row->provider,
+                    'platform'=>$row->platform,
+                    'banner_unit_id'=>$row->banner_unit_id,
+                    'interstitial_enabled'=>(bool)$row->interstitial_enabled && (bool)$row->interstitial_unit_id,
+                    'interstitial_unit_id'=>$row->interstitial_enabled ? $row->interstitial_unit_id : null,
+                ])
             : [];
         return response()->json([
             'app'=>'School PDF','version'=>'1.1.4',

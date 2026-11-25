@@ -15,6 +15,30 @@ class Brand {
       surface: Colors.white, brightness: Brightness.light),
     appBarTheme: const AppBarTheme(backgroundColor: bg, foregroundColor: navy,
       elevation: 0, centerTitle: true),
+    // Material dialogs share one glossy Clean 3D surface across the whole app.
+    dialogTheme: DialogThemeData(
+      backgroundColor: const Color(0xFFF6F9FF),
+      surfaceTintColor: Colors.transparent,
+      elevation: 17,
+      shadowColor: const Color(0xA84464A0),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: Colors.white, width: 2),
+        borderRadius: BorderRadius.circular(27)),
+      titleTextStyle: const TextStyle(
+        color: navy, fontSize: 21, fontWeight: FontWeight.w900),
+      contentTextStyle: const TextStyle(
+        color: navy, fontSize: 14, height: 1.45),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: const Color(0xFFF5F8FF),
+      surfaceTintColor: Colors.transparent,
+      elevation: 12,
+      shadowColor: const Color(0x773C5790),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(19),
+        side: const BorderSide(color: Colors.white)),
+    ),
     cardTheme: CardThemeData(color: Colors.white, surfaceTintColor: Colors.transparent,
       elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
     filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(

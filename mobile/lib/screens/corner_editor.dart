@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
+import '../widgets/clean_3d_dialog.dart';
 import '../services/scan_models.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
@@ -93,7 +94,7 @@ class _CornerEditorState extends State<CornerEditor> {
       final path=await widget.scanner.process(source,chosen,filter,widget.quality);
       if(path==null)throw const FormatException('Could not process image');
       if(!mounted)return;
-      final ok=await showDialog<bool>(context:context,builder:(dialogContext)=>AlertDialog(
+      final ok=await showClean3DDialog<bool>(context:context,builder:(dialogContext)=>AlertDialog(
         title:Text(strings.t('معاينة الورقة بعد التصحيح','Corrected page preview')),
         content:SizedBox(width:300,height:420,child:Image.file(File(path),fit:BoxFit.contain)),
         actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext,false),

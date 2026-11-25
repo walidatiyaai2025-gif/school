@@ -1,0 +1,79 @@
+name: Office intake cross-platform QA
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'backend/**'
+      - '.github/workflows/office-intake-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flutter-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+      - run: flutter create --project-name school_pdf --platforms android --org com.fiftysols .
+        working-directory: mobile
+      - run: python3 tool/patch_platforms.py
+        working-directory: mobile
+      - run: |
+          if [ -f test/widget_test.dart ] && grep -q MyApp test/widget_test.dart; then rm test/widget_test.dart; fi
+          flutter pub get
+          flutter analyze --no-fatal-infos
+          flutter test
+        working-directory: mobile
+      - run: flutter build apk --debug
+        working-directory: mobile
+  flutter-ios:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+      - run: flutter create --project-name school_pdf --platforms ios --org com.fiftysols .
+        working-directory: mobile
+      - run: python3 tool/patch_platforms.py
+        working-directory: mobile
+      - run: |
+          if [ -f test/widget_test.dart ] && grep -q MyApp test/widget_test.dart; then rm test/widget_test.dart; fi
+          flutter pub get
+          flutter analyze --no-fatal-infos
+          flutter test
+        working-directory: mobile
+      - run: flutter build ios --simulator --no-codesign
+        working-directory: mobile
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, fileinfo, zip
+      - run: composer install --no-interaction --prefer-dist
+        working-directory: backend
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress
+          libreoffice --version
+          printf 'School PDF office conversion acceptance fixture\n' > /tmp/schoolpdf-office-sample.txt
+          timeout 45 libreoffice -env:UserInstallation=file:///tmp/schoolpdf-office-qa-profile --headless --convert-to pdf --outdir /tmp /tmp/schoolpdf-office-sample.txt
+          test -s /tmp/schoolpdf-office-sample.pdf
+          head -c 5 /tmp/schoolpdf-office-sample.pdf | grep -q '%PDF-'
+      - run: |
+          php -l routes/api.php
+          php -l app/Http/Controllers/Api/OfficeConversionController.php
+          php -l config/services.php
+          ./vendor/bin/phpunit --filter=OfficeConversionTest
+        working-directory: backend

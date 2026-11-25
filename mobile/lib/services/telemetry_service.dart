@@ -13,7 +13,7 @@ import 'notifications_service.dart';
 class TelemetryService {
   static const api = String.fromEnvironment('SCHOOLPDF_API_BASE',
       defaultValue: 'https://sclpdf.50sols.com/api');
-  static const version = '1.1.4';
+  static const version = '1.1.5';
   static bool _sending = false;
   static const secure = FlutterSecureStorage();
 
