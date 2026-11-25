@@ -1,0 +1,59 @@
+name: School PDF Android Release APK Reproduction (no rebuild)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/android-release-artifact-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replay-actual-owner-tested-qa-apks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact QA APKs user reports crash on physical phone
+        uses: actions/download-artifact@v4
+        with:
+          name: SchoolPDF-v1.1.5-build6-Release-APK-QA-AD-DIAGNOSTIC
+          run-id: 45596330077
+          github-token: ${{ github.token }}
+          path: mobile/dist
+      - name: Validate archived APKs and script before emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n mobile/tool/ci_release_startup.sh
+          cd mobile/dist
+          sha256sum -c SchoolPDF-v1.1.5-build6-NoAds-QA-Release.apk.sha256
+          sha256sum -c SchoolPDF-v1.1.5-build6-PlayLike-QA-Release.apk.sha256
+          test -s SchoolPDF-v1.1.5-build6-NoAds-QA-Release.apk
+          test -s SchoolPDF-v1.1.5-build6-PlayLike-QA-Release.apk
+      - name: Enable Linux runner KVM for Android emulator
+        shell: bash
+        run: |
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+          else
+            echo '::warning::KVM missing; emulator may not boot'
+          fi
+      - name: Exact user APK launch / re-launch and Android crash evidence
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash mobile/tool/ci_release_startup.sh
+      - name: Upload Android fatal startup logs even when app exits
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-v1.1.5-Owner-Tested-QA-APK-Android-Logcat
+          path: schoolpdf-release-*.log
+          if-no-files-found: ignore
+          retention-days: 14
