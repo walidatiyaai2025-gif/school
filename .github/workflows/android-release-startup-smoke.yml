@@ -159,6 +159,8 @@ jobs:
       - name: Restore Play-like APK as the emulator test subject
         working-directory: mobile
         run: cp dist/SchoolPDF-v1.1.5-build6-PlayLike-QA-Release.apk build/app/outputs/flutter-apk/app-release.apk
+      - name: Verify external smoke script syntax
+        run: bash -n mobile/tool/ci_release_startup.sh
       - name: Enable hardware virtualization on GitHub-hosted Linux
         shell: bash
         run: |
@@ -177,27 +179,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: |
-            set -eu
-            adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
-            adb shell pm clear com.fiftysols.schoolpdf
-            for cycle in 1 2; do
-              adb shell am force-stop com.fiftysols.schoolpdf || true
-              adb logcat -c
-              adb shell am start -W -n com.fiftysols.schoolpdf/.MainActivity
-              sleep 20
-              if ! adb shell pidof com.fiftysols.schoolpdf >/dev/null; then
-                adb logcat -d -v time > "schoolpdf-release-crash-cycle-${cycle}.log"
-                echo "::error::Release app exited during cold-start/relaunch cycle ${cycle}; inspect the uploaded log"
-                exit 1
-              fi
-              adb logcat -d -v time > "schoolpdf-release-startup-cycle-${cycle}.log"
-              if grep -E 'FATAL EXCEPTION.*|Fatal signal|Dart Unhandled Exception' "schoolpdf-release-startup-cycle-${cycle}.log" | grep -E 'com.fiftysols.schoolpdf|flutter|dart' >/dev/null; then
-                echo "::error::App fatal exception observed during Release startup."
-                exit 1
-              fi
-              echo "Release app process remained alive for startup cycle ${cycle}"
-            done
+          script: bash mobile/tool/ci_release_startup.sh
       - name: Keep startup diagnostics as internal QA evidence
         if: always()
         uses: actions/upload-artifact@v4
