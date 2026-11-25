@@ -1,0 +1,91 @@
+name: School PDF Android Release Startup Smoke
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'VERSION'
+      - '.github/workflows/android-release-startup-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  release-startup-on-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - name: Build the exact 1.1.5 release variant with a disposable CI-only key
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat ../VERSION)" = "1.1.5"
+          python3 tool/verify_firebase_config.py
+          mkdir -p "$HOME/.gradle/init.d"
+          cp tool/gradle_repositories_init.gradle "$HOME/.gradle/init.d/schoolpdf-repos.gradle"
+          flutter create --project-name school_pdf --platforms android --org com.fiftysols .
+          python3 tool/patch_platforms.py
+          flutter pub get
+          keytool -genkeypair -noprompt -storetype PKCS12 -keyalg RSA -keysize 2048 \
+            -validity 1 -keystore "$RUNNER_TEMP/disposable-emulator-release.jks" \
+            -storepass ci-emulator-only -keypass ci-emulator-only \
+            -alias disposable -dname "CN=Disposable School PDF Emulator CI"
+          echo "SCHOOLPDF_UPLOAD_KEYSTORE_FILE=$RUNNER_TEMP/disposable-emulator-release.jks" >> "$GITHUB_ENV"
+          echo 'SCHOOLPDF_UPLOAD_STORE_PASSWORD=ci-emulator-only' >> "$GITHUB_ENV"
+          echo 'SCHOOLPDF_UPLOAD_KEY_ALIAS=disposable' >> "$GITHUB_ENV"
+          echo 'SCHOOLPDF_UPLOAD_KEY_PASSWORD=ci-emulator-only' >> "$GITHUB_ENV"
+      - name: Compile installable release APK with production ads disabled
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk --release --no-pub \
+            --build-name=1.1.5 --build-number=5 \
+            --dart-define=SCHOOLPDF_PRODUCTION_ADS=false \
+            --dart-define=SCHOOLPDF_TEST_ADS=false
+          test -s build/app/outputs/flutter-apk/app-release.apk
+          echo "Release APK is a disposable QA build, not a Google Play upload artifact."
+      - name: Emulator cold-launch and restart safety checks
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            set -eu
+            adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
+            for cycle in 1 2; do
+              adb shell am force-stop com.fiftysols.schoolpdf || true
+              adb logcat -c
+              adb shell am start -W -n com.fiftysols.schoolpdf/.MainActivity
+              sleep 20
+              if ! adb shell pidof com.fiftysols.schoolpdf >/dev/null; then
+                adb logcat -d -v time > "schoolpdf-release-crash-cycle-${cycle}.log"
+                echo "::error::Release app exited during cold-start/relaunch cycle ${cycle}"
+                exit 1
+              fi
+              adb logcat -d -v time > "schoolpdf-release-startup-cycle-${cycle}.log"
+              echo "Release app process remained alive for startup cycle ${cycle}"
+            done
+      - name: Keep startup diagnostics as internal QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-v1.1.5-Android-Release-Startup-Logs
+          path: schoolpdf-release-*.log
+          if-no-files-found: ignore
+          retention-days: 7
