@@ -95,11 +95,11 @@ if build.exists():
         raise SystemExit('Missing required Room/WorkManager R8 constructor keep rules')
     shutil.copy2(proguard_source,root/'android/app/proguard-rules.pro')
     if 'proguardFiles("proguard-rules.pro")' not in s:
-        release_block=re.search(r'(?m)^([ \\t]*)release[ \\t]*\\{',s)
+        release_block=re.search(r'(?m)^([ \t]*)release[ \t]*\{',s)
         if release_block is None:
             raise SystemExit('Release block missing: cannot install R8 rules')
         indentation=release_block.group(1)
-        insertion='\\n'+indentation+'    proguardFiles("proguard-rules.pro")'
+        insertion='\n'+indentation+'    proguardFiles("proguard-rules.pro")'
         s=s[:release_block.end()]+insertion+s[release_block.end():]
     if 'id("com.google.gms.google-services")' not in s:
         s=re.sub(r'(plugins\s*\{)',
