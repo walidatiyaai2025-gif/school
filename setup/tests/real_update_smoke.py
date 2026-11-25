@@ -18,7 +18,7 @@ def run_real_update_smoke(app: Path, env: dict, php: str) -> None:
     target = os.environ["SCHOOLPDF_REAL_UPDATE_TARGET_VERSION"]
     assert archive.is_file(), "exact Update ZIP missing"
     current = json.loads((app / "storage/app/private/install.lock").read_text())["version"]
-    assert current in ("1.1.3", "1.1.4"), f"unsupported CI starting version: {current}"
+    assert current in ("1.1.2", "1.1.3", "1.1.4"), f"unsupported CI starting version: {current}"
     with zipfile.ZipFile(archive) as z:
         assert z.testzip() is None
         manifest_raw = z.read("manifest.json")
@@ -74,23 +74,34 @@ def run_real_update_smoke(app: Path, env: dict, php: str) -> None:
         return subprocess.run([php, "-r", base + source, str(app), str(package)],
                               env=e, capture_output=True, text=True, timeout=220)
 
-    # Real production lineage: verified Setup 1.1.3 was upgraded with the
-    # actual signed 1.1.4 Update. Reconstruct the chain rather than editing
-    # an installer lock or faking the migration baseline.
-    if current == "1.1.3":
-        prior = Path(os.environ["SCHOOLPDF_PRIOR_UPDATE_ARCHIVE"]).resolve()
-        assert prior.is_file(), "actual prior v1.1.4 signed Update ZIP missing"
-        prior_run = subprocess.run([php, "-r", r'''
-require $argv[1]."/vendor/autoload.php";
-$app=require $argv[1]."/bootstrap/app.php";
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-$m=$app->make(App\Services\SystemUpdateManager::class);
-$s=$m->stage($argv[2]); $r=$m->install($s["id"]);
-if (($r["version"]??"")!=="1.1.4") exit(11);
-echo "ACTUAL_PRIOR_UPGRADE_OK";''', str(app), str(prior)],
-            env=e, capture_output=True, text=True, timeout=220)
+    # Real historical production lineage. The immutable 1.1.2 Setup ZIP is
+    # installed, then the exact previously released signed 1.1.3 and 1.1.4
+    # updates are applied. Never fake install.lock or skip intermediate schema.
+    def apply_prior(env_name: str, target_version: str) -> None:
+        package = Path(os.environ[env_name]).resolve()
+        assert package.is_file(), f"actual prior {target_version} signed update missing"
+        script = (
+            'require $argv[1]."/vendor/autoload.php";'
+            '$app=require $argv[1]."/bootstrap/app.php";'
+            r'$app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap();'
+            '$m=$app->make(App\\Services\\SystemUpdateManager::class);'
+            '$s=$m->stage($argv[2]);$r=$m->install($s["id"]);'
+            'if (($r["version"]??"")!==getenv("SCHOOLPDF_EXPECTED_PRIOR_VERSION")) exit(11);'
+            'echo "ACTUAL_PRIOR_UPGRADE_OK";'
+        )
+        prior_run = subprocess.run(
+            [php, "-r", script, str(app), str(package)],
+            env={**e, "SCHOOLPDF_EXPECTED_PRIOR_VERSION": target_version},
+            capture_output=True, text=True, timeout=220)
         assert prior_run.returncode == 0 and "ACTUAL_PRIOR_UPGRADE_OK" in prior_run.stdout, (
-            "actual prior signed v1.1.4 update failed: " + prior_run.stderr[-1000:])
+            f"actual prior {target_version} signed update failed: " + prior_run.stderr[-1000:])
+        assert json.loads((app / "storage/app/private/install.lock").read_text())["version"] == target_version
+
+    if current == "1.1.2":
+        apply_prior("SCHOOLPDF_PRIOR_UPDATE_ARCHIVE", "1.1.3")
+        current = "1.1.3"
+    if current == "1.1.3":
+        apply_prior("SCHOOLPDF_MIDDLE_UPDATE_ARCHIVE", "1.1.4")
     assert json.loads((app / "storage/app/private/install.lock").read_text())["version"] == "1.1.4"
 
     before = run_php(r'''
