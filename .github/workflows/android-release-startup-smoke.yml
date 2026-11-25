@@ -7,6 +7,11 @@ on:
       - 'VERSION'
       - '.github/workflows/android-release-startup-smoke.yml'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/android-release-startup-smoke.yml'
 permissions:
   contents: read
 
@@ -14,6 +19,9 @@ jobs:
   release-startup-on-emulator:
     runs-on: ubuntu-latest
     timeout-minutes: 65
+    env:
+      # Keep native Google Mobile Ads application ID identical to Play AAB.
+      ADMOB_ANDROID_APP_ID: 'ca-app-pub-3218037275900725~8048418854'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -37,6 +45,19 @@ jobs:
           flutter create --project-name school_pdf --platforms android --org com.fiftysols .
           python3 tool/patch_platforms.py
           flutter pub get
+          cp android/app/src/main/res/mipmap-hdpi/ic_launcher.png "$RUNNER_TEMP/stock-flutter-icon.png"
+          dart run flutter_launcher_icons -f tool/flutter_launcher_icons_android.yaml
+          python3 tool/verify_branding.py
+          test -s android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          if cmp -s "$RUNNER_TEMP/stock-flutter-icon.png" android/app/src/main/res/mipmap-hdpi/ic_launcher.png; then
+            echo "::error::Stock Flutter launcher icon was not replaced by School PDF branding."
+            exit 1
+          fi
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            test -s "android/app/src/main/res/mipmap-$density/ic_launcher.png"
+          done
+          grep -q 'ca-app-pub-3218037275900725~8048418854' android/app/src/main/AndroidManifest.xml
+          echo 'Verified branded native launcher resources before Release build.'
           keytool -genkeypair -noprompt -storetype PKCS12 -keyalg RSA -keysize 2048 \
             -validity 3650 -keystore "$RUNNER_TEMP/disposable-emulator-release.jks" \
             -storepass ci-emulator-only -keypass ci-emulator-only \
@@ -51,7 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           flutter build apk --release --no-pub \
-            --build-name=1.1.5 --build-number=5 \
+            --build-name=1.1.5 --build-number=6 \
             --dart-define=SCHOOLPDF_PRODUCTION_ADS=true \
             --dart-define=SCHOOLPDF_TEST_ADS=false \
             --dart-define=ADMOB_ANDROID_BANNER_ID=ca-app-pub-3218037275900725/8379591348
@@ -63,43 +84,70 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/SchoolPDF-v1.1.5-build5-QA-Release.apk
-          (cd dist && sha256sum SchoolPDF-v1.1.5-build5-QA-Release.apk > SchoolPDF-v1.1.5-build5-QA-Release.apk.sha256)
+          cp build/app/outputs/flutter-apk/app-release.apk dist/SchoolPDF-v1.1.5-build6-PlayLike-QA-Release.apk
+          (cd dist && sha256sum SchoolPDF-v1.1.5-build6-PlayLike-QA-Release.apk > SchoolPDF-v1.1.5-build6-PlayLike-QA-Release.apk.sha256)
           python3 - <<'PY'
           import json, os
           from pathlib import Path
           data = {
               "version_name": "1.1.5",
-              "version_code": 5,
+              "version_code": 6,
               "git_sha": os.environ.get("GITHUB_SHA"),
               "android_application_id": "com.fiftysols.schoolpdf",
               "build_type": "release",
               "signing": "DISPOSABLE_CI_QA_KEY_NOT_GOOGLE_PLAY",
               "production_ads_config": True,
+              "native_app_id": "ca-app-pub-3218037275900725~8048418854",
+              "launcher_icon": "School PDF assets/branding/icon.png generated using flutter_launcher_icons",
               "intended_use": "manual_install_and_crash_regression_testing_only",
               "warning": "Cannot update an installed Play-signed School PDF because QA signature differs. Back up local user documents before uninstalling."
           }
           Path("dist/BUILD_INFO.json").write_text(json.dumps(data, indent=2))
           PY
-      - name: Upload School PDF 1.1.5 QA release APK for device testing
+      - name: Build an ad-disabled release for safe differential crash diagnosis
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk --release --no-pub \
+            --build-name=1.1.5 --build-number=6 \
+            --dart-define=SCHOOLPDF_PRODUCTION_ADS=false \
+            --dart-define=SCHOOLPDF_TEST_ADS=false
+          cp build/app/outputs/flutter-apk/app-release.apk dist/SchoolPDF-v1.1.5-build6-NoAds-QA-Release.apk
+          (cd dist && sha256sum SchoolPDF-v1.1.5-build6-NoAds-QA-Release.apk > SchoolPDF-v1.1.5-build6-NoAds-QA-Release.apk.sha256)
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          Path('dist/NO_ADS_QA_BUILD_INFO.json').write_text(json.dumps({
+              'version_name':'1.1.5','version_code':6,
+              'signing':'DISPOSABLE_CI_QA_KEY_NOT_GOOGLE_PLAY',
+              'production_ads':False,
+              'purpose':'DIFFERENTIAL_CRASH_TEST_ONLY_NOT_PLAY'
+          },indent=2))
+          PY
+      - name: Upload both branded QA Release APK variants
         uses: actions/upload-artifact@v4
         with:
-          name: SchoolPDF-v1.1.5-build5-QA-Release-APK-TEST-ONLY
+          name: SchoolPDF-v1.1.5-build6-Release-APK-QA-AD-DIAGNOSTIC
           path: mobile/dist/
           if-no-files-found: error
           retention-days: 21
+      - name: Restore Play-like APK as the emulator test subject
+        working-directory: mobile
+        run: cp dist/SchoolPDF-v1.1.5-build6-PlayLike-QA-Release.apk build/app/outputs/flutter-apk/app-release.apk
       - name: Emulator cold-launch and restart safety checks
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: 34
           target: google_apis
           arch: x86_64
-          profile: pixel_6
+          profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             set -eu
             adb install -r mobile/build/app/outputs/flutter-apk/app-release.apk
+            adb shell pm clear com.fiftysols.schoolpdf
             for cycle in 1 2; do
               adb shell am force-stop com.fiftysols.schoolpdf || true
               adb logcat -c
@@ -107,10 +155,14 @@ jobs:
               sleep 20
               if ! adb shell pidof com.fiftysols.schoolpdf >/dev/null; then
                 adb logcat -d -v time > "schoolpdf-release-crash-cycle-${cycle}.log"
-                echo "::error::Release app exited during cold-start/relaunch cycle ${cycle}"
+                echo "::error::Release app exited during cold-start/relaunch cycle ${cycle}; inspect the uploaded log"
                 exit 1
               fi
               adb logcat -d -v time > "schoolpdf-release-startup-cycle-${cycle}.log"
+              if grep -E 'FATAL EXCEPTION.*|Fatal signal|Dart Unhandled Exception' "schoolpdf-release-startup-cycle-${cycle}.log" | grep -E 'com.fiftysols.schoolpdf|flutter|dart' >/dev/null; then
+                echo "::error::App fatal exception observed during Release startup."
+                exit 1
+              fi
               echo "Release app process remained alive for startup cycle ${cycle}"
             done
       - name: Keep startup diagnostics as internal QA evidence
