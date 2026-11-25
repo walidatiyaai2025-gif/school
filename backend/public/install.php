@@ -137,7 +137,7 @@ if (($_SERVER['REQUEST_METHOD']??'GET')==='POST') {
                             'role'=>'super_admin','is_active'=>true,
                         ]);
                         // The database may already have been modified. Never attempt blind rollback.
-                        $record=json_encode(['project'=>'School PDF','version'=>'1.1.4',
+                        $record=json_encode(['project'=>'School PDF','version'=>'1.1.5',
                             'installed_at'=>gmdate('c')],JSON_THROW_ON_ERROR);
                         if (file_put_contents($lock,$record."\n",LOCK_EX)===false)
                             throw new RuntimeException('Cannot lock installer');
@@ -180,7 +180,7 @@ button[disabled]{opacity:.45;cursor:not-allowed}.secondary{background:#dfe9fa;co
 .alert{padding:14px;border-radius:12px;background:#fff0f0;color:#9a2546;margin:10px 0}.good{padding:14px;border-radius:12px;background:#e9f9ef;color:#116d40}
 small{color:#5d718e}.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:550px){main{margin:0;border-radius:0;padding:18px}.cols{grid-template-columns:1fr}}
 </style></head><body><main>
-<h1>📄 School PDF — إعداد Laravel</h1><div class="sub">sclpdf.50sols.com • Setup v1.1.4 • تثبيت بدون Terminal على الاستضافة</div>
+<h1>📄 School PDF — إعداد Laravel</h1><div class="sub">sclpdf.50sols.com • Setup v1.1.5 • تثبيت بدون Terminal على الاستضافة</div>
 <div class="steps"><span class="step">1 — فحص الاستضافة</span><span class="step">2 — البيانات</span><span class="step">3 — التأكيد والتشغيل</span></div>
 <?php foreach ($errors as $error): ?><p class="alert"><?=esc($error)?></p><?php endforeach; ?>
 <?php if ($installed): ?>
