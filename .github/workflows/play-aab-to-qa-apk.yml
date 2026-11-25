@@ -1,0 +1,102 @@
+name: School PDF 1.1.5 Play AAB to branded QA APK
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/play-aab-to-qa-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  convert-verified-main-aab-to-test-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Retrieve exact signed 1.1.5 production AAB artifact (read-only)
+        uses: actions/download-artifact@v4
+        with:
+          name: SchoolPDF-v1.1.5-GooglePlay-AAB-SIGNED
+          run-id: 45594523106
+          github-token: ${{ github.token }}
+          path: input-aab
+      - name: Validate signed base AAB SHA and release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd input-aab
+          sha256sum -c SchoolPDF-v1.1.5-release-SIGNED.aab.sha256
+          python3 - <<'PY'
+          import json,zipfile
+          meta=json.load(open('BUILD_INFO.json'))
+          assert meta['git_sha']=='489b63a1af1a6220dbda0fc77f2d16e2ab01c0c2'
+          assert meta['version_name']=='1.1.5' and meta['version_code']==5
+          assert meta['type']=='SIGNED_PLAY_UPLOAD_CANDIDATE'
+          with zipfile.ZipFile('SchoolPDF-v1.1.5-release-SIGNED.aab') as z:
+              assert z.testzip() is None
+              names=z.namelist()
+              assert any('mipmap' in n or 'ic_launcher' in n for n in names), 'branded launcher resources absent'
+              assert 'base/manifest/AndroidManifest.xml' in names
+          PY
+      - name: Install official bundletool 1.18.3 for conversion (not Gradle)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --retry-delay 2 \
+            'https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar' \
+            --output "$RUNNER_TEMP/bundletool.jar"
+          test -s "$RUNNER_TEMP/bundletool.jar"
+          jar tf "$RUNNER_TEMP/bundletool.jar" | grep -q 'com/android/tools/build/bundletool/BundleToolMain.class'
+      - name: Create disposable test signing identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -noprompt -storetype PKCS12 -keyalg RSA -keysize 2048 \
+            -validity 3650 -keystore "$RUNNER_TEMP/schoolpdf-aab-qa.jks" \
+            -storepass ci-qa-only -keypass ci-qa-only \
+            -alias schoolpdfqa -dname "CN=School PDF AAB Derived QA APK"
+      - name: Produce installable universal APK derived from exact main AAB
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
+            --bundle=input-aab/SchoolPDF-v1.1.5-release-SIGNED.aab \
+            --output="$RUNNER_TEMP/schoolpdf-qa.apks" \
+            --mode=universal \
+            --ks="$RUNNER_TEMP/schoolpdf-aab-qa.jks" \
+            --ks-key-alias=schoolpdfqa \
+            --ks-pass=pass:ci-qa-only \
+            --key-pass=pass:ci-qa-only
+          unzip -p "$RUNNER_TEMP/schoolpdf-qa.apks" universal.apk > dist/SchoolPDF-v1.1.5-build5-PLAY-AAB-Derived-QA.apk
+          test -s dist/SchoolPDF-v1.1.5-build5-PLAY-AAB-Derived-QA.apk
+          sha256sum dist/SchoolPDF-v1.1.5-build5-PLAY-AAB-Derived-QA.apk > dist/SHA256SUMS.txt
+          python3 - <<'PY'
+          import json,zipfile
+          from pathlib import Path
+          apk=Path('dist/SchoolPDF-v1.1.5-build5-PLAY-AAB-Derived-QA.apk')
+          with zipfile.ZipFile(apk) as z:
+              assert z.testzip() is None
+              assert 'AndroidManifest.xml' in z.namelist()
+          Path('dist/BUILD_INFO.json').write_text(json.dumps({
+             'version_name':'1.1.5','version_code':5,
+             'original_aab_sha':'489b63a1af1a6220dbda0fc77f2d16e2ab01c0c2',
+             'original_aab_workflow_run':45594523106,
+             'type':'UNIVERSAL_APK_FROM_SIGNED_PLAY_AAB_RE_SIGNED_FOR_QA',
+             'signed_with':'DISPOSABLE_QA_KEY_NEVER_VALID_FOR_PLAY_UPLOAD',
+             'warning':'Not production signed: may require uninstall of previous QA app after backing up local user documents.'
+          },indent=2))
+          PY
+      - name: Upload original Play AAB derived test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SchoolPDF-1.1.5-AAB-DERIVED-Universal-APK-QA-TEST-ONLY
+          path: dist/
+          retention-days: 21
+          if-no-files-found: error
