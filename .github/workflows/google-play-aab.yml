@@ -46,6 +46,9 @@ jobs:
           cp tool/gradle_repositories_init.gradle "$HOME/.gradle/init.d/schoolpdf-repos.gradle"
           flutter create --project-name school_pdf --platforms android --org com.fiftysols .
           python3 tool/patch_platforms.py
+          grep -Fq 'proguardFiles("proguard-rules.pro")' android/app/build.gradle.kts
+          grep -Fq -- '-keep class * extends androidx.room.RoomDatabase { <init>(); }' android/app/proguard-rules.pro
+          grep -Fq -- '-keep class * extends androidx.work.InputMerger { <init>(); }' android/app/proguard-rules.pro
           if [ -f test/widget_test.dart ] && grep -q MyApp test/widget_test.dart; then rm test/widget_test.dart; fi
           flutter pub get
           dart run flutter_launcher_icons -f tool/flutter_launcher_icons_android.yaml
