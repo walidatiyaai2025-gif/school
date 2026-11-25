@@ -79,7 +79,7 @@ jobs:
               "intended_use": "manual_install_and_crash_regression_testing_only",
               "warning": "Cannot update an installed Play-signed School PDF because QA signature differs. Back up local user documents before uninstalling."
           }
-          Path("dist/BUILD_INFO.json").write_text(json.dumps(data, indent=2) + "\\n")
+          Path("dist/BUILD_INFO.json").write_text(json.dumps(data, indent=2))
           PY
       - name: Upload School PDF 1.1.5 QA release APK for device testing
         uses: actions/upload-artifact@v4
