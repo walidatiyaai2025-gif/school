@@ -23,7 +23,7 @@ class ConfigController {
                 ])
             : [];
         return response()->json([
-            'app'=>'School PDF','version'=>'1.1.4',
+            'app'=>'School PDF','version'=>'1.1.5',
             'privacy_url'=>'https://sclpdf.50sols.com/privacy',
             'support_url'=>'https://sclpdf.50sols.com/support',
             'ads'=>[
